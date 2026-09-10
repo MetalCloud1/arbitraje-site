@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Noticias, entrevistas y análisis sobre arbitraje y ajedrez competitivo.' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{title}</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+</head>
+<body>
+  <Header />
+  <slot />
+
+  <script>
+    const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+    if (revealEls.length) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+      );
+      revealEls.forEach((el) => observer.observe(el));
+    }
+  </script>
+</body>
+</html>

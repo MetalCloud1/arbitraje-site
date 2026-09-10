@@ -1,0 +1,25 @@
+# wrangler.toml
+name = 'arbitraje-site'
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# Base de datos D1 donde viven los articulos.
+[[d1_databases]]
+binding = "DB"
+database_name = "arbitraje_db"
+database_id = "a72976d5-660a-43e5-b7a7-78bba16ef9c9"
+
+# Bucket R2 donde viven las imagenes de portada.
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "arbitraje-images"
+
+# Variables no secretas (secretas van con `wrangler pages secret put`)
+[vars]
+ADMIN_USER = "admin"
+PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAEut1CrZF_r2jNlG"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "c32b1fc8dba84a5892b7b84d24bd16bf"

@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getArticleBySlug } from '../../lib/db';
+import { formatDateEs } from '../../lib/text';
+
+export const prerender = false;
+
+const db = Astro.locals.runtime.env.DB;
+const { slug } = Astro.params;
+const article = slug ? await getArticleBySlug(db, slug) : null;
+
+if (!article) {
+  return Astro.redirect('/articulos');
+}
+
+const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
+---
+<BaseLayout title={`${article.title} — La Hora del Arbitraje`} description={article.excerpt ?? undefined}>
+  <div class="container">
+    <article class="article-detail">
+      <a class="back-link" href="/articulos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver a artículos
+      </a>
+
+      <div class="article-category">{article.category}</div>
+      <h1>{article.title}</h1>
+
+      <div class="article-meta">
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          {formatDateEs(article.published_at)}
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          {article.read_minutes} min de lectura
+        </span>
+      </div>
+
+      {coverUrl && <img class="article-cover" src={coverUrl} alt={article.title} />}
+
+      <div class="article-body" set:html={article.content_html} />
+    </article>
+  </div>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { listAllArticles } from '../../lib/db';
+
+export const prerender = false;
+
+const db = Astro.locals.runtime.env.DB;
+const categoria = Astro.url.searchParams.get('categoria');
+const all = await listAllArticles(db);
+const articles = categoria ? all.filter((a) => a.category === categoria) : all;
+---
+<BaseLayout title="Artículos — La Hora del Arbitraje">
+  <section class="articles-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-title">
+          <div class="rule"></div>
+          <span>{categoria ? categoria : 'Todos los Artículos'}</span>
+        </div>
+      </div>
+
+      {articles.length === 0 && (
+        <p class="empty-state">No hay artículos {categoria ? `en la categoría "${categoria}"` : 'publicados todavía'}.</p>
+      )}
+
+      <div class="articles-grid reveal-stagger">
+        {articles.map((article) => <ArticleCard article={article} />)}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

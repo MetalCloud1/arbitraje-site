@@ -1,0 +1,19 @@
+name = "arbitraje-cleanup"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Corre todos los dias a las 09:00 UTC (ajusta si quieres otra hora).
+# Las Cron Triggers son gratis dentro del plan Free de Workers.
+[triggers]
+crons = ["0 9 * * *"]
+
+# Debe apuntar a LA MISMA base D1 y bucket R2 que usa el sitio principal
+# (mismos database_id / bucket_name que en el wrangler.toml de la raiz).
+[[d1_databases]]
+binding = "DB"
+database_name = "arbitraje_db"
+database_id = "a72976d5-660a-43e5-b7a7-78bba16ef9c9"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "arbitraje-images"

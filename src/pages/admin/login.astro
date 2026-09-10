@@ -1,0 +1,50 @@
+---
+import '../../styles/global.css';
+
+export const prerender = false;
+
+if (Astro.locals.session) {
+  return Astro.redirect('/admin');
+}
+
+const error = Astro.url.searchParams.get('error');
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso — Panel de Administración</title>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <h1>Panel de Administración</h1>
+      <p class="subtitle">La Hora del Arbitraje</p>
+
+      {error === 'invalid' && <div class="alert alert-error">Usuario o contraseña incorrectos.</div>}
+      {error === 'ratelimit' && <div class="alert alert-error">Demasiados intentos. Intentá de nuevo en unos minutos.</div>}
+      {error === 'captcha' && <div class="alert alert-error">Verificación de seguridad fallida. Recargá la página.</div>}
+
+      <form method="POST" action="/api/auth/login" autocomplete="off">
+        <div class="field">
+          <label for="user">Usuario</label>
+          <input type="text" id="user" name="user" autocomplete="username" required maxlength="64" />
+        </div>
+        <div class="field">
+          <label for="pass">Contraseña</label>
+          <input type="password" id="pass" name="pass" autocomplete="current-password" required maxlength="256" />
+        </div>
+
+        <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="light"></div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center;">
+          Iniciar sesión
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

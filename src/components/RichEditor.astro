@@ -1,0 +1,74 @@
+---
+interface Props {
+  name: string;
+  initialHtml?: string;
+}
+
+const { name, initialHtml = '' } = Astro.props;
+---
+<div class="rich-editor" data-field-name={name}>
+  <div class="editor-toolbar" role="toolbar" aria-label="Formato de texto">
+    <button type="button" data-cmd="bold" title="Negrita"><strong>B</strong></button>
+    <button type="button" data-cmd="italic" title="Cursiva"><em>I</em></button>
+    <button type="button" data-cmd="underline" title="Subrayado"><u>U</u></button>
+    <button type="button" data-cmd="formatBlock" data-value="h2" title="Título">H2</button>
+    <button type="button" data-cmd="formatBlock" data-value="h3" title="Subtítulo">H3</button>
+    <button type="button" data-cmd="formatBlock" data-value="blockquote" title="Cita">&ldquo;&rdquo;</button>
+    <button type="button" data-cmd="insertUnorderedList" title="Lista con viñetas">•</button>
+    <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1.</button>
+    <button type="button" data-cmd="createLink" data-prompt="Pega el enlace (URL):" title="Enlace">🔗</button>
+    <button type="button" data-cmd="removeFormat" title="Quitar formato">Tx</button>
+    <button type="button" data-cmd="undo" title="Deshacer">↺</button>
+  </div>
+  <div class="editor-body" contenteditable="true" set:html={initialHtml} data-placeholder="Escribe el contenido del artículo..."></div>
+  <input type="hidden" name={name} />
+</div>
+
+<script>
+  // Cada instancia del editor en la pagina se inicializa por separado.
+  document.querySelectorAll('.rich-editor').forEach((wrapper) => {
+    const toolbar = wrapper.querySelector('.editor-toolbar');
+    const body = wrapper.querySelector('.editor-body') as HTMLElement;
+    const hidden = wrapper.querySelector('input[type="hidden"]') as HTMLInputElement;
+
+    const syncHidden = () => {
+      hidden.value = body.innerHTML;
+    };
+
+    toolbar?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('button');
+      if (!btn) return;
+      e.preventDefault();
+      body.focus();
+
+      const cmd = btn.getAttribute('data-cmd')!;
+      let value = btn.getAttribute('data-value') ?? undefined;
+
+      if (cmd === 'createLink') {
+        const url = window.prompt(btn.getAttribute('data-prompt') ?? 'URL:');
+        if (!url) return;
+        value = url;
+      }
+
+      document.execCommand(cmd, false, value);
+      syncHidden();
+    });
+
+    body.addEventListener('input', syncHidden);
+    body.addEventListener('blur', syncHidden);
+
+    // Encuentra el <form> padre y sincroniza justo antes de enviarlo,
+    // por si el usuario no disparo un evento input/blur a tiempo.
+    const form = wrapper.closest('form');
+    form?.addEventListener('submit', syncHidden);
+
+    syncHidden();
+  });
+</script>
+
+<style>
+  .editor-body:empty:before {
+    content: attr(data-placeholder);
+    color: var(--gray-dim);
+  }
+</style>
