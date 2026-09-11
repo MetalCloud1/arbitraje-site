@@ -9,6 +9,7 @@ export interface Article {
   excerpt: string | null;
   content_html: string;
   cover_key: string | null;
+  video_url: string | null;
   read_minutes: number;
   published_at: string;
   expires_at: string | null;
@@ -23,6 +24,7 @@ export interface ArticleInput {
   excerpt: string;
   content_html: string;
   cover_key: string | null;
+  video_url: string | null;
   read_minutes: number;
   published_at: string;
   expires_at: string | null;
@@ -62,8 +64,8 @@ export async function createArticle(db: D1Database, input: ArticleInput): Promis
   const result = await db
     .prepare(
       `INSERT INTO articles
-        (slug, title, category, excerpt, content_html, cover_key, read_minutes, published_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (slug, title, category, excerpt, content_html, cover_key, video_url, read_minutes, published_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       input.slug,
@@ -72,6 +74,7 @@ export async function createArticle(db: D1Database, input: ArticleInput): Promis
       input.excerpt,
       input.content_html,
       input.cover_key,
+      input.video_url,
       input.read_minutes,
       input.published_at,
       input.expires_at
@@ -85,7 +88,7 @@ export async function updateArticle(db: D1Database, id: number, input: ArticleIn
     .prepare(
       `UPDATE articles SET
         slug = ?, title = ?, category = ?, excerpt = ?, content_html = ?,
-        cover_key = ?, read_minutes = ?, published_at = ?, expires_at = ?,
+        cover_key = ?, video_url = ?, read_minutes = ?, published_at = ?, expires_at = ?,
         updated_at = datetime('now')
        WHERE id = ?`
     )
@@ -96,6 +99,7 @@ export async function updateArticle(db: D1Database, id: number, input: ArticleIn
       input.excerpt,
       input.content_html,
       input.cover_key,
+      input.video_url,
       input.read_minutes,
       input.published_at,
       input.expires_at,

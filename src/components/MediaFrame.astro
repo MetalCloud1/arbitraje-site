@@ -1,0 +1,29 @@
+---
+// Muestra una imagen completa (sin recortar, object-fit: contain) sobre un
+// fondo hecho con la misma imagen ampliada y difuminada, para que nunca
+// queden franjas negras/vacías cuando la proporción de la imagen no calza
+// exactamente con el contenedor. Se usa dentro de un contenedor con
+// position: relative y un tamaño/aspect-ratio ya definido.
+interface Props {
+  imageUrl: string | null;
+  alt: string;
+  isVideo?: boolean;
+  playSize?: 'sm' | 'md';
+  eager?: boolean;
+}
+
+const { imageUrl, alt, isVideo = false, playSize = 'md', eager = false } = Astro.props;
+---
+<div class="media-frame">
+  {imageUrl && (
+    <>
+      <div class="media-frame-bg" style={`background-image:url(${imageUrl})`}></div>
+      <img class="media-frame-fg" src={imageUrl} alt={alt} loading={eager ? 'eager' : 'lazy'} />
+    </>
+  )}
+  {isVideo && (
+    <span class={`article-thumb-play ${playSize === 'sm' ? 'article-thumb-play-sm' : ''}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </span>
+  )}
+</div>

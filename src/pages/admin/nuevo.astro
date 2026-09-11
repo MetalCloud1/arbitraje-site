@@ -44,7 +44,13 @@ const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast'];
     <div class="field">
       <label for="cover">Imagen de portada (opcional)</label>
       <input type="file" id="cover" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" />
-      <p class="field-hint">JPG, PNG, WEBP o GIF, hasta 5 MB.</p>
+      <p class="field-hint">JPG, PNG, WEBP o GIF, hasta 5 MB. Si el video es de Facebook, subí una imagen acá: se usa como miniatura en el listado (Facebook no ofrece una automática).</p>
+    </div>
+
+    <div class="field">
+      <label for="video_url">Link de video de Facebook o YouTube (opcional)</label>
+      <input type="url" id="video_url" name="video_url" placeholder="https://www.facebook.com/.../videos/... o https://youtu.be/..." />
+      <p class="field-hint">Si pegas un link acá, el video se muestra embebido en la página del artículo. En YouTube la miniatura del listado se genera sola; en Facebook se usa la imagen de portada de arriba.</p>
     </div>
 
     <div class="field">

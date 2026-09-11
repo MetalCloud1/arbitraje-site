@@ -59,11 +59,23 @@ const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
       <label for="cover">Imagen de portada</label>
       {coverUrl && <img class="cover-preview" src={coverUrl} alt="Portada actual" />}
       <input type="file" id="cover" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" style="margin-top:10px;" />
-      <p class="field-hint">Sube una nueva imagen para reemplazar la actual.</p>
+      <p class="field-hint">Sube una nueva imagen para reemplazar la actual. Si el video es de Facebook, esta imagen se usa como miniatura en el listado.</p>
       {coverUrl && (
         <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:400;">
           <input type="checkbox" name="remove_cover" style="width:auto;" />
           Quitar la imagen de portada
+        </label>
+      )}
+    </div>
+
+    <div class="field">
+      <label for="video_url">Link de video de Facebook o YouTube (opcional)</label>
+      <input type="url" id="video_url" name="video_url" placeholder="https://www.facebook.com/.../videos/... o https://youtu.be/..." value={article.video_url ?? ''} />
+      <p class="field-hint">Si hay un link acá, se muestra el video embebido en vez de la imagen de portada.</p>
+      {article.video_url && (
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:400;">
+          <input type="checkbox" name="remove_video" style="width:auto;" />
+          Quitar el video
         </label>
       )}
     </div>

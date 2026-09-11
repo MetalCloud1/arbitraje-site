@@ -1,18 +1,20 @@
 ---
 import type { Article } from '../lib/db';
 import { formatDateEs } from '../lib/text';
+import { resolveThumbnail } from '../lib/video';
+import MediaFrame from './MediaFrame.astro';
 
 interface Props {
   article: Article;
 }
 
 const { article } = Astro.props;
-const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
+const thumb = resolveThumbnail(article);
 ---
 <article class="article-card">
   <a class="article-title-link" href={`/articulos/${article.slug}`}>
     <div class="article-thumb">
-      {coverUrl && <img src={coverUrl} alt={article.title} loading="lazy" />}
+      <MediaFrame imageUrl={thumb.imageUrl} alt={article.title} isVideo={thumb.isVideo} />
     </div>
   </a>
   <div class="article-category">{article.category}</div>

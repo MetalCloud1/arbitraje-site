@@ -2,6 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArticleBySlug } from '../../lib/db';
 import { formatDateEs } from '../../lib/text';
+import { parseVideoUrlSafe } from '../../lib/video';
+import MediaFrame from '../../components/MediaFrame.astro';
 
 export const prerender = false;
 
@@ -13,7 +15,8 @@ if (!article) {
   return Astro.redirect('/articulos');
 }
 
-const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
+const video = parseVideoUrlSafe(article.video_url);
+const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` : null;
 ---
 <BaseLayout title={`${article.title} — La Hora del Arbitraje`} description={article.excerpt ?? undefined}>
   <div class="container">
@@ -37,7 +40,22 @@ const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
         </span>
       </div>
 
-      {coverUrl && <img class="article-cover" src={coverUrl} alt={article.title} />}
+      {video && (
+        <div class="article-video-embed">
+          <iframe
+            src={video.embedUrl}
+            title={article.title}
+            loading="lazy"
+            allow="autoplay; encrypted-media; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+      )}
+      {coverUrl && (
+        <div class="article-cover-frame">
+          <MediaFrame imageUrl={coverUrl} alt={article.title} eager />
+        </div>
+      )}
 
       <div class="article-body" set:html={article.content_html} />
     </article>

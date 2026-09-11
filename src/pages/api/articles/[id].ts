@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getArticleById, updateArticle, slugExists } from '../../../lib/db';
 import { slugify, sanitizeHtml, estimateReadMinutes, excerptFromHtml } from '../../../lib/text';
 import { uploadCoverImage, deleteImage } from '../../../lib/images';
+import { parseVideoUrl } from '../../../lib/video';
 import { computeExpiresAt } from '../../../lib/expiry';
 
 export const prerender = false;
@@ -27,9 +28,23 @@ export const POST: APIRoute = async ({ request, params, locals, redirect }) => {
   let excerpt = String(form.get('excerpt') ?? '').trim();
   const coverFile = form.get('cover') as File | null;
   const removeCover = form.get('remove_cover') === 'on';
+  const videoUrlRaw = String(form.get('video_url') ?? '').trim();
+  const removeVideo = form.get('remove_video') === 'on';
 
   if (!title || !category || !contentHtmlRaw.trim()) {
     return redirect(`/admin/editar/${id}?error=` + encodeURIComponent('Título, categoría y contenido son obligatorios.'));
+  }
+
+  let videoUrl: string | null = existing.video_url;
+  if (removeVideo) {
+    videoUrl = null;
+  } else if (videoUrlRaw) {
+    try {
+      videoUrl = parseVideoUrl(videoUrlRaw).originalUrl;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'El link de video no es válido.';
+      return redirect(`/admin/editar/${id}?error=` + encodeURIComponent(msg));
+    }
   }
 
   const contentHtml = sanitizeHtml(contentHtmlRaw);
@@ -63,6 +78,7 @@ export const POST: APIRoute = async ({ request, params, locals, redirect }) => {
     excerpt,
     content_html: contentHtml,
     cover_key: coverKey,
+    video_url: videoUrl,
     read_minutes: estimateReadMinutes(contentHtml),
     published_at: publishedAt,
     expires_at: computeExpiresAt(expiresOption),

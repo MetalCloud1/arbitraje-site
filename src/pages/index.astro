@@ -2,36 +2,59 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import FeaturedArticles from '../components/FeaturedArticles.astro';
 import { listRecentArticles } from '../lib/db';
 
 export const prerender = false;
 
 const db = Astro.locals.runtime.env.DB;
-const articles = await listRecentArticles(db, 4);
+const articles = await listRecentArticles(db, 8);
+
+const featured = articles[0] ?? null;
+const secondary = articles.slice(1, 4);
+const recentGrid = articles.slice(4, 8);
 ---
 <BaseLayout title="La Hora del Arbitraje — Chess.com">
   <Hero />
 
-  <section class="articles-section">
-    <div class="container">
-      <div class="section-header reveal">
-        <div class="section-title">
-          <div class="rule"></div>
-          <span>Artículos Recientes</span>
+  {featured && (
+    <section class="featured-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-title">
+            <div class="rule"></div>
+            <span>Destacado</span>
+          </div>
         </div>
-        <a class="view-all" href="/articulos">
-          Ver todos los artículos
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
+        <FeaturedArticles featured={featured} secondary={secondary} />
       </div>
+    </section>
+  )}
 
-      {articles.length === 0 && (
-        <p class="empty-state">Todavía no hay artículos publicados. Vuelve pronto.</p>
-      )}
+  {(recentGrid.length > 0 || articles.length === 0) && (
+    <section class="articles-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-title">
+            <div class="rule"></div>
+            <span>Artículos Recientes</span>
+          </div>
+          <a class="view-all" href="/articulos">
+            Ver todos los artículos
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
 
-      <div class="articles-grid reveal-stagger">
-        {articles.map((article) => <ArticleCard article={article} />)}
+        {articles.length === 0 && (
+          <p class="empty-state">Todavía no hay artículos publicados. Vuelve pronto.</p>
+        )}
+
+        {recentGrid.length > 0 && (
+          <div class="articles-grid reveal-stagger">
+            {recentGrid.map((article) => <ArticleCard article={article} />)}
+          </div>
+        )}
       </div>
-    </div>
-  </section>
+    </section>
+  )}
 </BaseLayout>
