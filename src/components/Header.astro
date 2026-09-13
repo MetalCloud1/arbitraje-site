@@ -5,9 +5,9 @@ const isActive = (href: string) => (path === href ? 'active' : '');
 <header class="site-header">
   <div class="header-inner">
     <div class="brand-cluster">
-      <img class="chess-logo" src="/logo.svg" alt="Chess.com" />
+      <img class="brand-title" src="/site-title.webp" alt="La Hora del Arbitraje" />
       <div class="brand-divider"></div>
-      <img class="podcast-logo" src="/podcast-logo.svg" alt="La Hora del Arbitraje Podcast" />
+      <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" />
     </div>
 
     <nav class="main-nav">
@@ -35,11 +35,6 @@ const isActive = (href: string) => (path === href ? 'active' : '');
       <a href="/cursos" class={isActive('/cursos')}>Cursos</a>
       <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
     </nav>
-
-    <div class="header-alliance">
-      <span>En alianza con</span>
-      <img class="chess-logo" src="/logo.svg" alt="Chess.com" />
-    </div>
 
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
       <span class="bar"></span>
@@ -71,11 +66,6 @@ const isActive = (href: string) => (path === href ? 'active' : '');
   <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
   <a href="/cursos" class={isActive('/cursos')}>Cursos</a>
   <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
-
-  <div class="mobile-menu-alliance">
-    <span>En alianza con</span>
-    <img class="chess-logo" src="/logo.svg" alt="Chess.com" />
-  </div>
 </nav>
 
 <script>

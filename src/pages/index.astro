@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import FeaturedArticles from '../components/FeaturedArticles.astro';
+import KnightMark from '../components/KnightMark.astro';
 import { listRecentArticles } from '../lib/db';
 
 export const prerender = false;
@@ -22,7 +23,7 @@ const recentGrid = articles.slice(4, 8);
       <div class="container">
         <div class="section-header reveal">
           <div class="section-title">
-            <div class="rule"></div>
+            <KnightMark class="section-mark" />
             <span>Destacado</span>
           </div>
         </div>
@@ -36,7 +37,7 @@ const recentGrid = articles.slice(4, 8);
       <div class="container">
         <div class="section-header reveal">
           <div class="section-title">
-            <div class="rule"></div>
+            <KnightMark class="section-mark" />
             <span>Artículos Recientes</span>
           </div>
           <a class="view-all" href="/articulos">
