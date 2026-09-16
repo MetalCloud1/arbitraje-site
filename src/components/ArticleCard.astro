@@ -14,12 +14,17 @@ const thumb = resolveThumbnail(article);
 <article class="article-card">
   <a class="article-title-link" href={`/articulos/${article.slug}`}>
     <div class="article-thumb">
-      <MediaFrame imageUrl={thumb.imageUrl} alt={article.title} isVideo={thumb.isVideo} />
+      <MediaFrame
+        imageUrl={thumb.imageUrl}
+        alt={article.title}
+        isVideo={thumb.isVideo}
+        transitionName={`article-cover-${article.slug}`}
+      />
     </div>
   </a>
   <div class="article-category">{article.category}</div>
   <a class="article-title-link" href={`/articulos/${article.slug}`}>
-    <h3 class="article-title">{article.title}</h3>
+    <h3 class="article-title" transition:name={`article-title-${article.slug}`}>{article.title}</h3>
   </a>
   <div class="article-meta">
     <span>

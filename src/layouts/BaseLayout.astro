@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Header from '../components/Header.astro';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -17,14 +18,26 @@ const { title, description = 'Noticias, entrevistas y análisis sobre arbitraje 
   <meta name="description" content={description} />
   <title>{title}</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
+    rel="stylesheet"
+  />
+  <ClientRouter />
 </head>
 <body>
   <Header />
   <slot />
 
   <script>
-    const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
-    if (revealEls.length) {
+    // Se registra una sola vez, pero reacciona en cada carga: 'astro:page-load'
+    // se dispara tanto en la carga inicial como después de cada navegación
+    // hecha por el ClientRouter, así que el reveal siempre encuentra y observa
+    // el contenido editorial recién insertado en la página.
+    function initReveal() {
+      const revealEls = document.querySelectorAll('.reveal:not(.is-visible), .reveal-stagger:not(.is-visible)');
+      if (!revealEls.length) return;
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
@@ -38,6 +51,8 @@ const { title, description = 'Noticias, entrevistas y análisis sobre arbitraje 
       );
       revealEls.forEach((el) => observer.observe(el));
     }
+
+    document.addEventListener('astro:page-load', initReveal);
   </script>
 </body>
 </html>

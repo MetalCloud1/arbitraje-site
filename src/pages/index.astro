@@ -4,6 +4,7 @@ import Hero from '../components/Hero.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import FeaturedArticles from '../components/FeaturedArticles.astro';
 import KnightMark from '../components/KnightMark.astro';
+import EmptyState from '../components/EmptyState.astro';
 import { listRecentArticles } from '../lib/db';
 
 export const prerender = false;
@@ -21,12 +22,6 @@ const recentGrid = articles.slice(4, 8);
   {featured && (
     <section class="featured-section">
       <div class="container">
-        <div class="section-header reveal">
-          <div class="section-title">
-            <KnightMark class="section-mark" />
-            <span>Destacado</span>
-          </div>
-        </div>
         <FeaturedArticles featured={featured} secondary={secondary} />
       </div>
     </section>
@@ -47,7 +42,10 @@ const recentGrid = articles.slice(4, 8);
         </div>
 
         {articles.length === 0 && (
-          <p class="empty-state">Todavía no hay artículos publicados. Vuelve pronto.</p>
+          <EmptyState
+            title="Todavía no hay artículos publicados"
+            description="Vuelve pronto para ver las últimas noticias y análisis de arbitraje."
+          />
         )}
 
         {recentGrid.length > 0 && (

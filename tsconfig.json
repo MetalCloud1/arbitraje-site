@@ -3,6 +3,7 @@
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "worker-cleanup"],
   "compilerOptions": {
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["@cloudflare/workers-types"],
   }
 }

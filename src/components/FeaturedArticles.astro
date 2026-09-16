@@ -19,7 +19,7 @@ const featuredThumb = resolveThumbnail(featured);
     <div class="featured-info">
       <div class="article-category">{featured.category}</div>
       <a class="article-title-link" href={`/articulos/${featured.slug}`}>
-        <h2 class="featured-title">{featured.title}</h2>
+        <h2 class="featured-title" transition:name={`article-title-${featured.slug}`}>{featured.title}</h2>
       </a>
       {featured.excerpt && <p class="featured-excerpt">{featured.excerpt}</p>}
       <div class="article-meta">
@@ -35,7 +35,13 @@ const featuredThumb = resolveThumbnail(featured);
     </div>
 
     <a class="featured-media" href={`/articulos/${featured.slug}`} aria-label={featured.title}>
-      <MediaFrame imageUrl={featuredThumb.imageUrl} alt={featured.title} isVideo={featuredThumb.isVideo} eager />
+      <MediaFrame
+        imageUrl={featuredThumb.imageUrl}
+        alt={featured.title}
+        isVideo={featuredThumb.isVideo}
+        eager
+        transitionName={`article-cover-${featured.slug}`}
+      />
     </a>
   </div>
 
@@ -46,11 +52,17 @@ const featuredThumb = resolveThumbnail(featured);
         return (
           <a class="featured-list-item" href={`/articulos/${article.slug}`}>
             <div class="featured-list-thumb">
-              <MediaFrame imageUrl={thumb.imageUrl} alt={article.title} isVideo={thumb.isVideo} playSize="sm" />
+              <MediaFrame
+                imageUrl={thumb.imageUrl}
+                alt={article.title}
+                isVideo={thumb.isVideo}
+                playSize="sm"
+                transitionName={`article-cover-${article.slug}`}
+              />
             </div>
             <div class="featured-list-body">
               <div class="featured-list-category">{article.category}</div>
-              <h3 class="featured-list-title">{article.title}</h3>
+              <h3 class="featured-list-title" transition:name={`article-title-${article.slug}`}>{article.title}</h3>
               <div class="featured-list-meta">
                 <span>{article.read_minutes} min</span>
                 <span>{formatDateEs(article.published_at)}</span>

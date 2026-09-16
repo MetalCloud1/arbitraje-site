@@ -32,5 +32,25 @@ const path = Astro.url.pathname;
       <slot />
     </main>
   </div>
+
+  <script>
+    // Estado de carga genérico para cualquier <form> del panel: al enviar,
+    // deshabilita el botón de submit y le agrega el spinner (.is-loading),
+    // tanto para evitar doble-envío como para dar feedback durante subidas
+    // de imagen que pueden tardar unos segundos.
+    // event.defaultPrevented ya refleja, en este punto, si un onsubmit
+    // inline (como el "confirm()" del botón Borrar) canceló el envío —
+    // así no mostramos "cargando" en un formulario que en realidad no se envió.
+    document.addEventListener('submit', (event) => {
+      if (event.defaultPrevented) return;
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const submitBtn = form.querySelector('button[type="submit"], button:not([type])');
+      if (!(submitBtn instanceof HTMLButtonElement) || submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.setAttribute('aria-busy', 'true');
+    });
+  </script>
 </body>
 </html>

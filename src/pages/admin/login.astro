@@ -46,5 +46,20 @@ const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       </form>
     </div>
   </div>
+
+  <script>
+    // Mismo comportamiento que en el panel de administración: feedback
+    // inmediato y bloqueo de doble-envío mientras se valida la sesión.
+    document.addEventListener('submit', (event) => {
+      if (event.defaultPrevented) return;
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const submitBtn = form.querySelector('button[type="submit"], button:not([type])');
+      if (!(submitBtn instanceof HTMLButtonElement) || submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.setAttribute('aria-busy', 'true');
+    });
+  </script>
 </body>
 </html>

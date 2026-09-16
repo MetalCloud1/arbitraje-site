@@ -2,32 +2,62 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleCard from '../../components/ArticleCard.astro';
 import KnightMark from '../../components/KnightMark.astro';
-import { listAllArticles } from '../../lib/db';
+import EmptyState from '../../components/EmptyState.astro';
+import { listAllArticles, searchArticles } from '../../lib/db';
 
 export const prerender = false;
 
 const db = Astro.locals.runtime.env.DB;
 const categoria = Astro.url.searchParams.get('categoria');
-const all = await listAllArticles(db);
-const articles = categoria ? all.filter((a) => a.category === categoria) : all;
+const buscar = Astro.url.searchParams.get('buscar')?.trim() || null;
+
+const articles = buscar
+  ? await searchArticles(db, buscar)
+  : await (async () => {
+      const all = await listAllArticles(db);
+      return categoria ? all.filter((a) => a.category === categoria) : all;
+    })();
+
+const heading = buscar ? `Resultados para "${buscar}"` : categoria ? categoria : 'Todos los Artículos';
 ---
-<BaseLayout title="Artículos — La Hora del Arbitraje">
+<BaseLayout title={`${buscar ? `Buscar: ${buscar}` : 'Artículos'} — La Hora del Arbitraje`}>
   <section class="articles-section">
     <div class="container">
       <div class="section-header reveal">
         <div class="section-title">
           <KnightMark class="section-mark" />
-          <span>{categoria ? categoria : 'Todos los Artículos'}</span>
+          <span>{heading}</span>
         </div>
       </div>
 
       {articles.length === 0 && (
-        <p class="empty-state">No hay artículos {categoria ? `en la categoría "${categoria}"` : 'publicados todavía'}.</p>
+        buscar ? (
+          <EmptyState
+            title={`Sin resultados para "${buscar}"`}
+            description="Probá con otra palabra o revisá la ortografía."
+            actionLabel="Ver todos los artículos"
+            actionHref="/articulos"
+          />
+        ) : categoria ? (
+          <EmptyState
+            title={`Sin resultados en "${categoria}"`}
+            description="No hay artículos publicados en esta categoría todavía."
+            actionLabel="Ver todos los artículos"
+            actionHref="/articulos"
+          />
+        ) : (
+          <EmptyState
+            title="Todavía no hay artículos publicados"
+            description="Vuelve pronto para ver las últimas noticias y análisis de arbitraje."
+          />
+        )
       )}
 
-      <div class="articles-grid reveal-stagger">
-        {articles.map((article) => <ArticleCard article={article} />)}
-      </div>
+      {articles.length > 0 && (
+        <div class="articles-grid reveal-stagger">
+          {articles.map((article) => <ArticleCard article={article} />)}
+        </div>
+      )}
     </div>
   </section>
 </BaseLayout>

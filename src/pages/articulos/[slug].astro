@@ -4,6 +4,7 @@ import { getArticleBySlug } from '../../lib/db';
 import { formatDateEs } from '../../lib/text';
 import { parseVideoUrlSafe } from '../../lib/video';
 import MediaFrame from '../../components/MediaFrame.astro';
+import ReadingProgress from '../../components/ReadingProgress.astro';
 
 export const prerender = false;
 
@@ -19,6 +20,7 @@ const video = parseVideoUrlSafe(article.video_url);
 const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` : null;
 ---
 <BaseLayout title={`${article.title} — La Hora del Arbitraje`} description={article.excerpt ?? undefined}>
+  <ReadingProgress />
   <div class="container">
     <article class="article-detail">
       <a class="back-link" href="/articulos">
@@ -27,7 +29,7 @@ const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` :
       </a>
 
       <div class="article-category">{article.category}</div>
-      <h1>{article.title}</h1>
+      <h1 transition:name={`article-title-${article.slug}`}>{article.title}</h1>
 
       <div class="article-meta">
         <span>
@@ -39,6 +41,11 @@ const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` :
           {article.read_minutes} min de lectura
         </span>
       </div>
+
+      {/* Título y texto van primero — la imagen/video se movió al final
+          del artículo (ver más abajo) para que el lector entre directo
+          al contenido en vez de scrollear una foto grande primero. */}
+      <div class="article-body" set:html={article.content_html} />
 
       {video && (
         <div class="article-video-embed">
@@ -53,11 +60,14 @@ const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` :
       )}
       {coverUrl && (
         <div class="article-cover-frame">
-          <MediaFrame imageUrl={coverUrl} alt={article.title} eager />
+          <MediaFrame
+            imageUrl={coverUrl}
+            alt={article.title}
+            eager
+            transitionName={`article-cover-${article.slug}`}
+          />
         </div>
       )}
-
-      <div class="article-body" set:html={article.content_html} />
     </article>
   </div>
 </BaseLayout>

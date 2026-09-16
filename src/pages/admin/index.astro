@@ -2,6 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { listAllArticles } from '../../lib/db';
 import { formatDateEs } from '../../lib/text';
+import EmptyState from '../../components/EmptyState.astro';
 
 export const prerender = false;
 
@@ -47,7 +48,12 @@ function daysLeft(expiresAt: string): number {
   </div>
 
   {articles.length === 0 ? (
-    <p class="empty-state">Todavía no has publicado ningún artículo.</p>
+    <EmptyState
+      title="Todavía no has publicado ningún artículo"
+      description="Los artículos que publiques van a aparecer acá, con su estado y fecha de eliminación."
+      actionLabel="+ Nuevo artículo"
+      actionHref="/admin/nuevo"
+    />
   ) : (
     <table class="admin-table">
       <thead>

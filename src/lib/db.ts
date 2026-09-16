@@ -60,6 +60,29 @@ export async function slugExists(db: D1Database, slug: string, excludeId?: numbe
   return !!row;
 }
 
+function escapeLikeTerm(term: string): string {
+  // Escapa los comodines propios de LIKE para que una búsqueda por
+  // "50%" o "a_b" no se interprete como patrón, sino como texto literal.
+  return term.replace(/[\\%_]/g, (match) => `\\${match}`);
+}
+
+/**
+ * Busca artículos por título, resumen o categoría. Usada tanto por las
+ * sugerencias en vivo del buscador (con `limit`) como por la página de
+ * resultados completos (sin `limit`).
+ */
+export async function searchArticles(db: D1Database, query: string, limit?: number): Promise<Article[]> {
+  const term = `%${escapeLikeTerm(query.trim())}%`;
+  const sql =
+    `SELECT * FROM articles
+     WHERE title LIKE ? ESCAPE '\\' OR excerpt LIKE ? ESCAPE '\\' OR category LIKE ? ESCAPE '\\'
+     ORDER BY published_at DESC` + (limit ? ' LIMIT ?' : '');
+  const stmt = db.prepare(sql);
+  const bound = limit ? stmt.bind(term, term, term, limit) : stmt.bind(term, term, term);
+  const { results } = await bound.all<Article>();
+  return results ?? [];
+}
+
 export async function createArticle(db: D1Database, input: ArticleInput): Promise<number> {
   const result = await db
     .prepare(
