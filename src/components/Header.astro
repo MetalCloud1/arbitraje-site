@@ -1,44 +1,22 @@
 ---
-import SearchBox from './SearchBox.astro';
-
 const path = Astro.url.pathname;
 const isActive = (href: string) => (path === href ? 'active' : '');
 ---
 <header class="site-header">
   <div class="header-inner">
-    <div class="brand-cluster">
-      <img class="brand-title" src="/site-title.webp" alt="La Hora del Arbitraje" />
+    <a href="/" class="brand-cluster" aria-label="La Hora del Arbitraje — Inicio">
+      <h1 class="brand-h1">
+          <img 
+            class="brand-title" 
+            src="/site-title.webp" 
+            alt="La Hora del Arbitraje - Noticias, entrevistas y análisis de arbitraje en ajedrez competitivo" 
+            width="150" 
+            height="55" 
+          />
+        </h1>
       <div class="brand-divider"></div>
-      <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" />
-    </div>
-
-    <nav class="main-nav">
-      <a href="/" class={isActive('/')}>Inicio</a>
-
-      <div class="nav-dropdown">
-        <a
-          href="/articulos"
-          class={`nav-dropdown-trigger ${path.startsWith('/articulos') ? 'active' : ''}`}
-          aria-haspopup="true"
-        >
-          Artículos
-          <svg class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
-        </a>
-        <div class="nav-dropdown-menu">
-          <a href="/articulos?categoria=Casos">Casos</a>
-          <a href="/articulos?categoria=Entrevistas">Entrevistas</a>
-          <a href="/articulos?categoria=Análisis">Análisis</a>
-          <a href="/articulos?categoria=Podcast">Podcast</a>
-        </div>
-      </div>
-
-      <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
-      <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
-      <a href="/cursos" class={isActive('/cursos')}>Cursos</a>
-      <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
-    </nav>
-
-    <SearchBox />
+      <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" width="92" height="26" />
+    </a>
 
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
       <span class="bar"></span>
@@ -66,9 +44,6 @@ const isActive = (href: string) => (path === href ? 'active' : '');
     </div>
   </div>
 
-  <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
-  <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
-  <a href="/cursos" class={isActive('/cursos')}>Cursos</a>
   <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
 </nav>
 

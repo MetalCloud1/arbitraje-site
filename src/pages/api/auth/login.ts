@@ -10,15 +10,25 @@ function isNonEmptyString(v: FormDataEntryValue | null, maxLen: number): v is st
   return typeof v === 'string' && v.length > 0 && v.length <= maxLen;
 }
 
-async function verifyTurnstile(token: string, secret: string, ip: string): Promise<boolean> {
+async function verifyTurnstile(
+  token: string,
+  secret: string,
+  ip: string,
+  expectedHostname: string
+): Promise<boolean> {
   try {
     const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: AbortSignal.timeout(10_000),
       body: new URLSearchParams({ secret, response: token, remoteip: ip }),
     });
-    const data = (await res.json()) as { success: boolean };
-    return data.success === true;
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success: boolean; action?: string; hostname?: string };
+    // No basta con `success`: un token válido pero resuelto en otro
+    // hostname/acción (p. ej. reusado desde otra propiedad con la misma
+    // cuenta de Cloudflare) no debería alcanzar para entrar acá.
+    return data.success === true && data.action === 'login' && data.hostname === expectedHostname;
   } catch (err) {
     console.error('Error verificando Turnstile:', err);
     return false; // si Cloudflare falla, no dejamos pasar por defecto
@@ -64,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       return redirect('/admin/login?error=1');
     }
 
-    const captchaOk = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip);
+    const captchaOk = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, ip, new URL(request.url).hostname);
     if (!captchaOk) {
       return redirect('/admin/login?error=captcha');
     }

@@ -180,6 +180,21 @@ a {
   color: #08120d;
 }
 
+/* Oculta visualmente sin quitarlo del árbol de accesibilidad/SEO. Se usa
+   para el H1 de la home: el header ahora es puro logo, así que el único
+   encabezado real de la página no ocupa espacio en pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .container {
   max-width: 1440px;
   margin: 0 auto;
@@ -194,7 +209,6 @@ a {
 
 /* ---------- HEADER ---------- */
 header.site-header {
-  border-bottom: 1px solid var(--border);
   background: var(--bg-black);
   position: sticky;
   top: 0;
@@ -205,38 +219,48 @@ header.site-header {
 
 header.site-header.is-scrolled {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  background: rgba(10, 20, 16, 0.92);
-  backdrop-filter: blur(8px);
 }
 
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 48px;
+  padding: 26px 48px;
   gap: 32px;
   transition: padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 header.site-header.is-scrolled .header-inner {
-  padding: 12px 48px;
+  padding: 16px 48px;
 }
 
+.brand-h1 {
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* El header ahora es puramente identidad: el logo, más grande, es la
+   única "presentación". La navegación vive en la barra de categorías
+   de abajo (siempre visible), no compite aquí con nada más. */
 .brand-cluster {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   flex-shrink: 0;
 }
 
 .brand-title {
-  height: 44px;
+  height: 56px;
   width: auto;
   transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
 }
 
 header.site-header.is-scrolled .brand-title {
-  height: 36px;
+  height: 42px;
 }
 
 .brand-cluster:hover .brand-title {
@@ -245,17 +269,23 @@ header.site-header.is-scrolled .brand-title {
 
 .brand-divider {
   width: 1px;
-  height: 28px;
+  height: 34px;
   background: var(--border);
   transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 header.site-header.is-scrolled .brand-divider {
-  height: 22px;
+  height: 24px;
 }
 
 .chess-logo-ally {
-  height: 20px;
+  /* 47px y no 25px: site-title.webp tiene bastante aire alrededor del
+     dibujo (el logo real ocupa ~83% de la altura del archivo), mientras
+     que logo.svg está recortado casi al límite de su viewBox (~99%).
+     A la misma altura CSS, el segundo se ve visualmente más chico y
+     desalineado con el primero -- esta altura compensa esa diferencia
+     de recorte para que el tamaño *percibido* de ambos logos coincida. */
+  height: 47px;
   width: auto;
   opacity: 0.8;
   transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.3s ease;
@@ -267,15 +297,14 @@ header.site-header.is-scrolled .brand-divider {
 }
 
 header.site-header.is-scrolled .chess-logo-ally {
-  height: 17px;
+  height: 36px;
 }
 
 nav.main-nav {
   display: flex;
   align-items: center;
-  gap: 34px;
-  flex: 1;
-  justify-content: center;
+  gap: 30px;
+  min-width: 0;
 }
 
 nav.main-nav a {
@@ -534,12 +563,49 @@ body.menu-open {
 }
 
 @media (max-width: 1100px) {
-  nav.main-nav {
-    display: none;
-  }
   .menu-toggle {
     display: flex;
   }
+}
+
+/* La barra de categorías es siempre visible (no depende del ancho): en
+   pantallas angostas, en vez de esconderse detrás del hamburguesa, se
+   vuelve una fila con scroll horizontal. Sin scrollbar visible, para que
+   se lea como una fila de pestañas y no como un textarea.
+   Mismo breakpoint (1100px) que activa el hamburguesa del Header: por
+   debajo de ese ancho ya no hay garantía de que el nav completo + la
+   lupa entren en una sola fila, así que necesitan el scroll desde ahí
+   mismo, no solo desde 860px. Entre 861px y 1100px el nav no tenía
+   overflow-x ni podía encoger, así que desbordaba la fila y el
+   overflow-x:hidden del body terminaba cortando la lupa. */
+@media (max-width: 1100px) {
+  nav.main-nav {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 22px;
+  }
+
+  nav.main-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  nav.main-nav a {
+    padding-bottom: 10px;
+    margin-bottom: 0;
+  }
+
+  nav.main-nav a::after {
+    bottom: 8px;
+  }
+
+  .search-box {
+    flex-shrink: 0;
+  }
+
 }
 
 /* ---------- SEARCH BOX ---------- */
@@ -729,6 +795,7 @@ body.menu-open {
   color: var(--white);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -801,150 +868,70 @@ body.menu-open {
 
 @media (max-width: 860px) {
   .header-inner {
-    padding: 14px 20px;
+    padding: 16px 20px;
     gap: 12px;
   }
   .brand-title {
-    height: 36px;
+    height: 40px;
   }
   header.site-header.is-scrolled .brand-title {
-    height: 30px;
+    height: 32px;
+  }
+  .brand-divider {
+    height: 26px;
+  }
+  .chess-logo-ally {
+    height: 34px;
+  }
+  /* Sin esto, el estado "scrolled" en mobile heredaba por especificidad
+     el height:36px de la regla desktop-scrolled (misma especificidad,
+     pero definida antes en el archivo), en vez de escalar junto con el
+     resto de los tamaños mobile. */
+  header.site-header.is-scrolled .chess-logo-ally {
+    height: 27px;
   }
 }
 
-/* ---------- HERO ---------- */
-.hero {
+/* ---------- CATEGORY BAR ----------
+   Segunda fila, fija debajo del header, con la navegación principal y el
+   buscador. Reemplaza tanto al masthead (foto+texto) como a la fila de
+   nav que antes vivía apretada dentro del header. El link a "Sobre
+   Nosotros" y las subcategorías de Artículos siguen accesibles desde el
+   hamburguesa del Header -- aquí solo va lo principal. */
+.category-bar {
+  /* position/z-index explícitos: sin esto, la regla genérica
+     "body > * { z-index: 1 }" convierte a .category-bar en su propio
+     contexto de apilamiento con z-index 1, igual que las secciones de
+     la página que vienen después en el DOM. Al empatar en z-index,
+     gana quien esté más abajo en el HTML -- así que el buscador y el
+     menú "Artículos" (que viven dentro de .category-bar) quedaban
+     tapados por el contenido siguiente en vez de flotar sobre él. */
   position: relative;
-  overflow: hidden;
-  min-height: 440px;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-black);
+}
+
+.category-bar-inner {
   display: flex;
   align-items: center;
-  background: #08120d;
-}
-
-.hero-bg-image {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  animation: fadeIn 900ms var(--ease-editorial) both;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    100deg,
-    rgba(6, 14, 10, 0.95) 0%,
-    rgba(6, 14, 10, 0.87) 32%,
-    rgba(6, 14, 10, 0.4) 62%,
-    rgba(6, 14, 10, 0.08) 100%
-  );
-}
-
-.hero-inner {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-}
-
-.hero-content {
-  max-width: 620px;
-  padding: 20px 0;
-}
-
-.hero-content > * {
-  animation: fadeSlideUp var(--dur-editorial) var(--ease-editorial) both;
-}
-
-.hero-content > .hero-heading { animation-delay: 0.06s; }
-.hero-content > .hero-copy { animation-delay: 0.12s; }
-
-.knight-mark {
-  display: block;
-  color: var(--green);
-}
-
-.hero-mark {
-  width: 34px;
-  height: 34px;
-  margin-bottom: 14px;
-  filter: drop-shadow(0 0 10px rgba(151, 204, 95, 0.35));
-}
-
-.hero-heading {
-  font-size: 32px;
-  line-height: 1.2;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  margin-bottom: 14px;
-  text-transform: uppercase;
-  color: var(--white);
-}
-
-.hero-heading .accent {
-  color: var(--green);
-}
-
-.hero-copy {
-  font-size: 15.5px;
-  line-height: 1.6;
-  color: var(--gray);
-  max-width: 480px;
-}
-
-.hero-copy strong {
-  color: var(--white);
-  font-weight: 700;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 10px 4;
 }
 
 @media (max-width: 860px) {
-  .hero {
-    min-height: 0;
-  }
-  .hero-inner {
-    padding-top: 48px;
-    padding-bottom: 48px;
-  }
-  .hero-content {
-    max-width: 100%;
-  }
-  .hero-heading {
-    font-size: 26px;
-  }
-  /* La imagen tiene 9 caras en fila, cada vez más iluminadas de izquierda
-     a derecha hasta terminar en la más reconocible (Magnus Carlsen). En
-     un contenedor angosto, "cover + center" recorta a ciegas y muestra
-     justo la franja más oscura y menos interesante del medio. Corremos
-     el foco hacia la derecha para conservar esa cara y el resto de las
-     mejor iluminadas. */
-  .hero-bg-image {
-    background-position: 90% center;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    min-height: 0;
-  }
-  .hero-inner {
-    padding-top: 36px;
-    padding-bottom: 36px;
-  }
-  .hero-heading {
-    font-size: 22px;
-  }
-  .hero-copy {
-    font-size: 14.5px;
-  }
-  .hero-overlay {
-    background: linear-gradient(
-      170deg,
-      rgba(6, 14, 10, 0.96) 0%,
-      rgba(6, 14, 10, 0.88) 45%,
-      rgba(6, 14, 10, 0.5) 75%,
-      rgba(6, 14, 10, 0.15) 100%
-    );
+  .category-bar-inner {
+    /* Antes decía "padding: 8px 0", que sí ajusta el alto pero también
+       pone el padding izquierdo/derecho en 0 -- y como este mismo div
+       también tiene la clase .container (que da los 24px de aire a los
+       costados en mobile), esta regla ganaba por ser la que aparece
+       después en el archivo con la misma especificidad, pisando ese
+       padding lateral. Resultado: "Inicio" y la lupa quedaban pegados
+       al borde de la pantalla. Ahora solo toca el alto, no los costados. */
+    gap: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 }
 
@@ -1125,6 +1112,7 @@ body.menu-open {
   color: var(--white);
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1225,6 +1213,7 @@ body.menu-open {
   margin-bottom: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1241,6 +1230,7 @@ body.menu-open {
   max-width: 640px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1324,6 +1314,7 @@ body.menu-open {
   margin-bottom: 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1371,11 +1362,20 @@ body.menu-open {
 
   .featured-info {
     flex: 0 0 auto;
+    order: 2;
+  }
+
+  /* La imagen es el gancho visual más fuerte del destacado; en desktop
+     va al lado del texto, pero al apilarse en mobile debe ir primero
+     (patrón de feed editorial), no después de 2-3 líneas de texto. */
+  .featured-media {
+    order: 1;
   }
 
   .featured-title {
     font-size: 21px;
     -webkit-line-clamp: 2;
+    line-clamp: 2s;
     margin-bottom: 10px;
   }
 

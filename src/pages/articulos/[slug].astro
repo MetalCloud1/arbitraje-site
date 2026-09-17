@@ -18,8 +18,40 @@ if (!article) {
 
 const video = parseVideoUrlSafe(article.video_url);
 const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` : null;
+
+const publishedIso = new Date(article.published_at).toISOString();
+const modifiedIso = new Date(article.updated_at ?? article.published_at).toISOString();
+const canonicalArticleUrl = new URL(`/articulos/${article.slug}`, Astro.url.origin).toString();
+
+// NewsArticle en vez de Article genérico: es el tipo correcto de schema.org
+// para contenido periodístico/editorial como el de este sitio.
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: article.title,
+  description: article.excerpt ?? undefined,
+  image: coverUrl ? [new URL(coverUrl, Astro.url.origin).toString()] : undefined,
+  datePublished: publishedIso,
+  dateModified: modifiedIso,
+  articleSection: article.category,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalArticleUrl },
+  author: { '@type': 'Organization', name: 'La Hora del Arbitraje' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'La Hora del Arbitraje',
+    logo: { '@type': 'ImageObject', url: new URL('/logo.svg', Astro.url.origin).toString() },
+  },
+};
 ---
-<BaseLayout title={`${article.title} — La Hora del Arbitraje`} description={article.excerpt ?? undefined}>
+<BaseLayout
+  title={`${article.title} — La Hora del Arbitraje`}
+  description={article.excerpt ?? undefined}
+  image={coverUrl ?? undefined}
+  type="article"
+  publishedTime={publishedIso}
+  modifiedTime={modifiedIso}
+  jsonLd={articleJsonLd}
+>
   <ReadingProgress />
   <div class="container">
     <article class="article-detail">

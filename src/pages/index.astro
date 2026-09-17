@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Hero from '../components/Hero.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import FeaturedArticles from '../components/FeaturedArticles.astro';
 import KnightMark from '../components/KnightMark.astro';
@@ -16,9 +15,10 @@ const featured = articles[0] ?? null;
 const secondary = articles.slice(1, 4);
 const recentGrid = articles.slice(4, 8);
 ---
-<BaseLayout title="La Hora del Arbitraje — Chess.com">
-  <Hero />
-
+<BaseLayout
+  title="La Hora del Arbitraje - Noticias y análisis de arbitraje en ajedrez"
+  description="Noticias, entrevistas y análisis sobre arbitraje y ajedrez competitivo, de la mano de Chess.com."
+>
   {featured && (
     <section class="featured-section">
       <div class="container">
@@ -30,7 +30,7 @@ const recentGrid = articles.slice(4, 8);
   {(recentGrid.length > 0 || articles.length === 0) && (
     <section class="articles-section">
       <div class="container">
-        <div class="section-header reveal">
+        <div class="section-header">
           <div class="section-title">
             <KnightMark class="section-mark" />
             <span>Artículos Recientes</span>
@@ -49,7 +49,7 @@ const recentGrid = articles.slice(4, 8);
         )}
 
         {recentGrid.length > 0 && (
-          <div class="articles-grid reveal-stagger">
+          <div class="articles-grid">
             {recentGrid.map((article) => <ArticleCard article={article} />)}
           </div>
         )}

@@ -8,6 +8,7 @@ type ENV = {
   ADMIN_PASS_HASH: string;
   SESSION_SECRET: string;
   TURNSTILE_SECRET_KEY: string;
+  PUBLIC_TURNSTILE_SITE_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
 };
 

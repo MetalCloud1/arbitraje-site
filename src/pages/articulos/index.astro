@@ -19,11 +19,22 @@ const articles = buscar
     })();
 
 const heading = buscar ? `Resultados para "${buscar}"` : categoria ? categoria : 'Todos los Artículos';
+
+// Los resultados de búsqueda son contenido efímero y específico de cada
+// consulta: no aportan nada nuevo que indexar y compiten por posicionamiento
+// con la propia página de artículos. El filtro por categoría vía query param
+// tiene el mismo problema (contenido duplicado de /articulos con otro título),
+// así que ambos se marcan noindex hasta que existan rutas propias por
+// categoría (p. ej. /articulos/categoria/casos) que sí valga la pena indexar.
+const shouldNoindex = Boolean(buscar || categoria);
 ---
-<BaseLayout title={`${buscar ? `Buscar: ${buscar}` : 'Artículos'} — La Hora del Arbitraje`}>
+<BaseLayout
+  title={`${buscar ? `Buscar: ${buscar}` : 'Artículos'} — La Hora del Arbitraje`}
+  noindex={shouldNoindex}
+>
   <section class="articles-section">
     <div class="container">
-      <div class="section-header reveal">
+      <div class="section-header">
         <div class="section-title">
           <KnightMark class="section-mark" />
           <span>{heading}</span>
@@ -54,7 +65,7 @@ const heading = buscar ? `Resultados para "${buscar}"` : categoria ? categoria :
       )}
 
       {articles.length > 0 && (
-        <div class="articles-grid reveal-stagger">
+        <div class="articles-grid">
           {articles.map((article) => <ArticleCard article={article} />)}
         </div>
       )}

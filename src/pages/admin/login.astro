@@ -8,7 +8,13 @@ if (Astro.locals.session) {
 }
 
 const error = Astro.url.searchParams.get('error');
-const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+// Antes se leía con `import.meta.env.PUBLIC_TURNSTILE_SITE_KEY` (variable de
+// build de Vite), pero la key vive en `wrangler.toml` bajo `[vars]`, que solo
+// se inyecta en el runtime de Cloudflare. Con `import.meta.env` llegaba
+// `undefined` en producción, el widget nunca se renderizaba y por eso nunca
+// se generaba un token que enviar a `siteverify`. Se lee del mismo lugar que
+// el resto de los bindings del proyecto (DB, IMAGES, etc.).
+const TURNSTILE_SITE_KEY = Astro.locals.runtime.env.PUBLIC_TURNSTILE_SITE_KEY;
 ---
 <!DOCTYPE html>
 <html lang="es">
@@ -38,7 +44,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
           <input type="password" id="pass" name="pass" autocomplete="current-password" required maxlength="256" />
         </div>
 
-        <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="light"></div>
+        <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-action="login" data-theme="light"></div>
 
         <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center;">
           Iniciar sesión

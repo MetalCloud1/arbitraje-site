@@ -6,7 +6,7 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<div class="coming-soon reveal">
+<div class="coming-soon">
   <div class="coming-soon-icon" aria-hidden="true">
     <img
       src="/icons/knight.svg"
@@ -19,11 +19,11 @@ const { title } = Astro.props;
   <h1>{title}</h1>
 
   <p class="coming-soon-msg">
-    Alguien despierte al desarrollador… esta sección todavía no está lista. ☕
+    Esta sección está en construcción.
   </p>
 
   <p class="coming-soon-sub">
-    Estamos trabajando en esta sección. Vuelve pronto.
+    Estamos preparando el contenido de {title.toLowerCase()}. Vuelve pronto.
   </p>
 
   <a class="coming-soon-back" href="/articulos">
