@@ -133,7 +133,7 @@ body {
 .reveal-stagger.is-visible > *:nth-child(5) { animation-delay: 0.24s; }
 .reveal-stagger.is-visible > *:nth-child(6) { animation-delay: 0.3s; }
 .reveal-stagger.is-visible > *:nth-child(7) { animation-delay: 0.36s; }
-.reveal-stagger.is-visible > *:nth-child(8) { animation-delay: 0.42s; }
+.reveal-stagger.is-visible > *:nth-child(n+8) { animation-delay: 0.42s; }
 
 body {
   position: relative;
@@ -232,15 +232,6 @@ header.site-header.is-scrolled {
 
 header.site-header.is-scrolled .header-inner {
   padding: 16px 48px;
-}
-
-.brand-h1 {
-  margin: 0;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  font-size: 0;
-  line-height: 0;
 }
 
 /* El header ahora es puramente identidad: el logo, más grande, es la
@@ -418,6 +409,32 @@ nav.main-nav a.active::after {
   background: rgba(151, 204, 95, 0.12);
   color: var(--green-bright);
   padding-left: 16px !important;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.social-links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.social-link:hover {
+  color: var(--green-bright);
+  transform: translateY(-1px);
 }
 
 .menu-toggle {
@@ -1375,7 +1392,7 @@ body.menu-open {
   .featured-title {
     font-size: 21px;
     -webkit-line-clamp: 2;
-    line-clamp: 2s;
+    line-clamp: 2;
     margin-bottom: 10px;
   }
 
@@ -2064,4 +2081,577 @@ table.admin-table tr:last-child td {
   .field-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------- ÁRBITROS: admin ---------- */
+
+.field-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.field-checkbox input[type='checkbox'] {
+  width: auto;
+}
+
+.quota-bar {
+  height: 8px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.quota-bar-fill {
+  height: 100%;
+  background: var(--green);
+}
+
+/* ---------- ÁRBITROS: listado público ---------- */
+
+.arbitros-page {
+  padding: 48px 20px 80px;
+}
+
+.arbitros-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1100px;
+  margin-bottom: 28px;
+}
+
+.arbitros-header-copy {
+  max-width: 620px;
+}
+
+.arbitros-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.arbitros-intro {
+  color: var(--gray);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.arbitros-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.arbitros-cta svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Buscador propio de la sección (no el del header: ese sigue siendo solo
+   para artículos) + el select de categoría, agrupados en una fila. */
+.arbitros-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.arbitros-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+}
+
+.arbitros-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--gray);
+  pointer-events: none;
+}
+
+.arbitros-search-input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0d1913;
+  color: var(--white);
+  font-size: 14px;
+  transition: border-color var(--dur-fast) var(--ease-interactive);
+}
+
+.arbitros-search-input::placeholder {
+  color: var(--gray);
+}
+
+.arbitros-search-input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.arbitros-search-input::-webkit-search-cancel-button {
+  filter: invert(0.6);
+}
+
+/* Franja de estados: en escritorio es simplemente flex-wrap. En móvil
+   (ver breakpoint abajo) se convierte en una sola fila con scroll
+   horizontal -- es el mayor ladrón de espacio vertical en pantallas
+   angostas (llegaba a ocupar 4-5 filas antes de esta tarjeta). */
+.arbitros-filtros-wrap {
+  margin-bottom: 28px;
+}
+
+.arbitros-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtro-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--gray);
+  transition: border-color var(--dur-fast) var(--ease-interactive),
+    color var(--dur-fast) var(--ease-interactive),
+    background var(--dur-fast) var(--ease-interactive);
+}
+
+.filtro-chip.active,
+.filtro-chip:hover {
+  border-color: var(--green);
+  color: var(--green-bright);
+  background: rgba(129, 182, 76, 0.08);
+}
+
+.arbitros-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+/* Marcador invisible al final de la lista: el IntersectionObserver del
+   script dispara la siguiente página cuando esto entra en viewport. */
+.arbitros-sentinel {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0 4px;
+}
+
+.arbitros-loading {
+  display: flex;
+  gap: 6px;
+}
+
+.arbitros-loading-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  opacity: 0.5;
+  animation: arbitrosLoadingBounce 1s ease-in-out infinite;
+}
+
+.arbitros-loading-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.arbitros-loading-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes arbitrosLoadingBounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* Filtro por categoría (dropdown). Mismo look que el buscador; el de
+   estado usa chips (abajo), así que no hace falta duplicarlo acá. */
+.arbitros-select {
+  padding: 11px 34px 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0d1913;
+  color: var(--white);
+  font-size: 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8b3ac' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.arbitros-select:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+@media (max-width: 700px) {
+  .arbitros-page {
+    padding: 28px 16px 64px;
+  }
+
+  .arbitros-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .arbitros-header h1 {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  /* La descripción se recorta a 2 líneas: sigue explicando de qué va el
+     directorio sin empujar la lista fuera de la primera pantalla. */
+  .arbitros-intro {
+    font-size: 13px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+  }
+
+  .arbitros-cta {
+    align-self: flex-start;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .arbitros-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .arbitros-select {
+    width: 100%;
+  }
+
+  /* Los 12+ chips de estado ya no envuelven en varias filas: se vuelven
+     una sola tira horizontal con scroll, con un desvanecido en los bordes
+     que insinúa "hay más, desliza →". */
+  .arbitros-filtros-wrap {
+    margin: 0 -16px 22px;
+    padding: 0 16px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
+  }
+
+  .arbitros-filtros {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .arbitros-filtros::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filtro-chip {
+    font-size: 12.5px;
+    padding: 6px 12px;
+  }
+
+  .arbitro-row {
+    gap: 12px;
+    padding: 14px 4px;
+    flex-wrap: wrap;
+  }
+
+  .arbitro-row-photo {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* La fila completa sigue siendo el link (clave en mobile: nada de
+     depender de tocar un "Ver perfil" a la derecha que no entra). La
+     ubicación se apila debajo del nombre en vez de ir en su propia
+     columna, y el CTA de texto se oculta -- alcanza con la flecha. */
+  .arbitro-row-main {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .arbitro-row-location {
+    flex-basis: calc(100% - 60px);
+    margin-left: 60px;
+    font-size: 12px;
+  }
+
+  .arbitro-row-cta span {
+    display: none;
+  }
+}
+
+/* Fila de árbitro. Sobria a propósito: nada de dorado, glow ni animación.
+   El color de categoría (tier.color) se usa solo como color de texto del
+   título, no como borde ni resplandor -- una pista sutil, no un efecto. */
+.arbitro-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 6px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--dur-fast) var(--ease-interactive);
+}
+
+.arbitro-row:hover,
+.arbitro-row:focus-visible {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.arbitro-row-photo {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #0d1913;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arbitro-row-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.arbitro-row-pawn {
+  width: 42%;
+  height: 42%;
+  color: var(--gray-dim);
+}
+
+.arbitro-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.arbitro-row-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arbitro-row-titulo {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.arbitro-row-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gray);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.arbitro-row-location svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.arbitro-row-cta {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--green);
+  font-size: 13.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.arbitro-row-cta svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- ÁRBITROS: perfil individual ---------- */
+
+.arbitro-detail {
+  max-width: 720px;
+  margin: 24px auto 80px;
+}
+
+.arbitro-detail-header {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin: 20px 0 24px;
+  flex-wrap: wrap;
+}
+
+.arbitro-detail-photo {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(129, 182, 76, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 3px solid var(--tier-color, transparent);
+  box-shadow: 0 0 0 6px var(--tier-glow, transparent);
+}
+
+.arbitro-detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.arbitro-detail-pawn {
+  width: 44%;
+  height: 44%;
+  color: var(--tier-color-bright, var(--green-bright));
+  opacity: 0.65;
+}
+
+.arbitro-detail-rank {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100px;
+  border: 3px solid var(--bg-black);
+  background: var(--tier-color, var(--green));
+  color: #0a1410;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.arbitro-detail-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.arbitro-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.arbitro-detail-email a {
+  color: var(--green-bright);
+  font-size: 14px;
+}
+
+.arbitro-detail-bio {
+  color: var(--gray);
+  line-height: 1.7;
+  font-size: 15.5px;
+  white-space: pre-line;
+  margin-bottom: 28px;
+}
+
+/* Nota de reclamo: deliberadamente discreta -- ver conversación de
+   diseño. Nada de rojo/naranja ni iconos de alerta: es una invitación,
+   no una bandera de "cuidado con este perfil". Va al final de la
+   tarjeta, separada por una línea fina, en gris apagado. */
+.arbitro-claim-hint {
+  font-size: 13px;
+  color: var(--gray-dim);
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  margin-top: 12px;
+}
+
+.arbitro-claim-hint a {
+  color: var(--gray);
+  text-decoration: underline;
+}
+
+.arbitro-claim-hint a:hover {
+  color: var(--green-bright);
+}
+
+/* ---------- ÁRBITROS: formulario público (registro/reclamo) ---------- */
+
+.postular-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+
+.postular-page h1 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 16px 0 10px;
+}
+
+.postular-intro {
+  color: var(--gray);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.postular-page .form-card {
+  max-width: none;
+}
+
+.postular-ip-notice {
+  font-size: 12.5px;
+  color: var(--gray-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 18px 0;
+}
+
+/* Honeypot: fuera de la pantalla en vez de display:none, porque algunos
+   bots ignoran los campos display:none pero igual completan cualquier
+   input presente en el DOM. Para una persona (y para un lector de
+   pantalla, gracias a aria-hidden en el contenedor) es invisible. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  opacity: 0;
+  pointer-events: none;
 }

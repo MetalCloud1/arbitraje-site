@@ -44,7 +44,7 @@ const articleJsonLd = {
 };
 ---
 <BaseLayout
-  title={`${article.title} — La Hora del Arbitraje`}
+  title={`${article.title} - La Hora del Arbitraje`}
   description={article.excerpt ?? undefined}
   image={coverUrl ?? undefined}
   type="article"
@@ -74,7 +74,7 @@ const articleJsonLd = {
         </span>
       </div>
 
-      {/* Título y texto van primero — la imagen/video se movió al final
+      {/* Título y texto van primero - la imagen/video se movió al final
           del artículo (ver más abajo) para que el lector entre directo
           al contenido en vez de scrollear una foto grande primero. */}
       <div class="article-body" set:html={article.content_html} />

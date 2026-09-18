@@ -10,15 +10,15 @@ binding = "DB"
 database_name = "arbitraje_db"
 database_id = "a72976d5-660a-43e5-b7a7-78bba16ef9c9"
 
-# Bucket R2 donde viven las imagenes de portada.
 [[r2_buckets]]
 binding = "IMAGES"
 bucket_name = "arbitraje-images"
 
-# Variables no secretas (secretas van con `wrangler pages secret put`)
 [vars]
 ADMIN_USER = "admin"
 PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAEut1CrZF_r2jNlG"
+RESEND_FROM_EMAIL = "contacto@lahoradelarbitraje.pro"
+ARBITROS_NOTIFY_EMAIL = "gilbertoramirezgr001@gmail.com"
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"

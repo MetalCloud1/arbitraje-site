@@ -4,7 +4,7 @@ const isActive = (href: string) => (path === href ? 'active' : '');
 ---
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="brand-cluster" aria-label="La Hora del Arbitraje — Inicio">
+    <a href="/" class="brand-cluster" aria-label="La Hora del Arbitraje - Inicio">
       <h1 class="brand-h1">
           <img 
             class="brand-title" 
@@ -18,11 +18,22 @@ const isActive = (href: string) => (path === href ? 'active' : '');
       <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" width="92" height="26" />
     </a>
 
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
+    <div class="header-right">
+      <div class="social-links">
+        <a href="https://www.facebook.com/LaHoradelArbitraje" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="La Hora del Arbitraje en Facebook">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.197 2.238.197v2.476h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94Z"/></svg>
+        </a>
+        <a href="https://www.youtube.com/@lahoradelarbitraje" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="La Hora del Arbitraje en YouTube">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M21.582 7.186a2.51 2.51 0 0 0-1.768-1.778C18.254 5 12 5 12 5s-6.254 0-7.814.408a2.51 2.51 0 0 0-1.768 1.778C2 8.756 2 12 2 12s0 3.244.418 4.814a2.51 2.51 0 0 0 1.768 1.778C5.746 19 12 19 12 19s6.254 0 7.814-.408a2.51 2.51 0 0 0 1.768-1.778C22 15.244 22 12 22 12s0-3.244-.418-4.814ZM10 15.5v-7l6 3.5-6 3.5Z"/></svg>
+        </a>
+      </div>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </div>
   </div>
 </header>
 

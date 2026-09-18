@@ -60,7 +60,7 @@ export async function slugExists(db: D1Database, slug: string, excludeId?: numbe
   return !!row;
 }
 
-function escapeLikeTerm(term: string): string {
+export function escapeLikeTerm(term: string): string {
   // Escapa los comodines propios de LIKE para que una búsqueda por
   // "50%" o "a_b" no se interprete como patrón, sino como texto literal.
   return term.replace(/[\\%_]/g, (match) => `\\${match}`);

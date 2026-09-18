@@ -10,6 +10,9 @@ type ENV = {
   TURNSTILE_SECRET_KEY: string;
   PUBLIC_TURNSTILE_SITE_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
+  RESEND_API_KEY: string;
+  RESEND_FROM_EMAIL: string;
+  ARBITROS_NOTIFY_EMAIL: string;
 };
 
 type Runtime = import('@astrojs/cloudflare').Runtime<ENV>;

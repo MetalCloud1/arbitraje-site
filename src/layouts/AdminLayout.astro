@@ -13,7 +13,7 @@ const path = Astro.url.pathname;
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{title} — Admin</title>
+  <title>{title} - Admin</title>
 </head>
 <body>
   <div class="admin-shell">
@@ -21,6 +21,7 @@ const path = Astro.url.pathname;
       <div class="brand">La Hora del Arbitraje</div>
       <a href="/admin" class={path === '/admin' ? 'active' : ''}>Artículos</a>
       <a href="/admin/nuevo" class={path === '/admin/nuevo' ? 'active' : ''}>Nuevo artículo</a>
+      <a href="/admin/arbitros" class={path.startsWith('/admin/arbitros') ? 'active' : ''}>Árbitros</a>
       <a href="/" target="_blank">Ver sitio ↗</a>
       <form method="POST" action="/api/auth/logout">
         <button class="btn btn-secondary" type="submit" style="width:100%; justify-content:center;">

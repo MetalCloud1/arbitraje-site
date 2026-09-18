@@ -8,7 +8,7 @@ const EXT_BY_TYPE: Record<string, string> = {
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
-export async function uploadCoverImage(bucket: R2Bucket, file: File): Promise<string> {
+export async function uploadCoverImage(bucket: R2Bucket, file: File, prefix = 'covers'): Promise<string> {
   if (!(file.type in EXT_BY_TYPE)) {
     throw new Error('Formato de imagen no soportado. Usa JPG, PNG, WEBP o GIF.');
   }
@@ -17,7 +17,7 @@ export async function uploadCoverImage(bucket: R2Bucket, file: File): Promise<st
   }
 
   const ext = EXT_BY_TYPE[file.type];
-  const key = `covers/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  const key = `${prefix}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
   await bucket.put(key, await file.arrayBuffer(), {
     httpMetadata: { contentType: file.type },

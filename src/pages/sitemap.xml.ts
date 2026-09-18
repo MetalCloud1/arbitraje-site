@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { listAllArticles } from '../lib/db';
+import { listAllArbitros } from '../lib/arbitros';
 
 // @astrojs/sitemap no sirve aquí: según su propia documentación, no puede
 // generar entradas para rutas dinámicas en modo SSR (nuestros artículos
@@ -12,6 +13,7 @@ export const prerender = false;
 const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string }> = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/articulos', changefreq: 'daily', priority: '0.9' },
+  { path: '/arbitros', changefreq: 'weekly', priority: '0.7' },
   { path: '/sobre-nosotros', changefreq: 'yearly', priority: '0.4' },
 ];
 
@@ -27,6 +29,7 @@ function escapeXml(value: string): string {
 export const GET: APIRoute = async ({ url, locals }) => {
   const db = locals.runtime.env.DB;
   const articles = await listAllArticles(db);
+  const arbitros = await listAllArbitros(db);
 
   const staticEntries = STATIC_ROUTES.map(
     (route) => `  <url>
@@ -36,13 +39,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
   </url>`
   );
 
-const articleEntries = articles.map((article) => {
-    const rawDate = article.updated_at ?? article.published_at;
-    const parsedDate = new Date(rawDate);
-    const lastmod = !isNaN(parsedDate.getTime())
-      ? parsedDate.toISOString()
-      : new Date().toISOString();
-
+  const articleEntries = articles.map((article) => {
+    const lastmod = new Date(article.updated_at ?? article.published_at).toISOString();
     return `  <url>
     <loc>${escapeXml(`${url.origin}/articulos/${article.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -51,9 +49,19 @@ const articleEntries = articles.map((article) => {
   </url>`;
   });
 
+  const arbitroEntries = arbitros.map((arbitro) => {
+    const lastmod = new Date(arbitro.updated_at ?? arbitro.created_at).toISOString();
+    return `  <url>
+    <loc>${escapeXml(`${url.origin}/arbitros/${arbitro.slug}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`;
+  });
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticEntries, ...articleEntries].join('\n')}
+${[...staticEntries, ...articleEntries, ...arbitroEntries].join('\n')}
 </urlset>
 `;
 
