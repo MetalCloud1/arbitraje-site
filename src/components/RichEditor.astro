@@ -1,4 +1,13 @@
 ---
+// Editor de contenido del panel. Dos modos sobre el mismo campo:
+//  - Visual: editor basado en Tiptap/ProseMirror (reemplaza al antiguo
+//    contenteditable + document.execCommand, API obsoleta). Solo produce el
+//    HTML que el sitio sabe mostrar: párrafos <p>, H2/H3, negrita, cursiva,
+//    subrayado, listas, citas, enlaces y tablas. Al pegar desde Word, Google
+//    Docs o una web, descarta estilos/colores/fuentes en vez de arrastrarlos.
+//  - HTML: cuadro de código para escribir o pegar HTML tal cual.
+// El valor viaja en un <input type="hidden"> con el mismo nombre de siempre,
+// así que las rutas /api/articles no cambian.
 interface Props {
   name: string;
   initialHtml?: string;
@@ -8,67 +17,295 @@ const { name, initialHtml = '' } = Astro.props;
 ---
 <div class="rich-editor" data-field-name={name}>
   <div class="editor-toolbar" role="toolbar" aria-label="Formato de texto">
-    <button type="button" data-cmd="bold" title="Negrita"><strong>B</strong></button>
-    <button type="button" data-cmd="italic" title="Cursiva"><em>I</em></button>
-    <button type="button" data-cmd="underline" title="Subrayado"><u>U</u></button>
-    <button type="button" data-cmd="formatBlock" data-value="h2" title="Título">H2</button>
-    <button type="button" data-cmd="formatBlock" data-value="h3" title="Subtítulo">H3</button>
-    <button type="button" data-cmd="formatBlock" data-value="blockquote" title="Cita">&ldquo;&rdquo;</button>
-    <button type="button" data-cmd="insertUnorderedList" title="Lista con viñetas">•</button>
-    <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1.</button>
-    <button type="button" data-cmd="createLink" data-prompt="Pega el enlace (URL):" title="Enlace">🔗</button>
-    <button type="button" data-cmd="removeFormat" title="Quitar formato">Tx</button>
-    <button type="button" data-cmd="undo" title="Deshacer">↺</button>
+    <div class="editor-tools" data-tools>
+      <button type="button" data-action="bold" title="Negrita (Ctrl+B)" aria-label="Negrita"><strong>B</strong></button>
+      <button type="button" data-action="italic" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><em>I</em></button>
+      <button type="button" data-action="underline" title="Subrayado (Ctrl+U)" aria-label="Subrayado"><u>U</u></button>
+      <span class="editor-sep" aria-hidden="true"></span>
+      <button type="button" data-action="h2" title="Título" aria-label="Título">H2</button>
+      <button type="button" data-action="h3" title="Subtítulo" aria-label="Subtítulo">H3</button>
+      <button type="button" data-action="quote" title="Cita" aria-label="Cita">&ldquo;&rdquo;</button>
+      <span class="editor-sep" aria-hidden="true"></span>
+      <button type="button" data-action="ul" title="Lista con viñetas" aria-label="Lista con viñetas">•</button>
+      <button type="button" data-action="ol" title="Lista numerada" aria-label="Lista numerada">1.</button>
+      <button type="button" data-action="link" title="Enlace" aria-label="Enlace">🔗</button>
+      <button type="button" data-action="table" title="Insertar tabla" aria-label="Insertar tabla">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>
+      </button>
+      <span class="editor-sep" aria-hidden="true"></span>
+      <button type="button" data-action="clear" title="Quitar formato" aria-label="Quitar formato">Tx</button>
+      <button type="button" data-action="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↺</button>
+      <button type="button" data-action="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer">↻</button>
+    </div>
+
+    <div class="editor-tabs" role="tablist" aria-label="Modo del editor">
+      <button type="button" role="tab" data-mode="visual" aria-selected="true">Visual</button>
+      <button type="button" role="tab" data-mode="html" aria-selected="false">HTML</button>
+    </div>
   </div>
-  <div class="editor-body" contenteditable="true" set:html={initialHtml} data-placeholder="Escribe el contenido del artículo..."></div>
+
+  <div class="editor-table-tools" data-table-tools hidden aria-label="Opciones de tabla">
+    <span>Tabla:</span>
+    <button type="button" data-table="addRow">+ Fila</button>
+    <button type="button" data-table="addCol">+ Columna</button>
+    <button type="button" data-table="delRow">− Fila</button>
+    <button type="button" data-table="delCol">− Columna</button>
+    <button type="button" data-table="header">Fila de encabezado</button>
+    <button type="button" data-table="delTable" class="is-danger">Eliminar tabla</button>
+  </div>
+
+  <div class="editor-body" data-mount data-empty="true" data-placeholder="Escribe el contenido del artículo..."></div>
+
+  <textarea
+    class="editor-source"
+    data-source
+    spellcheck="false"
+    autocomplete="off"
+    aria-label="Código HTML del artículo"
+    placeholder="<p>Escribe o pega aquí el HTML del artículo…</p>"
+    hidden
+  >{initialHtml}</textarea>
+
+  <p class="editor-note" data-note hidden>
+    Al volver al modo Visual solo se conserva el formato que el editor soporta (párrafos, títulos H2/H3,
+    negrita, cursiva, subrayado, listas, citas, enlaces y tablas). Estilos, clases e incrustaciones se descartan.
+  </p>
+
   <input type="hidden" name={name} />
 </div>
 
 <script>
-  // Cada instancia del editor en la pagina se inicializa por separado.
-  document.querySelectorAll('.rich-editor').forEach((wrapper) => {
-    const toolbar = wrapper.querySelector('.editor-toolbar');
-    const body = wrapper.querySelector('.editor-body') as HTMLElement;
-    const hidden = wrapper.querySelector('input[type="hidden"]') as HTMLInputElement;
+  import { Editor } from '@tiptap/core';
+  import StarterKit from '@tiptap/starter-kit';
+  import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 
-    const syncHidden = () => {
-      hidden.value = body.innerHTML;
-    };
+  // Un enlace sin esquema ("chess.com/x") se guardaría como ruta relativa
+  // del propio sitio y quedaría roto: se completa con https://.
+  function normalizeHref(raw: string): string {
+    const value = raw.trim();
+    if (!value) return '';
+    if (/^(https?:|mailto:|tel:|\/|#)/i.test(value)) return value;
+    return `https://${value}`;
+  }
 
-    toolbar?.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement).closest('button');
-      if (!btn) return;
-      e.preventDefault();
-      body.focus();
+  // Tiptap siempre deja al menos un <p></p>; un artículo "vacío" debe llegar
+  // como cadena vacía para que el servidor lo rechace como antes.
+  function cleanHtml(editor: Editor): string {
+    if (editor.isEmpty) return '';
+    return (
+      editor
+        .getHTML()
+        // Ruido que Tiptap agrega a las tablas para su propio redimensionado:
+        // el sitio no lo usa y solo ensucia el HTML guardado (y el del RSS).
+        .replace(/<colgroup>[\s\S]*?<\/colgroup>/g, '')
+        .replace(/<table style="[^"]*">/g, '<table>')
+        .replace(/ (colspan|rowspan)="1"/g, '')
+        .replace(/(<p><\/p>)+$/, '')
+    );
+  }
 
-      const cmd = btn.getAttribute('data-cmd')!;
-      let value = btn.getAttribute('data-value') ?? undefined;
+  function initEditor(wrapper: HTMLElement) {
+    if (wrapper.dataset.ready === 'true') return;
+    wrapper.dataset.ready = 'true';
 
-      if (cmd === 'createLink') {
-        const url = window.prompt(btn.getAttribute('data-prompt') ?? 'URL:');
-        if (!url) return;
-        value = url;
-      }
+    const mount = wrapper.querySelector<HTMLElement>('[data-mount]')!;
+    const source = wrapper.querySelector<HTMLTextAreaElement>('[data-source]')!;
+    const hidden = wrapper.querySelector<HTMLInputElement>('input[type="hidden"]')!;
+    const tools = wrapper.querySelector<HTMLElement>('[data-tools]')!;
+    const tableTools = wrapper.querySelector<HTMLElement>('[data-table-tools]')!;
+    const note = wrapper.querySelector<HTMLElement>('[data-note]')!;
+    const tabs = wrapper.querySelectorAll<HTMLButtonElement>('.editor-tabs [data-mode]');
 
-      document.execCommand(cmd, false, value);
-      syncHidden();
+    const original = source.value;
+    let mode: 'visual' | 'html' = 'visual';
+    // Mientras nadie edite en modo Visual, se guarda el HTML original tal
+    // cual: abrir un artículo viejo y guardarlo sin tocarlo no lo reescribe.
+    let visualDirty = false;
+
+    hidden.value = original;
+
+    const editor = new Editor({
+      element: mount,
+      content: original,
+      extensions: [
+        StarterKit.configure({
+          heading: { levels: [2, 3] },
+          // Formatos que el sitio no estiliza: fuera para no generar HTML "huérfano".
+          code: false,
+          codeBlock: false,
+          strike: false,
+          horizontalRule: false,
+          link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
+        }),
+        Table,
+        TableRow,
+        TableHeader,
+        TableCell,
+      ],
+      editorProps: {
+        attributes: { 'aria-label': 'Contenido del artículo', spellcheck: 'true' },
+      },
+      onUpdate: () => {
+        visualDirty = true;
+        sync();
+        refreshEmpty();
+      },
+      onTransaction: () => refreshToolbar(),
     });
 
-    body.addEventListener('input', syncHidden);
-    body.addEventListener('blur', syncHidden);
+    function sync() {
+      if (mode === 'html') {
+        hidden.value = source.value;
+      } else if (visualDirty) {
+        hidden.value = cleanHtml(editor);
+      }
+    }
 
-    // Encuentra el <form> padre y sincroniza justo antes de enviarlo,
-    // por si el usuario no disparo un evento input/blur a tiempo.
-    const form = wrapper.closest('form');
-    form?.addEventListener('submit', syncHidden);
+    function refreshEmpty() {
+      mount.dataset.empty = editor.isEmpty ? 'true' : 'false';
+    }
 
-    syncHidden();
-  });
-</script>
+    const activeChecks: Record<string, () => boolean> = {
+      bold: () => editor.isActive('bold'),
+      italic: () => editor.isActive('italic'),
+      underline: () => editor.isActive('underline'),
+      h2: () => editor.isActive('heading', { level: 2 }),
+      h3: () => editor.isActive('heading', { level: 3 }),
+      quote: () => editor.isActive('blockquote'),
+      ul: () => editor.isActive('bulletList'),
+      ol: () => editor.isActive('orderedList'),
+      link: () => editor.isActive('link'),
+    };
 
-<style>
-  .editor-body:empty:before {
-    content: attr(data-placeholder);
-    color: var(--gray-dim);
+    function refreshToolbar() {
+      tools.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((btn) => {
+        const check = activeChecks[btn.dataset.action!];
+        btn.setAttribute('aria-pressed', check && check() ? 'true' : 'false');
+      });
+      tableTools.hidden = mode !== 'visual' || !editor.isActive('table');
+    }
+
+    function setLink() {
+      const previous = (editor.getAttributes('link').href as string | undefined) ?? '';
+      const answer = window.prompt('Pega el enlace (URL). Déjalo vacío para quitarlo:', previous);
+      if (answer === null) return; // canceló
+      const href = normalizeHref(answer);
+      const chain = editor.chain().focus();
+      if (!href) {
+        chain.extendMarkRange('link').unsetLink().run();
+        return;
+      }
+      if (editor.state.selection.empty && !editor.isActive('link')) {
+        // Sin texto seleccionado: se inserta la propia URL como texto del enlace.
+        chain
+          .insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] })
+          .run();
+        return;
+      }
+      chain.extendMarkRange('link').setLink({ href }).run();
+    }
+
+    const actions: Record<string, () => void> = {
+      bold: () => editor.chain().focus().toggleBold().run(),
+      italic: () => editor.chain().focus().toggleItalic().run(),
+      underline: () => editor.chain().focus().toggleUnderline().run(),
+      h2: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+      h3: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+      quote: () => editor.chain().focus().toggleBlockquote().run(),
+      ul: () => editor.chain().focus().toggleBulletList().run(),
+      ol: () => editor.chain().focus().toggleOrderedList().run(),
+      link: setLink,
+      table: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      clear: () => editor.chain().focus().clearNodes().unsetAllMarks().run(),
+      undo: () => editor.chain().focus().undo().run(),
+      redo: () => editor.chain().focus().redo().run(),
+    };
+
+    const tableActions: Record<string, () => void> = {
+      addRow: () => editor.chain().focus().addRowAfter().run(),
+      addCol: () => editor.chain().focus().addColumnAfter().run(),
+      delRow: () => editor.chain().focus().deleteRow().run(),
+      delCol: () => editor.chain().focus().deleteColumn().run(),
+      header: () => editor.chain().focus().toggleHeaderRow().run(),
+      delTable: () => editor.chain().focus().deleteTable().run(),
+    };
+
+    // mousedown + preventDefault: el botón no le quita el foco (ni la
+    // selección) al editor antes de aplicar el comando.
+    wrapper.addEventListener('mousedown', (e) => {
+      if ((e.target as HTMLElement).closest('.editor-toolbar button, .editor-table-tools button')) {
+        e.preventDefault();
+      }
+    });
+
+    wrapper.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const actionBtn = target.closest<HTMLButtonElement>('[data-action]');
+      if (actionBtn && mode === 'visual') {
+        actions[actionBtn.dataset.action!]?.();
+        return;
+      }
+      const tableBtn = target.closest<HTMLButtonElement>('[data-table]');
+      if (tableBtn && mode === 'visual') {
+        tableActions[tableBtn.dataset.table!]?.();
+      }
+    });
+
+    function setMode(next: 'visual' | 'html') {
+      if (next === mode) return;
+
+      if (next === 'html') {
+        // Solo se regenera el código si se editó en Visual; si no, se
+        // conserva el HTML original (sin la normalización de Tiptap).
+        if (visualDirty) source.value = cleanHtml(editor);
+        visualDirty = false;
+        mode = 'html';
+      } else {
+        editor.commands.setContent(source.value, { emitUpdate: false });
+        mode = 'visual';
+        visualDirty = true; // lo que se ve en Visual es lo que se guarda
+      }
+
+      const isHtml = mode === 'html';
+      source.hidden = !isHtml;
+      mount.hidden = isHtml;
+      tools.classList.toggle('is-disabled', isHtml);
+      note.hidden = !isHtml;
+      tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.mode === mode)));
+
+      sync();
+      refreshEmpty();
+      refreshToolbar();
+      if (isHtml) source.focus();
+      else editor.commands.focus();
+    }
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode as 'visual' | 'html')));
+
+    source.addEventListener('input', sync);
+    source.addEventListener('blur', sync);
+
+    // Tab dentro del cuadro de código inserta sangría en vez de saltar de campo.
+    source.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault();
+      const { selectionStart, selectionEnd, value } = source;
+      source.value = `${value.slice(0, selectionStart)}  ${value.slice(selectionEnd)}`;
+      source.selectionStart = source.selectionEnd = selectionStart + 2;
+      sync();
+    });
+
+    // Sincroniza justo antes de enviar, por si no se disparó a tiempo otro evento.
+    wrapper.closest('form')?.addEventListener('submit', sync);
+
+    refreshEmpty();
+    refreshToolbar();
   }
-</style>
+
+  function initAll() {
+    document.querySelectorAll<HTMLElement>('.rich-editor').forEach(initEditor);
+  }
+
+  initAll();
+  document.addEventListener('astro:page-load', initAll);
+</script>

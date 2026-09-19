@@ -122,3 +122,15 @@ export function splitAfterFirstParagraph(html: string): { head: string; tail: st
 
   return { head: '', tail: html };
 }
+
+/**
+ * Envuelve cada <table> en un contenedor con scroll horizontal (.table-scroll)
+ * para que una tabla ancha se desplace sola en el celular en vez de salirse
+ * de la pantalla. Solo para mostrar en la página: lo guardado en la base de
+ * datos y el feed RSS conservan la tabla sin envoltorio.
+ */
+export function wrapTables(html: string): string {
+  return html
+    .replace(/<table\b/gi, '<div class="table-scroll"><table')
+    .replace(/<\/table>/gi, '</table></div>');
+}
