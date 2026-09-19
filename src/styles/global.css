@@ -1483,11 +1483,13 @@ body.menu-open {
   padding: 64px 0 110px;
 }
 
-.article-detail .article-category {
+.article-detail .article-category,
+.article-hero .article-category {
   margin-bottom: 18px;
 }
 
-.article-detail h1 {
+.article-detail h1,
+.article-hero h1 {
   font-family: var(--font-serif);
   font-size: 42px;
   line-height: 1.18;
@@ -1509,7 +1511,9 @@ body.menu-open {
   border-radius: 8px;
   border: 1px solid var(--border);
   overflow: hidden;
-  margin-top: 48px;
+  /* Va entre dos bloques de texto: poco aire arriba (el párrafo anterior ya
+     trae su margen) y más abajo para que el texto siguiente respire. */
+  margin: 12px 0 44px;
 }
 
 .article-video-embed {
@@ -1520,7 +1524,7 @@ body.menu-open {
   border-radius: 8px;
   border: 1px solid var(--border);
   overflow: hidden;
-  margin-top: 40px;
+  margin: 12px 0 44px;
 }
 
 .article-video-embed iframe {
@@ -1567,13 +1571,13 @@ body.menu-open {
    la combinación clásica de apertura editorial (funciona con cualquier
    artículo porque usa :first-of-type / ::first-letter, no depende de que
    el editor marque nada especial). */
-.article-body > p:first-of-type {
+.article-body:not(.article-body-cont) > p:first-of-type {
   font-size: 21px;
   line-height: 1.7;
   color: var(--white);
 }
 
-.article-body > p:first-of-type::first-letter {
+.article-body:not(.article-body-cont) > p:first-of-type::first-letter {
   float: left;
   font-size: 68px;
   line-height: 0.82;
@@ -1645,7 +1649,8 @@ body.menu-open {
    contenido. El resto (párrafos, listas) ya se ajusta solo porque su
    ancho depende del contenedor, no de un valor fijo. */
 @media (max-width: 600px) {
-  .article-detail h1 {
+  .article-detail h1,
+  .article-hero h1 {
     font-size: 30px;
   }
 
@@ -1653,11 +1658,11 @@ body.menu-open {
     font-size: 17.5px;
   }
 
-  .article-body > p:first-of-type {
+  .article-body:not(.article-body-cont) > p:first-of-type {
     font-size: 19px;
   }
 
-  .article-body > p:first-of-type::first-letter {
+  .article-body:not(.article-body-cont) > p:first-of-type::first-letter {
     font-size: 52px;
     margin: 4px 8px 0 0;
   }
@@ -1670,6 +1675,91 @@ body.menu-open {
   .article-body h3 {
     font-size: 19px;
     margin: 34px 0 14px;
+  }
+}
+
+/* ---------- ARTICLE HERO (encabezado con la portada de fondo) ----------
+   La portada enmarca el encabezado: desenfocada, oscurecida y con fundido
+   hacia el fondo de la página. El desenfoque evita que el texto o los
+   rostros de la imagen compitan con el título; la versión nítida y
+   completa aparece después, tras el primer párrafo. */
+.article-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 64px 0 56px;
+}
+
+.article-hero-inner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.article-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #0d1913;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+}
+
+/* Capa extra de oscurecimiento: garantiza contraste del título incluso con
+   portadas muy claras. Es un pseudo-elemento del propio fondo, así que
+   viaja con él en la transición de vista. */
+.article-hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(6, 12, 9, 0.35), rgba(6, 12, 9, 0.6));
+}
+
+.article-hero-img {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  max-width: none;
+  object-fit: cover;
+  filter: blur(26px) brightness(0.55) saturate(1.25);
+}
+
+.article-hero .article-meta {
+  margin-bottom: 0;
+}
+
+.article-hero .back-link {
+  margin-bottom: 28px;
+}
+
+/* Sobre imagen, los grises del sitio pierden contraste: se aclaran y se
+   les da una sombra suave. Sin imagen (.has-image ausente) quedan igual. */
+.article-hero.has-image .back-link,
+.article-hero.has-image .article-meta {
+  color: #cfd8d1;
+}
+
+.article-hero.has-image h1,
+.article-hero.has-image .article-category,
+.article-hero.has-image .back-link,
+.article-hero.has-image .article-meta {
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
+}
+
+.article-hero.has-image .back-link:hover {
+  color: var(--white);
+}
+
+/* El cuerpo empieza pegado al encabezado; el padding de 64px de
+   .article-detail era para cuando el título estaba dentro. */
+.article-detail.article-detail-body {
+  padding-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .article-hero {
+    padding: 40px 0 44px;
   }
 }
 

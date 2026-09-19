@@ -13,6 +13,7 @@ Disallow: /admin
 Disallow: /api/
 
 Sitemap: ${url.origin}/sitemap.xml
+Sitemap: ${url.origin}/news-sitemap.xml
 `;
 
   return new Response(body, {
