@@ -31,7 +31,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
         <h1>Árbitros</h1>
         <p class="arbitros-intro">{descripcion}</p>
       </div>
-      <a class="btn btn-primary arbitros-cta" href="/arbitros/postular">
+      <a class="btn btn-primary arbitros-cta" href="/postular?tipo=arbitro">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         Registrarme como árbitro
       </a>
@@ -80,7 +80,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
           title={estadoFiltro || tituloFiltro ? 'Ningún árbitro registrado con ese filtro todavía' : 'Todavía no hay árbitros registrados'}
           description="¿Eres árbitro y quieres aparecer acá?"
           actionLabel="Registrarme como árbitro"
-          actionHref="/arbitros/postular"
+          actionHref="/postular?tipo=arbitro"
         />
       ) : (
         <div class="arbitros-list reveal-stagger" data-arbitros-list>
@@ -141,7 +141,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
       <a class="arbitro-row" href="/arbitros/${encodeURIComponent(a.slug)}">
         <div class="arbitro-row-photo">
           ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(a.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
-          <span style="${fotoUrl ? 'display:none' : ''}">${PAWN_SVG}</span>
+          ${PAWN_SVG.replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
         </div>
         <div class="arbitro-row-main">
           <h3 class="arbitro-row-name">${escapeHtml(a.nombre_completo)}</h3>

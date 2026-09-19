@@ -1,0 +1,237 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getArbitroById } from '../lib/arbitros';
+import { getEntrenadorById } from '../lib/entrenadores';
+import { ESTADOS_MX, TITULOS_ARBITRO, type TipoDirectorio } from '../lib/postulacion';
+import { TITULOS_AJEDREZ } from '../lib/titulos-ajedrez';
+
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const TURNSTILE_SITE_KEY = env.PUBLIC_TURNSTILE_SITE_KEY;
+
+// Un solo formulario para los dos directorios (ver /api/postular.ts):
+// ?tipo=arbitro (default, para que /arbitros/postular siga funcionando
+// sin ese parámetro) o ?tipo=entrenador.
+const tipoDirectorio: TipoDirectorio = Astro.url.searchParams.get('tipo') === 'entrenador' ? 'entrenador' : 'arbitro';
+const esEntrenador = tipoDirectorio === 'entrenador';
+
+const enviado = Astro.url.searchParams.get('enviado') === '1';
+const error = Astro.url.searchParams.get('error');
+
+const reclamoIdRaw = Astro.url.searchParams.get('reclamo');
+const reclamoId = reclamoIdRaw ? Number(reclamoIdRaw) : null;
+const perfilValido = reclamoId && Number.isInteger(reclamoId) && reclamoId > 0;
+const perfilReclamado = perfilValido
+  ? esEntrenador
+    ? await getEntrenadorById(env.DB, reclamoId!)
+    : await getArbitroById(env.DB, reclamoId!)
+  : null;
+
+// Si viene un ?reclamo=ID que no corresponde a ningún perfil (del
+// directorio correcto), no tiene sentido mostrar el formulario en "modo
+// reclamo" de un perfil inexistente -- lo tratamos como registro normal.
+const esReclamo = !!perfilReclamado;
+
+const volverHref = esEntrenador ? '/entrenadores' : '/arbitros';
+const volverTexto = esEntrenador ? 'Volver a entrenadores' : 'Volver a árbitros';
+const tituloAccion = esEntrenador ? 'entrenador' : 'árbitro';
+---
+<BaseLayout
+  title={esReclamo ? `Reclamar perfil de ${perfilReclamado!.nombre_completo} - La Hora del Arbitraje` : `Registrarme como ${tituloAccion} - La Hora del Arbitraje`}
+  noindex
+>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <div class="container postular-page">
+    <a class="back-link" href={volverHref}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      {volverTexto}
+    </a>
+
+    <h1>{esReclamo ? 'Reclamar perfil' : `Registrarme como ${tituloAccion}`}</h1>
+
+    {esReclamo ? (
+      <p class="postular-intro">
+        Estás reclamando el perfil de <strong>{perfilReclamado!.nombre_completo}</strong>. Completa el
+        formulario para confirmar que eres tú: un humano revisa cada solicitud antes de aprobarla.
+      </p>
+    ) : (
+      <p class="postular-intro">
+        Este formulario no publica tu perfil automáticamente: la información llega a un humano que la
+        revisa antes de sumarte al directorio.
+      </p>
+    )}
+
+    {enviado && (
+      <div class="alert alert-success">
+        Tu {esReclamo ? 'reclamo' : 'postulación'} fue enviado. Te contactaremos por correo si hace falta algo más.
+      </div>
+    )}
+    {error && <div class="alert alert-error">{error}</div>}
+
+    {!enviado && (
+      <form class="form-card" method="POST" action="/api/postular">
+        <input type="hidden" name="tipo_directorio" value={tipoDirectorio} />
+        <input type="hidden" name="tipo" value={esReclamo ? 'reclamo' : 'registro'} />
+        {esReclamo && <input type="hidden" name="perfil_id" value={perfilReclamado!.id} />}
+
+        {/* Honeypot: invisible para una persona, tentador para un bot que
+            autocompleta cualquier input que "parezca" un campo de contacto.
+            Si llega lleno, el backend lo trata como spam sin decirlo. */}
+        <div class="hp-field" aria-hidden="true">
+          <label for="sitio_web">Sitio web</label>
+          <input type="text" id="sitio_web" name="sitio_web" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label for="nombre_completo">Nombre completo</label>
+          <input
+            type="text"
+            id="nombre_completo"
+            name="nombre_completo"
+            required
+            minlength="3"
+            maxlength="100"
+            pattern="[A-Za-zÀ-ÖØ-öø-ÿÑñ' -]{3,100}"
+            title="Solo letras y espacios, sin números ni símbolos."
+            value={esReclamo ? perfilReclamado!.nombre_completo : ''}
+          />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado" required>
+              <option value="" disabled selected={!perfilReclamado?.estado_republica}>Selecciona tu estado</option>
+              {ESTADOS_MX.map((e) => (
+                <option value={e} selected={perfilReclamado?.estado_republica === e}>{e}</option>
+              ))}
+            </select>
+          </div>
+          {!esEntrenador && (
+            <div class="field">
+              <label for="titulo_arbitraje">Título</label>
+              <select id="titulo_arbitraje" name="titulo_arbitraje" required>
+                <option value="" disabled selected={!perfilReclamado?.titulo}>Selecciona tu título</option>
+                {TITULOS_ARBITRO.map((t) => (
+                  <option value={t} selected={perfilReclamado?.titulo === t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {esEntrenador && (
+          <div class="field-group-notable">
+            <h3>Credenciales</h3>
+            <div class="field-row">
+              <div class="field">
+                <label for="titulo_ajedrez">Título de ajedrez</label>
+                <select id="titulo_ajedrez" name="titulo_ajedrez" required>
+                  <option value="" disabled selected={!perfilReclamado?.titulo_ajedrez}>Selecciona tu título</option>
+                  {TITULOS_AJEDREZ.map((t) => (
+                    <option value={t} selected={perfilReclamado?.titulo_ajedrez === t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div class="field">
+                <label for="elo_clasico">ELO clásico</label>
+                <input
+                  type="number"
+                  id="elo_clasico"
+                  name="elo_clasico"
+                  min="0"
+                  max="3500"
+                  step="1"
+                  placeholder="Ej. 2340"
+                  value={perfilReclamado?.elo_clasico ?? ''}
+                />
+                <p class="field-hint">Únicamente ELO clásico (no rápidas ni blitz). Déjalo vacío si no aplica.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="titulo_arbitraje">Título de arbitraje (opcional)</label>
+              <select id="titulo_arbitraje" name="titulo_arbitraje">
+                <option value="" selected={!perfilReclamado?.titulo_arbitraje}>No soy árbitro titulado</option>
+                {TITULOS_ARBITRO.map((t) => (
+                  <option value={t} selected={perfilReclamado?.titulo_arbitraje === t}>{t}</option>
+                ))}
+              </select>
+              <p class="field-hint">Marca esta opción solo si también tienes un título de arbitraje: se muestran ambos en tu perfil.</p>
+            </div>
+          </div>
+        )}
+
+        <div class="field-row">
+          <div class="field">
+            <label for="fide_id">ID de FIDE (opcional)</label>
+            <input
+              type="text"
+              id="fide_id"
+              name="fide_id"
+              inputmode="numeric"
+              maxlength="10"
+              pattern="[0-9]{4,10}"
+              title="Solo números, entre 4 y 10 dígitos."
+              value={perfilReclamado?.fide_id ?? ''}
+            />
+          </div>
+          <div class="field">
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" name="email" required maxlength="254" value={perfilReclamado?.email ?? ''} />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="bio">Breve descripción de tu carrera y trayectoria</label>
+          <textarea
+            id="bio"
+            name="bio"
+            required
+            minlength="20"
+            maxlength="1000"
+            rows="5"
+            data-char-counter
+          >{perfilReclamado?.bio ?? ''}</textarea>
+          <p class="field-hint"><span data-char-count>0</span>/1000 caracteres</p>
+        </div>
+
+        <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-action="postular" data-theme="dark"></div>
+
+        <p class="postular-ip-notice">
+          Tu IP se subirá de forma automática junto con tu formulario, como parte de la revisión antispam.
+        </p>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" type="submit">Enviar {esReclamo ? 'reclamo' : 'postulación'}</button>
+        </div>
+      </form>
+    )}
+  </div>
+
+  <script>
+    // Contador de caracteres de la bio -- puramente cosmético, la
+    // validación real (min/max/formato) siempre corre en el servidor.
+    document.querySelectorAll('[data-char-counter]').forEach((el) => {
+      if (!(el instanceof HTMLTextAreaElement)) return;
+      const counter = el.parentElement?.querySelector('[data-char-count]');
+      const update = () => {
+        if (counter) counter.textContent = String(el.value.length);
+      };
+      el.addEventListener('input', update);
+      update();
+    });
+
+    document.addEventListener('submit', (event) => {
+      if (event.defaultPrevented) return;
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (!(submitBtn instanceof HTMLButtonElement) || submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.setAttribute('aria-busy', 'true');
+    });
+  </script>
+</BaseLayout>

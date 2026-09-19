@@ -13,6 +13,9 @@ type ENV = {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   ARBITROS_NOTIFY_EMAIL: string;
+  // Opcional: si no está definida, /api/postular.ts usa ARBITROS_NOTIFY_EMAIL
+  // como bandeja compartida para ambos directorios (ver ese archivo).
+  ENTRENADORES_NOTIFY_EMAIL?: string;
 };
 
 type Runtime = import('@astrojs/cloudflare').Runtime<ENV>;

@@ -2410,35 +2410,6 @@ table.admin-table tr:last-child td {
     font-size: 12.5px;
     padding: 6px 12px;
   }
-
-  .arbitro-row {
-    gap: 12px;
-    padding: 14px 4px;
-    flex-wrap: wrap;
-  }
-
-  .arbitro-row-photo {
-    width: 48px;
-    height: 48px;
-  }
-
-  /* La fila completa sigue siendo el link (clave en mobile: nada de
-     depender de tocar un "Ver perfil" a la derecha que no entra). La
-     ubicación se apila debajo del nombre en vez de ir en su propia
-     columna, y el CTA de texto se oculta -- alcanza con la flecha. */
-  .arbitro-row-main {
-    flex-basis: calc(100% - 60px);
-  }
-
-  .arbitro-row-location {
-    flex-basis: calc(100% - 60px);
-    margin-left: 60px;
-    font-size: 12px;
-  }
-
-  .arbitro-row-cta span {
-    display: none;
-  }
 }
 
 /* Fila de árbitro. Sobria a propósito: nada de dorado, glow ni animación.
@@ -2538,6 +2509,47 @@ table.admin-table tr:last-child td {
   height: 14px;
 }
 
+/* Móvil de la fila de árbitro. Va DESPUÉS de las reglas base: estaba dentro
+   del @media de arriba, donde el .arbitro-row / -photo / -main base (mismo
+   peso de selector, declarados más abajo) lo pisaban y la flecha quedaba
+   sola en una tercera línea. La fila completa sigue siendo el link:
+   arriba foto + nombre/título + flecha; la ubicación debajo del nombre. */
+@media (max-width: 700px) {
+  .arbitro-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas:
+      "photo main cta"
+      ".     loc  loc";
+    column-gap: 12px;
+    row-gap: 4px;
+    padding: 14px 4px;
+  }
+
+  .arbitro-row-photo {
+    grid-area: photo;
+    width: 48px;
+    height: 48px;
+  }
+
+  .arbitro-row-main {
+    grid-area: main;
+  }
+
+  .arbitro-row-location {
+    grid-area: loc;
+    font-size: 12px;
+  }
+
+  .arbitro-row-cta {
+    grid-area: cta;
+  }
+
+  .arbitro-row-cta span {
+    display: none;
+  }
+}
+
 /* ---------- ÁRBITROS: perfil individual ---------- */
 
 .arbitro-detail {
@@ -2630,7 +2642,7 @@ table.admin-table tr:last-child td {
    diseño. Nada de rojo/naranja ni iconos de alerta: es una invitación,
    no una bandera de "cuidado con este perfil". Va al final de la
    tarjeta, separada por una línea fina, en gris apagado. */
-.arbitro-claim-hint {
+.claim-hint {
   font-size: 13px;
   color: var(--gray-dim);
   border-top: 1px solid var(--border);
@@ -2638,13 +2650,19 @@ table.admin-table tr:last-child td {
   margin-top: 12px;
 }
 
-.arbitro-claim-hint a {
+.claim-hint a {
   color: var(--gray);
   text-decoration: underline;
 }
 
-.arbitro-claim-hint a:hover {
+.claim-hint a:hover {
   color: var(--green-bright);
+}
+
+/* Dentro del detalle de entrenador, el hover sigue el acento dorado de
+   la sección en vez del verde de marca genérico. */
+.entrenador-detail .claim-hint a:hover {
+  color: #f5d379;
 }
 
 /* ---------- ÁRBITROS: formulario público (registro/reclamo) ---------- */
@@ -2694,19 +2712,32 @@ table.admin-table tr:last-child td {
 }
 
 /* ---------- ENTRENADORES: listado público ----------
-   Deliberadamente distinto a árbitros: grilla de tarjetas en vez de
-   filas, porque acá el título y el ELO tienen que "pesar" visualmente
-   -- son la credencial que vende a un entrenador -- y una fila angosta
-   no les da el aire que necesitan. Acento dorado (en vez del verde de
-   marca puro) para el ELO, a tono con la medalla de GM/WGM. */
+   Mismo formato de directorio que árbitros (filas, no tarjetas) para que
+   ambas secciones se lean como una sola guía profesional. La variación
+   está en el acento dorado (en vez del verde de marca) y en el ELO
+   clásico, que acá tiene su propia columna. */
 
 .entrenadores-page {
   padding: 48px 20px 80px;
 }
 
 .entrenadores-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
   max-width: 1100px;
   margin-bottom: 28px;
+}
+
+.entrenadores-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.entrenadores-cta svg {
+  width: 16px;
+  height: 16px;
 }
 
 .entrenadores-header-copy {
@@ -2812,19 +2843,17 @@ table.admin-table tr:last-child td {
   background: rgba(227, 179, 65, 0.08);
 }
 
-/* Grilla, no columna: la diferencia estructural más visible frente al
-   directorio de árbitros. */
-.entrenadores-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
+/* Lista en columna con filete superior, igual que .arbitros-list. */
+.entrenadores-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
 }
 
 .entrenadores-sentinel {
   display: flex;
   justify-content: center;
   padding: 28px 0 4px;
-  grid-column: 1 / -1;
 }
 
 .entrenadores-loading {
@@ -2865,9 +2894,22 @@ table.admin-table tr:last-child td {
     padding: 28px 16px 64px;
   }
 
+  .entrenadores-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
   .entrenadores-header h1 {
     font-size: 24px;
     margin-bottom: 6px;
+  }
+
+  .entrenadores-cta {
+    align-self: flex-start;
+    padding: 8px 16px;
+    font-size: 13px;
   }
 
   .entrenadores-intro {
@@ -2906,181 +2948,210 @@ table.admin-table tr:last-child td {
   .entrenadores-filtros::-webkit-scrollbar {
     display: none;
   }
-
-  .entrenadores-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
-/* Tarjeta de entrenador. A diferencia de la fila de árbitro (sobria, sin
-   bordes propios), esta SÍ es una caja con borde e interacción de
-   elevación: es una grilla de "fichas", no un listado tabular. */
-.entrenador-card {
+/* Fila de entrenador. Misma anatomía que .arbitro-row (sobria: sin glow ni
+   elevación, solo un fondo tenue al pasar el mouse). Variaciones: el aro
+   de la foto toma el color del título (tier), el hover y el CTA usan el
+   dorado de la sección, y el ELO clásico va en su propia columna. */
+.entrenador-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 10px;
-  padding: 24px 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #0d1913;
+  gap: 16px;
+  padding: 16px 6px;
+  border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
-  transition: transform var(--dur-fast) var(--ease-interactive),
-    border-color var(--dur-fast) var(--ease-interactive),
-    box-shadow var(--dur-fast) var(--ease-interactive);
+  transition: background-color var(--dur-fast) var(--ease-interactive);
 }
 
-.entrenador-card:hover,
-.entrenador-card:focus-visible {
-  transform: translateY(-3px);
-  border-color: rgba(227, 179, 65, 0.4);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+.entrenador-row:hover,
+.entrenador-row:focus-visible {
+  background: rgba(227, 179, 65, 0.05);
 }
 
-.entrenador-card-photo {
+.entrenador-row-photo {
   position: relative;
-  width: 88px;
-  height: 88px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   overflow: hidden;
-  background: rgba(227, 179, 65, 0.1);
+  flex-shrink: 0;
+  background: #0d1913;
+  border: 2px solid var(--tier-color, var(--border));
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  border: 3px solid var(--tier-color, transparent);
-  box-shadow: 0 0 0 5px var(--tier-glow, transparent);
 }
 
-.entrenador-card-photo img {
+.entrenador-row-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.entrenador-card-queen {
-  width: 40%;
-  height: 40%;
-  color: var(--tier-color-bright, #f5d379);
-  opacity: 0.7;
+.entrenador-row-queen {
+  width: 44%;
+  height: 44%;
+  color: var(--gray-dim);
 }
 
-.entrenador-card-rank {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  min-width: 24px;
-  height: 22px;
-  padding: 0 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 100px;
-  border: 2px solid #0d1913;
-  background: var(--tier-color, #e3b341);
-  color: #0a1410;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+.entrenador-row-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.entrenador-card-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.entrenador-card-name {
+.entrenador-row-name {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--white);
+  margin-bottom: 2px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }
 
-.entrenador-card-titles {
+.entrenador-row-titulos {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
 }
 
-.entrenador-card-badge {
-  font-size: 10.5px;
+.entrenador-row-titulo {
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  padding: 3px 9px;
-  border-radius: 100px;
-  border: 1px solid var(--border);
 }
 
-.entrenador-card-badge-arbitraje {
-  border-color: currentColor;
-  opacity: 0.85;
+/* El título de árbitro (si tiene) va como dato secundario: mismo estilo,
+   más tenue y separado por un punto medio. */
+.entrenador-row-titulo-arbitraje {
+  opacity: 0.75;
 }
 
-/* El ELO es EL dato: caja propia, número grande, nada compite con él. */
-.entrenador-card-elo {
+.entrenador-row-titulo-arbitraje::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--gray-dim);
+}
+
+.entrenador-row-elo {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 1px;
-  padding: 6px 18px;
-  border-radius: 10px;
-  background: rgba(227, 179, 65, 0.08);
-  border: 1px solid rgba(227, 179, 65, 0.25);
+  min-width: 64px;
+  flex-shrink: 0;
+  text-align: right;
 }
 
-.entrenador-card-elo-value {
-  font-size: 22px;
+.entrenador-row-elo-value {
+  font-size: 17px;
   font-weight: 800;
   color: #f5d379;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
-.entrenador-card-elo-label {
+.entrenador-row-elo-label {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--gray-dim);
 }
 
-.entrenador-card-location {
+.entrenador-row-location {
   display: flex;
   align-items: center;
   gap: 5px;
   color: var(--gray);
-  font-size: 12.5px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
-.entrenador-card-location svg {
+.entrenador-row-location svg {
   width: 13px;
   height: 13px;
   flex-shrink: 0;
 }
 
-.entrenador-card-cta {
+.entrenador-row-cta {
   display: flex;
   align-items: center;
   gap: 3px;
   color: #e3b341;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  margin-top: 2px;
+  flex-shrink: 0;
 }
 
-.entrenador-card-cta svg {
+.entrenador-row-cta svg {
   width: 14px;
   height: 14px;
+}
+
+/* Móvil de la fila de entrenador. Va DESPUÉS de las reglas base (mismo
+   peso de selector: si estuviera antes, la regla base ganaría). */
+@media (max-width: 700px) {
+  /* La fila completa sigue siendo el link. Arriba foto + nombre/título +
+     flecha; abajo (alineados con el nombre) el ELO y la ubicación. El CTA
+     de texto se oculta -- alcanza con la flecha. */
+  .entrenador-row {
+    display: grid;
+    grid-template-columns: 48px auto 1fr auto;
+    grid-template-areas:
+      "photo main main cta"
+      ".     elo  loc  loc";
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 14px 4px;
+  }
+
+  .entrenador-row-photo {
+    grid-area: photo;
+    width: 48px;
+    height: 48px;
+  }
+
+  .entrenador-row-main {
+    grid-area: main;
+  }
+
+  /* Si los dos títulos no caben en una línea, el punto medio quedaría
+     huérfano al inicio de la segunda. */
+  .entrenador-row-titulo-arbitraje::before {
+    display: none;
+  }
+
+  .entrenador-row-elo {
+    grid-area: elo;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .entrenador-row-elo-value {
+    font-size: 14px;
+  }
+
+  .entrenador-row-location {
+    grid-area: loc;
+    font-size: 12px;
+  }
+
+  .entrenador-row-cta {
+    grid-area: cta;
+  }
+
+  .entrenador-row-cta span {
+    display: none;
+  }
 }
 
 /* ---------- ENTRENADORES: perfil individual ---------- */

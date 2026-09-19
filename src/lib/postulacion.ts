@@ -1,6 +1,12 @@
-// Validación del formulario público de árbitros (registro/reclamo) y
-// armado del correo que recibe un humano para revisar. Nada de esto
-// escribe en la base de árbitros: solo valida y arma un email.
+// Validación del formulario público de postulación (árbitros y
+// entrenadores: registro/reclamo) y armado del correo que recibe un
+// humano para revisar. Nada de esto escribe en las bases de árbitros o
+// entrenadores: solo valida y arma un email. Un único endpoint sirve a
+// los dos directorios -- ver /api/postular.ts -- así que esto valida
+// según `tipoDirectorio`, sin mezclar nunca el vocabulario de títulos
+// de uno con el del otro.
+
+import { TITULOS_AJEDREZ, parseEloClasicoInput } from './titulos-ajedrez';
 
 export const ESTADOS_MX = [
   'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche',
@@ -98,12 +104,20 @@ function isSingleLine(s: string): boolean {
   return !/[\r\n]/.test(s);
 }
 
+export type TipoDirectorio = 'arbitro' | 'entrenador';
+
 export interface PostulacionInput {
+  tipoDirectorio: TipoDirectorio;
   tipo: 'registro' | 'reclamo';
-  arbitroId: number | null; // solo con tipo === 'reclamo'
+  perfilId: number | null; // solo con tipo === 'reclamo'; id en la tabla de tipoDirectorio
   nombreCompleto: string;
   estado: string;
-  titulo: string;
+  // Árbitro: tituloArbitraje obligatorio, tituloAjedrez siempre null.
+  // Entrenador: tituloAjedrez obligatorio, tituloArbitraje opcional
+  // (muchos entrenadores también son árbitros titulados).
+  tituloArbitraje: string | null;
+  tituloAjedrez: string | null;
+  eloClasico: number | null; // solo aplica a entrenador
   fideId: string; // '' si no aplica
   email: string;
   bio: string;
@@ -115,19 +129,25 @@ export type PostulacionValidationResult =
 
 /** Extrae y valida los campos del formulario. No toca la base de datos. */
 export function validatePostulacion(form: FormData): PostulacionValidationResult {
+  const tipoDirectorioRaw = String(form.get('tipo_directorio') ?? '');
+  if (tipoDirectorioRaw !== 'arbitro' && tipoDirectorioRaw !== 'entrenador') {
+    return { ok: false, error: 'Formulario inválido.' };
+  }
+  const tipoDirectorio = tipoDirectorioRaw;
+
   const tipoRaw = String(form.get('tipo') ?? '');
   if (tipoRaw !== 'registro' && tipoRaw !== 'reclamo') {
     return { ok: false, error: 'Formulario inválido.' };
   }
   const tipo = tipoRaw;
 
-  let arbitroId: number | null = null;
+  let perfilId: number | null = null;
   if (tipo === 'reclamo') {
-    const idRaw = Number(form.get('arbitro_id'));
+    const idRaw = Number(form.get('perfil_id'));
     if (!Number.isInteger(idRaw) || idRaw <= 0) {
       return { ok: false, error: 'Perfil a reclamar inválido.' };
     }
-    arbitroId = idRaw;
+    perfilId = idRaw;
   }
 
   const nombreCompleto = String(form.get('nombre_completo') ?? '').trim();
@@ -140,9 +160,39 @@ export function validatePostulacion(form: FormData): PostulacionValidationResult
     return { ok: false, error: 'Selecciona un estado válido.' };
   }
 
-  const titulo = String(form.get('titulo') ?? '').trim();
-  if (!(TITULOS_ARBITRO as readonly string[]).includes(titulo)) {
-    return { ok: false, error: 'Selecciona un título válido.' };
+  // ---- Títulos: vocabulario separado por directorio, nunca mezclado ----
+  let tituloArbitraje: string | null = null;
+  let tituloAjedrez: string | null = null;
+  let eloClasico: number | null = null;
+
+  if (tipoDirectorio === 'arbitro') {
+    const tituloRaw = String(form.get('titulo_arbitraje') ?? '').trim();
+    if (!(TITULOS_ARBITRO as readonly string[]).includes(tituloRaw)) {
+      return { ok: false, error: 'Selecciona un título válido.' };
+    }
+    tituloArbitraje = tituloRaw;
+  } else {
+    const tituloAjedrezRaw = String(form.get('titulo_ajedrez') ?? '').trim();
+    if (!(TITULOS_AJEDREZ as readonly string[]).includes(tituloAjedrezRaw)) {
+      return { ok: false, error: 'Selecciona tu título de ajedrez.' };
+    }
+    tituloAjedrez = tituloAjedrezRaw;
+
+    // Opcional: muchos entrenadores también son árbitros titulados.
+    const tituloArbitrajeRaw = String(form.get('titulo_arbitraje') ?? '').trim();
+    if (tituloArbitrajeRaw) {
+      if (!(TITULOS_ARBITRO as readonly string[]).includes(tituloArbitrajeRaw)) {
+        return { ok: false, error: 'El título de arbitraje seleccionado no es válido.' };
+      }
+      tituloArbitraje = tituloArbitrajeRaw;
+    }
+
+    const eloRaw = String(form.get('elo_clasico') ?? '');
+    const eloResult = parseEloClasicoInput(eloRaw);
+    if (!eloResult.ok) {
+      return { ok: false, error: 'El ELO clásico debe ser un número entero entre 0 y 3500.' };
+    }
+    eloClasico = eloResult.value;
   }
 
   const fideId = String(form.get('fide_id') ?? '').trim();
@@ -163,35 +213,64 @@ export function validatePostulacion(form: FormData): PostulacionValidationResult
     };
   }
 
-  return { ok: true, data: { tipo, arbitroId, nombreCompleto, estado, titulo, fideId, email, bio } };
+  return {
+    ok: true,
+    data: { tipoDirectorio, tipo, perfilId, nombreCompleto, estado, tituloArbitraje, tituloAjedrez, eloClasico, fideId, email, bio },
+  };
 }
+
+const NOMBRE_DIRECTORIO: Record<TipoDirectorio, string> = {
+  arbitro: 'árbitro',
+  entrenador: 'entrenador',
+};
+
+const NOMBRE_DIRECTORIO_PLURAL: Record<TipoDirectorio, string> = {
+  arbitro: 'Árbitros',
+  entrenador: 'Entrenadores',
+};
 
 export interface PostulacionEmailContext {
   data: PostulacionInput;
   /** Nombre real leído de la base al momento de reclamar -- nunca el que mande el cliente. */
-  arbitroExistenteNombre?: string;
+  perfilExistenteNombre?: string;
   ip: string;
   userAgent: string;
 }
 
+/**
+ * Arma el correo que recibe un humano para revisar. Encabeza siempre con
+ * "Directorio: Árbitros/Entrenadores" a propósito -- es la corrección al
+ * problema original de reciclar un solo formulario para dos directorios:
+ * quien revisa el correo no debería tener que adivinar cuál es por el
+ * título que la persona eligió.
+ */
 export function buildPostulacionEmail(ctx: PostulacionEmailContext): { subject: string; text: string } {
-  const { data, arbitroExistenteNombre, ip, userAgent } = ctx;
+  const { data, perfilExistenteNombre, ip, userAgent } = ctx;
+  const nombreDirectorio = NOMBRE_DIRECTORIO[data.tipoDirectorio];
 
   const tipoLinea =
     data.tipo === 'reclamo'
-      ? `Reclamo de identidad — ID ${String(data.arbitroId).padStart(6, '0')} (${arbitroExistenteNombre ?? 'perfil no encontrado'})`
+      ? `Reclamo de identidad — ID ${String(data.perfilId).padStart(6, '0')} (${perfilExistenteNombre ?? 'perfil no encontrado'})`
       : 'Registro nuevo';
 
   const subject =
     data.tipo === 'reclamo'
-      ? `Reclamo de perfil #${data.arbitroId} — ${arbitroExistenteNombre ?? data.nombreCompleto}`
-      : `Nueva postulación de árbitro: ${data.nombreCompleto}`;
+      ? `Reclamo de perfil de ${nombreDirectorio} #${data.perfilId} — ${perfilExistenteNombre ?? data.nombreCompleto}`
+      : `Nueva postulación de ${nombreDirectorio}: ${data.nombreCompleto}`;
 
-  const text = `Tipo: ${tipoLinea}
+  const lineasTitulo: string[] = [];
+  if (data.tituloArbitraje) lineasTitulo.push(`Título de arbitraje: ${data.tituloArbitraje}`);
+  if (data.tituloAjedrez) lineasTitulo.push(`Título de ajedrez: ${data.tituloAjedrez}`);
+  if (data.tipoDirectorio === 'entrenador') {
+    lineasTitulo.push(`ELO clásico: ${data.eloClasico != null ? data.eloClasico : '(no proporcionado)'}`);
+  }
+
+  const text = `Directorio: ${NOMBRE_DIRECTORIO_PLURAL[data.tipoDirectorio]}
+Tipo: ${tipoLinea}
 
 Nombre completo: ${data.nombreCompleto}
 Estado: ${data.estado}
-Título: ${data.titulo}
+${lineasTitulo.join('\n')}
 ID FIDE: ${data.fideId || '(no proporcionado)'}
 Email de contacto: ${data.email}
 

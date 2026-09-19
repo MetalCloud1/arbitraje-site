@@ -73,6 +73,12 @@ const mostrarEmail = !!entrenador.reclamado_en && !!entrenador.email;
       </div>
 
       {entrenador.bio && <p class="entrenador-detail-bio">{entrenador.bio}</p>}
+
+      {!entrenador.reclamado_en && (
+        <p class="claim-hint">
+          ¿Este perfil es tuyo? <a href={`/postular?tipo=entrenador&reclamo=${entrenador.id}`}>Reclámalo</a> para confirmar tus datos y agregar tu contacto.
+        </p>
+      )}
     </article>
   </div>
 </BaseLayout>

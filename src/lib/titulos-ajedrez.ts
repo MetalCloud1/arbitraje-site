@@ -109,3 +109,20 @@ export function formatElo(elo: number | null): string {
   if (elo == null) return '—';
   return elo.toLocaleString('es-MX');
 }
+
+export type EloClasicoParseResult = { ok: true; value: number | null } | { ok: false };
+
+/**
+ * Parser puro (sin FormData) del ELO clásico: cadena vacía -> válido/null;
+ * si no, entero en un rango plausible (evita cargas tipo "20000" o
+ * negativos). Lo usan tanto el admin (vía parseEloClasico en
+ * lib/entrenadores.ts) como el formulario público de postulación, para
+ * no mantener el mismo rango válido en dos lugares.
+ */
+export function parseEloClasicoInput(raw: string): EloClasicoParseResult {
+  const value = raw.trim();
+  if (!value) return { ok: true, value: null };
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > 3500) return { ok: false };
+  return { ok: true, value: n };
+}

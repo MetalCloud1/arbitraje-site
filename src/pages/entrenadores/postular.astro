@@ -1,11 +1,9 @@
 ---
-// El formulario real vive en /postular (unificado con entrenadores, ver
-// /api/postular.ts). Esta ruta se conserva como alias -- por si hay
-// enlaces ya compartidos -- y solo redirige, preservando reclamo/error.
+// Mismo alias que /arbitros/postular, para el otro directorio.
 export const prerender = false;
 
 const target = new URL('/postular', Astro.url.origin);
-target.searchParams.set('tipo', 'arbitro');
+target.searchParams.set('tipo', 'entrenador');
 for (const key of ['reclamo', 'error', 'enviado']) {
   const value = Astro.url.searchParams.get(key);
   if (value) target.searchParams.set(key, value);

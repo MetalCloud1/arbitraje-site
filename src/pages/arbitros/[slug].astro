@@ -63,8 +63,8 @@ const mostrarEmail = !!arbitro.reclamado_en && !!arbitro.email;
       {arbitro.bio && <p class="arbitro-detail-bio">{arbitro.bio}</p>}
 
       {!arbitro.reclamado_en && (
-        <p class="arbitro-claim-hint">
-          ¿Este perfil es tuyo? <a href={`/arbitros/postular?reclamo=${arbitro.id}`}>Reclámalo</a> para confirmar tus datos y agregar tu contacto.
+        <p class="claim-hint">
+          ¿Este perfil es tuyo? <a href={`/postular?tipo=arbitro&reclamo=${arbitro.id}`}>Reclámalo</a> para confirmar tus datos y agregar tu contacto.
         </p>
       )}
     </article>

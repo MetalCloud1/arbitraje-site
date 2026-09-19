@@ -5,6 +5,7 @@
 // y elo_clasico.
 
 import { escapeLikeTerm } from './db';
+import { parseEloClasicoInput } from './titulos-ajedrez';
 
 export type Actividad = 'activo' | 'inactivo';
 
@@ -312,11 +313,10 @@ export function parseOrdenDestacado(raw: FormDataEntryValue | null): number | nu
 }
 
 /** Parsea el ELO clásico del form del admin: vacío -> null; si no, entero
- * en un rango plausible (evita cargas accidentales tipo "20000" o negativos). */
+ * en un rango plausible (evita cargas accidentales tipo "20000" o negativos).
+ * El rango válido vive en parseEloClasicoInput(), compartido con el
+ * formulario público de postulación. */
 export function parseEloClasico(raw: FormDataEntryValue | null): number | null {
-  const value = String(raw ?? '').trim();
-  if (!value) return null;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 0 || n > 3500) return null;
-  return n;
+  const result = parseEloClasicoInput(String(raw ?? ''));
+  return result.ok ? result.value : null;
 }

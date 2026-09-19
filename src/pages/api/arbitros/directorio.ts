@@ -17,6 +17,7 @@ const CACHE_TTL_SECONDS = 120;
 
 export const GET: APIRoute = async ({ url, locals }) => {
   const estado = url.searchParams.get('estado');
+  const titulo = url.searchParams.get('titulo');
   const q = url.searchParams.get('q');
   const cursor = url.searchParams.get('cursor');
   const limitParam = Number(url.searchParams.get('limit'));
@@ -36,7 +37,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     // items/nextCursor de esta respuesta. El "N árbitros registrados" del
     // encabezado se calcula aparte, directo en el servidor al renderizar la
     // página (ver src/pages/arbitros/index.astro), no pasa por este endpoint.
-    const { items, nextCursor } = await listArbitrosPage(db, { estado, q, cursor, limit });
+    const { items, nextCursor } = await listArbitrosPage(db, { estado, titulo, q, cursor, limit });
 
     const response = new Response(JSON.stringify({ items, nextCursor }), {
       headers: {

@@ -1,0 +1,81 @@
+---
+// Fila de directorio para entrenadores. Misma estructura que ArbitroRow
+// (foto circular, nombre + título, ubicación, "Ver perfil") para que las
+// dos secciones se lean como un mismo directorio profesional. Lo que la
+// distingue: acento dorado, la reina como placeholder, el aro de la foto
+// teñido con el color del título, y el ELO clásico como columna propia.
+// Sirve tanto para el registro completo (admin) como para el resumen
+// liviano del directorio paginado -- mismo patrón que ArbitroRow.
+import { getTituloAjedrezTier, formatElo } from '../lib/titulos-ajedrez';
+import { getTituloTier } from '../lib/postulacion';
+import QueenMark from './QueenMark.astro';
+
+interface EntrenadorRowData {
+  slug: string;
+  nombre_completo: string;
+  estado_republica: string | null;
+  titulo_ajedrez: string | null;
+  titulo_arbitraje: string | null;
+  elo_clasico: number | null;
+  foto_key: string | null;
+}
+
+interface Props {
+  entrenador: EntrenadorRowData;
+}
+
+const { entrenador } = Astro.props;
+const fotoUrl = entrenador.foto_key ? `/api/img/${entrenador.foto_key}` : null;
+const tierAjedrez = getTituloAjedrezTier(entrenador.titulo_ajedrez);
+const tierArbitraje = entrenador.titulo_arbitraje ? getTituloTier(entrenador.titulo_arbitraje) : null;
+---
+<a class="entrenador-row" href={`/entrenadores/${entrenador.slug}`}>
+  <div
+    class="entrenador-row-photo"
+    style={`--tier-color:${tierAjedrez.color}`}
+    transition:name={`entrenador-photo-${entrenador.slug}`}
+  >
+    {fotoUrl && (
+      <img
+        src={fotoUrl}
+        alt={entrenador.nombre_completo}
+        loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='';"
+      />
+    )}
+    <QueenMark class="entrenador-row-queen" style={fotoUrl ? { display: 'none' } : undefined} />
+  </div>
+
+  <div class="entrenador-row-main">
+    <h3 class="entrenador-row-name" transition:name={`entrenador-name-${entrenador.slug}`}>{entrenador.nombre_completo}</h3>
+    {(entrenador.titulo_ajedrez || tierArbitraje) && (
+      <div class="entrenador-row-titulos">
+        {entrenador.titulo_ajedrez && (
+          <span class="entrenador-row-titulo" style={`color:${tierAjedrez.color}`}>{entrenador.titulo_ajedrez}</span>
+        )}
+        {tierArbitraje && (
+          <span class="entrenador-row-titulo entrenador-row-titulo-arbitraje" style={`color:${tierArbitraje.color}`}>{entrenador.titulo_arbitraje}</span>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div class="entrenador-row-elo">
+    <span class="entrenador-row-elo-value">{formatElo(entrenador.elo_clasico)}</span>
+    <span class="entrenador-row-elo-label">ELO</span>
+  </div>
+
+  {entrenador.estado_republica && (
+    <div class="entrenador-row-location">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+      </svg>
+      {entrenador.estado_republica}
+    </div>
+  )}
+
+  <span class="entrenador-row-cta" aria-hidden="true">
+    <span>Ver perfil</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+  </span>
+</a>
