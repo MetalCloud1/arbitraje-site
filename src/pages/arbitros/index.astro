@@ -238,6 +238,26 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
           if (reset) listEl.innerHTML = '';
           listEl.insertAdjacentHTML('beforeend', data.items.map(rowHtml).join(''));
         }
+
+        // El observer solo avisa en un cambio de estado (pasa de "no
+        // visible" a "visible"), no mientras el target se queda quieto en
+        // estado visible. En pantallas anchas las filas son más bajas (todo
+        // entra en una sola línea), así que una página de 5 puede no
+        // alcanzar a empujar el sentinel fuera de la zona observada
+        // (viewport + rootMargin) -- nunca vuelve a "entrar" porque nunca
+        // llegó a "salir", y el observer se queda callado para siempre
+        // aunque queden más árbitros. En pantallas angostas las filas
+        // ocupan más alto (el título, ELO y ubicación se apilan) y esto no
+        // pasa, por eso el bug solo se veía en escritorio. Acá forzamos una
+        // re-evaluación: si el sentinel sigue a tiro después de insertar,
+        // seguimos pidiendo páginas hasta que ya no lo esté o se acabe el cursor.
+        if (cursor) {
+          requestAnimationFrame(() => {
+            if (loading || !cursor) return;
+            const rect = sentinel.getBoundingClientRect();
+            if (rect.top <= window.innerHeight + 400) fetchPage(false);
+          });
+        }
       } catch {
         if (myRequestId !== requestId) return;
         loadingEl.hidden = true;

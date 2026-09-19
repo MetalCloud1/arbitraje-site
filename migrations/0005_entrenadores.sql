@@ -3,8 +3,8 @@
 --
 -- Acá el título y el ELO son el dato central (a diferencia de árbitros,
 -- donde el título es casi el único "credencial"). Por eso:
---   - titulo_ajedrez: título FIDE/federativo de jugador (GM, WGM, FM, WFM,
---     CM, WCM, NM, WNM). Es independiente de titulo_arbitraje.
+--   - titulo_ajedrez: título FIDE/federativo de jugador (GM, WGM, IM, WIM,
+--     FM, WFM, CM, WCM, NM, WNM). Es independiente de titulo_arbitraje.
 --   - titulo_arbitraje: mismos valores que arbitros.titulo (Árbitro
 --     Internacional, FIDE, Nacional, de Club). Muchos entrenadores también
 --     son árbitros titulados, y ambos títulos se muestran juntos cuando

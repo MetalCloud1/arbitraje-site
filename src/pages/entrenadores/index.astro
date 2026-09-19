@@ -105,6 +105,8 @@ const descripcion = `Entrenadores de ajedrez con título y ELO verificados. ${to
   const TIER_AJEDREZ_BY_TITULO: Record<string, { tier: string; short: string; color: string; colorBright: string }> = {
     'Gran Maestro (GM)': { tier: 'gm', short: 'GM', color: '#e3b341', colorBright: '#f5d379' },
     'Gran Maestra Internacional (WGM)': { tier: 'gm', short: 'WGM', color: '#e3b341', colorBright: '#f5d379' },
+    'Maestro Internacional (IM)': { tier: 'im', short: 'IM', color: '#7ea8c4', colorBright: '#a7c9df' },
+    'Maestra Internacional (WIM)': { tier: 'im', short: 'WIM', color: '#7ea8c4', colorBright: '#a7c9df' },
     'Maestro FIDE (FM)': { tier: 'fm', short: 'FM', color: '#c7d0d6', colorBright: '#eef2f4' },
     'Maestra FIDE (WFM)': { tier: 'fm', short: 'WFM', color: '#c7d0d6', colorBright: '#eef2f4' },
     'Maestro Candidato (CM)': { tier: 'cm', short: 'CM', color: '#c17f4a', colorBright: '#e0a06c' },
@@ -260,6 +262,19 @@ const descripcion = `Entrenadores de ajedrez con título y ELO verificados. ${to
           const listEl = ensureList();
           if (reset) listEl.innerHTML = '';
           listEl.insertAdjacentHTML('beforeend', data.items.map(rowHtml).join(''));
+        }
+
+        // Ver la nota gemela en arbitros/index.astro: el observer solo avisa
+        // en un cambio de estado, y en pantallas anchas una página de 5 puede
+        // no alcanzar a sacar al sentinel de la zona observada (viewport +
+        // rootMargin), así que se queda callado aunque queden más
+        // entrenadores. Forzamos una re-evaluación después de insertar.
+        if (cursor) {
+          requestAnimationFrame(() => {
+            if (loading || !cursor) return;
+            const rect = sentinel.getBoundingClientRect();
+            if (rect.top <= window.innerHeight + 400) fetchPage(false);
+          });
         }
       } catch {
         if (myRequestId !== requestId) return;

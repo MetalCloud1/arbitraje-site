@@ -1644,6 +1644,63 @@ body.menu-open {
   margin: 36px 0;
 }
 
+/* Tablas. El contenedor .table-scroll lo agrega el servidor (wrapTables) para
+   que una tabla ancha se desplace sola en horizontal en el celular, en vez de
+   salirse de la pantalla y quedar cortada. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 0 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: #dde3de;
+}
+
+.article-body th,
+.article-body td {
+  padding: 11px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.article-body th {
+  background: rgba(129, 182, 76, 0.09);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.article-body tbody tr:last-child td,
+.article-body tr:last-child > td {
+  border-bottom: 0;
+}
+
+.article-body tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* El editor guarda cada celda como <td><p>…</p></td>: sin esto el margen de
+   26px de los párrafos del artículo inflaría todas las filas. */
+.article-body th p,
+.article-body td p {
+  margin: 0;
+}
+
+.article-body th p + p,
+.article-body td p + p {
+  margin-top: 8px;
+}
+
 /* El h1 grande y el drop cap se sienten bien en desktop, pero en un
    teléfono angosto ocupan demasiado espacio antes de llegar al
    contenido. El resto (párrafos, listas) ya se ajusta solo porque su
@@ -1987,6 +2044,7 @@ table.admin-table tr:last-child td {
 .field input[type='number'],
 .field input[type='password'],
 .field input[type='date'],
+.field input[type='url'],
 .field select,
 .field textarea {
   width: 100%;
@@ -2044,6 +2102,7 @@ table.admin-table tr:last-child td {
 
 .editor-toolbar {
   display: flex;
+  align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   background: #0a1410;
@@ -2051,6 +2110,20 @@ table.admin-table tr:last-child td {
   border-bottom: none;
   border-radius: 6px 6px 0 0;
   padding: 8px;
+}
+
+.editor-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* En modo HTML los botones de formato no aplican: se apagan pero se
+   quedan visibles para que el cambio de modo no mueva la interfaz. */
+.editor-tools.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .editor-toolbar button {
@@ -2073,20 +2146,117 @@ table.admin-table tr:last-child td {
   color: var(--white);
 }
 
+.editor-toolbar button[aria-pressed="true"] {
+  background: rgba(129, 182, 76, 0.22);
+  color: var(--green-bright);
+}
+
+.editor-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* Pestañas Visual / HTML, a la derecha de la barra */
+.editor-tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+}
+
+.editor-toolbar .editor-tabs button {
+  width: auto;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.editor-toolbar .editor-tabs button[aria-selected="true"] {
+  background: rgba(129, 182, 76, 0.22);
+  color: var(--green-bright);
+}
+
+/* Barra contextual: solo aparece con el cursor dentro de una tabla */
+.editor-table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #0d1913;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  font-size: 12.5px;
+  color: var(--gray);
+}
+
+.editor-table-tools[hidden] {
+  display: none;
+}
+
+.editor-table-tools button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--gray);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.editor-table-tools button:hover {
+  border-color: rgba(129, 182, 76, 0.5);
+  color: var(--white);
+}
+
+.editor-table-tools button.is-danger:hover {
+  border-color: #e5484d;
+  color: #ff8a8e;
+}
+
 .editor-body {
+  position: relative;
   min-height: 320px;
   background: #0a1410;
   border: 1px solid var(--border);
   border-radius: 0 0 6px 6px;
-  padding: 16px;
   font-size: 15px;
   line-height: 1.65;
   color: var(--white);
 }
 
-.editor-body:focus {
+.editor-body[hidden] {
+  display: none;
+}
+
+.editor-body:focus-within {
   outline: none;
   border-color: var(--green);
+}
+
+/* Tiptap monta aquí su propio contenteditable (.ProseMirror) */
+.editor-body .ProseMirror {
+  min-height: 320px;
+  padding: 16px;
+  outline: none;
+}
+
+.editor-body[data-empty="true"]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: var(--gray-dim);
+  pointer-events: none;
+}
+
+.editor-body p {
+  margin-bottom: 10px;
 }
 
 .editor-body h2 {
@@ -2101,13 +2271,96 @@ table.admin-table tr:last-child td {
 
 .editor-body ul,
 .editor-body ol {
-  margin-left: 22px;
+  margin: 0 0 10px 22px;
 }
 
 .editor-body blockquote {
   border-left: 3px solid var(--green);
   padding-left: 14px;
+  margin: 10px 0;
   color: var(--gray);
+}
+
+.editor-body a {
+  color: var(--green-bright);
+  text-decoration: underline;
+}
+
+/* Tablas dentro del editor (Tiptap las envuelve en .tableWrapper) */
+.editor-body .tableWrapper {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.editor-body table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.editor-body th,
+.editor-body td {
+  position: relative;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.editor-body th {
+  background: rgba(129, 182, 76, 0.08);
+  font-weight: 700;
+}
+
+.editor-body th p,
+.editor-body td p {
+  margin: 0;
+}
+
+.editor-body .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(129, 182, 76, 0.2);
+  pointer-events: none;
+}
+
+/* Modo HTML: cuadro de código */
+.rich-editor .editor-source {
+  display: block;
+  width: 100%;
+  min-height: 320px;
+  padding: 16px;
+  background: #0a1410;
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  color: var(--white);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+.rich-editor .editor-source[hidden] {
+  display: none;
+}
+
+.rich-editor .editor-source:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.editor-note {
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--gray-dim);
+}
+
+.editor-note[hidden] {
+  display: none;
 }
 
 .cover-preview {
@@ -2377,6 +2630,15 @@ table.admin-table tr:last-child td {
 .arbitros-loading {
   display: flex;
   gap: 6px;
+}
+
+/* Bug: sin esto, [hidden] no le gana a la regla de arriba (misma
+   especificidad, y una regla de autor siempre le gana al [hidden] por
+   defecto del navegador aunque venga antes en la hoja de estilos). El
+   resultado era que los puntitos quedaban visibles y animando para
+   siempre, incluso cuando loadingEl.hidden = true en el script. */
+.arbitros-loading[hidden] {
+  display: none;
 }
 
 .arbitros-loading-dot {
@@ -2949,6 +3211,12 @@ table.admin-table tr:last-child td {
 .entrenadores-loading {
   display: flex;
   gap: 6px;
+}
+
+/* Mismo bug que .arbitros-loading: sin esto, [hidden] no le gana a la
+   regla de arriba y los puntitos quedan animando para siempre. */
+.entrenadores-loading[hidden] {
+  display: none;
 }
 
 .entrenadores-loading-dot {

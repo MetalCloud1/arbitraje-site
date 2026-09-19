@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArticleBySlug } from '../../lib/db';
-import { formatDateEs, splitAfterFirstParagraph } from '../../lib/text';
+import { formatDateEs, splitAfterFirstParagraph, wrapTables } from '../../lib/text';
 import { parseVideoUrlSafe } from '../../lib/video';
 import MediaFrame from '../../components/MediaFrame.astro';
 import ReadingProgress from '../../components/ReadingProgress.astro';
@@ -110,7 +110,7 @@ const articleJsonLd = {
         {/* .article-content agrupa texto + media para que la barra de progreso
             de lectura mida el artículo completo, no solo el primer tramo. */}
         <div class="article-content">
-          {head && <div class="article-body" set:html={head} />}
+          {head && <div class="article-body" set:html={wrapTables(head)} />}
 
           {video && (
             <div class="article-video-embed">
@@ -131,7 +131,7 @@ const articleJsonLd = {
             </div>
           )}
 
-          {tail && <div class={head ? 'article-body article-body-cont' : 'article-body'} set:html={tail} />}
+          {tail && <div class={head ? 'article-body article-body-cont' : 'article-body'} set:html={wrapTables(tail)} />}
         </div>
       </div>
     </div>

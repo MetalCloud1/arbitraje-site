@@ -1,10 +1,11 @@
 // Títulos de jugador (no de árbitro) que puede tener un entrenador.
-// Deliberadamente acotado a los que pidió el sitio: sin IM/WIM. El orden
-// del array es también el orden de fuerza (de mayor a menor), y se usa
-// tal cual para ordenar los chips de filtro en /entrenadores.
+// El orden del array es también el orden de fuerza (de mayor a menor), y
+// se usa tal cual para ordenar los chips de filtro en /entrenadores.
 export const TITULOS_AJEDREZ = [
   'Gran Maestro (GM)',
   'Gran Maestra Internacional (WGM)',
+  'Maestro Internacional (IM)',
+  'Maestra Internacional (WIM)',
   'Maestro FIDE (FM)',
   'Maestra FIDE (WFM)',
   'Maestro Candidato (CM)',
@@ -20,9 +21,10 @@ export type TituloAjedrez = (typeof TITULOS_AJEDREZ)[number];
 // título es LA credencial que vende a un entrenador, así que cada tier
 // lleva su propia medalla con iniciales, pensada para una tarjeta más
 // grande que la fila de árbitros. GM y WGM comparten la medalla dorada
-// (son el techo real del ajedrez federado, con o sin la "W"); FM/WFM
-// plata; CM/WCM bronce; NM/WNM quedan discretos, sin medalla.
-export type TituloAjedrezTier = 'gm' | 'fm' | 'cm' | 'nm';
+// (son el techo real del ajedrez federado, con o sin la "W"); IM/WIM
+// llevan su propia medalla (un escalón debajo del oro); FM/WFM plata;
+// CM/WCM bronce; NM/WNM quedan discretos, sin medalla.
+export type TituloAjedrezTier = 'gm' | 'im' | 'fm' | 'cm' | 'nm';
 
 export interface TituloAjedrezTierMeta {
   tier: TituloAjedrezTier;
@@ -46,6 +48,20 @@ const TIER_BY_TITULO: Record<string, TituloAjedrezTierMeta> = {
     color: '#e3b341',
     colorBright: '#f5d379',
     glow: 'rgba(227, 179, 65, 0.45)',
+  },
+  'Maestro Internacional (IM)': {
+    tier: 'im',
+    short: 'IM',
+    color: '#7ea8c4',
+    colorBright: '#a7c9df',
+    glow: 'rgba(126, 168, 196, 0.4)',
+  },
+  'Maestra Internacional (WIM)': {
+    tier: 'im',
+    short: 'WIM',
+    color: '#7ea8c4',
+    colorBright: '#a7c9df',
+    glow: 'rgba(126, 168, 196, 0.4)',
   },
   'Maestro FIDE (FM)': {
     tier: 'fm',
