@@ -3,10 +3,11 @@ import { readSession } from './lib/auth';
 
 const PUBLIC_ADMIN_PATHS = new Set(['/admin/login']);
 
-// Excepción puntual dentro de /api/arbitros (que por lo demás requiere
-// sesión de admin): el listado/búsqueda que consume la página pública
-// /arbitros para su paginación con "cargar más" y el buscador.
-const PUBLIC_API_PATHS = new Set(['/api/arbitros/directorio']);
+// Excepción puntual dentro de /api/arbitros y /api/entrenadores (que por
+// lo demás requieren sesión de admin): el listado/búsqueda que consumen
+// las páginas públicas /arbitros y /entrenadores para su paginación con
+// "cargar más" y el buscador.
+const PUBLIC_API_PATHS = new Set(['/api/arbitros/directorio', '/api/entrenadores/directorio']);
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
@@ -21,6 +22,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     !PUBLIC_API_PATHS.has(pathname) &&
     (pathname.startsWith('/api/articles') ||
       pathname.startsWith('/api/arbitros') ||
+      pathname.startsWith('/api/entrenadores') ||
       pathname.startsWith('/api/upload') ||
       pathname.startsWith('/api/cleanup'));
 

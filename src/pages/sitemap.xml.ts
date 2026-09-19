@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { listAllArticles } from '../lib/db';
 import { listAllArbitros } from '../lib/arbitros';
+import { listAllEntrenadores } from '../lib/entrenadores';
 
 // @astrojs/sitemap no sirve aquí: según su propia documentación, no puede
 // generar entradas para rutas dinámicas en modo SSR (nuestros artículos
@@ -14,6 +15,7 @@ const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string 
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/articulos', changefreq: 'daily', priority: '0.9' },
   { path: '/arbitros', changefreq: 'weekly', priority: '0.7' },
+  { path: '/entrenadores', changefreq: 'weekly', priority: '0.7' },
   { path: '/sobre-nosotros', changefreq: 'yearly', priority: '0.4' },
 ];
 
@@ -30,6 +32,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const db = locals.runtime.env.DB;
   const articles = await listAllArticles(db);
   const arbitros = await listAllArbitros(db);
+  const entrenadores = await listAllEntrenadores(db);
 
   const staticEntries = STATIC_ROUTES.map(
     (route) => `  <url>
@@ -59,9 +62,19 @@ export const GET: APIRoute = async ({ url, locals }) => {
   </url>`;
   });
 
+  const entrenadorEntries = entrenadores.map((entrenador) => {
+    const lastmod = new Date(entrenador.updated_at ?? entrenador.created_at).toISOString();
+    return `  <url>
+    <loc>${escapeXml(`${url.origin}/entrenadores/${entrenador.slug}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`;
+  });
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticEntries, ...articleEntries, ...arbitroEntries].join('\n')}
+${[...staticEntries, ...articleEntries, ...arbitroEntries, ...entrenadorEntries].join('\n')}
 </urlset>
 `;
 

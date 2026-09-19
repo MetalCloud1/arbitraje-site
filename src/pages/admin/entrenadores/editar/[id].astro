@@ -1,0 +1,137 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { getEntrenadorById } from '../../../../lib/entrenadores';
+import { ESTADOS_MX, TITULOS_ARBITRO } from '../../../../lib/postulacion';
+import { TITULOS_AJEDREZ } from '../../../../lib/titulos-ajedrez';
+
+export const prerender = false;
+
+const db = Astro.locals.runtime.env.DB;
+const id = Number(Astro.params.id);
+const entrenador = Number.isInteger(id) ? await getEntrenadorById(db, id) : null;
+
+if (!entrenador) {
+  return Astro.redirect('/admin/entrenadores?error=' + encodeURIComponent('Entrenador no encontrado.'));
+}
+
+const error = Astro.url.searchParams.get('error');
+const fotoUrl = entrenador.foto_key ? `/api/img/${entrenador.foto_key}` : null;
+---
+<AdminLayout title={`Editar — ${entrenador.nombre_completo}`}>
+  <div class="admin-header">
+    <h1>Editar entrenador</h1>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+
+  <form class="form-card" method="POST" action={`/api/entrenadores/${entrenador.id}`} enctype="multipart/form-data">
+    <div class="field">
+      <label for="nombre_completo">Nombre completo</label>
+      <input type="text" id="nombre_completo" name="nombre_completo" required maxlength="100" value={entrenador.nombre_completo} />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="estado_republica">Estado</label>
+        <select id="estado_republica" name="estado_republica">
+          <option value="">Sin especificar</option>
+          {ESTADOS_MX.map((e) => <option value={e} selected={entrenador.estado_republica === e}>{e}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label for="fide_id">ID de FIDE (opcional)</label>
+        <input type="text" id="fide_id" name="fide_id" maxlength="10" value={entrenador.fide_id ?? ''} />
+      </div>
+    </div>
+
+    <div class="field-group-notable">
+      <h3>Credenciales</h3>
+      <div class="field-row">
+        <div class="field">
+          <label for="titulo_ajedrez">Título de ajedrez</label>
+          <select id="titulo_ajedrez" name="titulo_ajedrez">
+            <option value="">Sin especificar</option>
+            {TITULOS_AJEDREZ.map((t) => <option value={t} selected={entrenador.titulo_ajedrez === t}>{t}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="elo_clasico">ELO clásico</label>
+          <input type="number" id="elo_clasico" name="elo_clasico" min="0" max="3500" step="1" placeholder="Ej. 2340" value={entrenador.elo_clasico ?? ''} />
+          <p class="field-hint">Únicamente ELO clásico (no rápidas ni blitz). Vacío si no aplica o no se conoce.</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="titulo_arbitraje">Título de arbitraje (opcional)</label>
+        <select id="titulo_arbitraje" name="titulo_arbitraje">
+          <option value="">No es árbitro titulado</option>
+          {TITULOS_ARBITRO.map((t) => <option value={t} selected={entrenador.titulo_arbitraje === t}>{t}</option>)}
+        </select>
+        <p class="field-hint">Si el entrenador también es árbitro titulado, ambos títulos se muestran juntos en su perfil.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="email">Correo de contacto (opcional)</label>
+      <input type="email" id="email" name="email" maxlength="254" value={entrenador.email ?? ''} />
+      <p class="field-hint">Solo se muestra públicamente si el perfil está marcado como reclamado.</p>
+    </div>
+
+    <div class="field">
+      <label for="bio">Descripción / trayectoria</label>
+      <textarea id="bio" name="bio" rows="5" maxlength="1000">{entrenador.bio ?? ''}</textarea>
+    </div>
+
+    <div class="field">
+      <label for="foto">Foto</label>
+      {fotoUrl && <img class="cover-preview" src={fotoUrl} alt={entrenador.nombre_completo} />}
+      <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/webp,image/gif" style="margin-top:10px;" />
+      <p class="field-hint">Sube una nueva foto para reemplazar la actual.</p>
+      {fotoUrl && (
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:400;">
+          <input type="checkbox" name="remove_foto" style="width:auto;" />
+          Quitar la foto actual
+        </label>
+      )}
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="actividad">Actividad</label>
+        <select id="actividad" name="actividad">
+          <option value="activo" selected={entrenador.actividad === 'activo'}>Activo</option>
+          <option value="inactivo" selected={entrenador.actividad === 'inactivo'}>Inactivo</option>
+        </select>
+      </div>
+      <div class="field field-checkbox">
+        <label>
+          <input type="checkbox" name="reclamado" checked={!!entrenador.reclamado_en} />
+          Identidad ya verificada (reclamado)
+        </label>
+        {entrenador.reclamado_en && <p class="field-hint">Reclamado el {new Date(entrenador.reclamado_en).toLocaleDateString('es-MX')}</p>}
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="orden_destacado">Destacar en el directorio (opcional)</label>
+      <input
+        type="number"
+        id="orden_destacado"
+        name="orden_destacado"
+        min="1"
+        step="1"
+        style="max-width:140px"
+        value={entrenador.orden_destacado ?? ''}
+      />
+      <p class="field-hint">
+        Vacío = orden alfabético normal, como el resto. Si le pones un número, aparece antes que los
+        alfabéticos (1 primero, 2 después, etc.), sin importar el nombre. Es una excepción editorial puntual,
+        no un ranking.
+      </p>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">Guardar cambios</button>
+      <a class="btn btn-secondary" href="/admin/entrenadores">Cancelar</a>
+    </div>
+  </form>
+</AdminLayout>

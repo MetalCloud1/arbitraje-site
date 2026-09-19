@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEntrenadorBySlug } from '../../lib/entrenadores';
+import { getTituloAjedrezTier, formatElo } from '../../lib/titulos-ajedrez';
+import { getTituloTier } from '../../lib/postulacion';
+import QueenMark from '../../components/QueenMark.astro';
+
+export const prerender = false;
+
+const db = Astro.locals.runtime.env.DB;
+const { slug } = Astro.params;
+const entrenador = slug ? await getEntrenadorBySlug(db, slug) : null;
+
+if (!entrenador) {
+  return Astro.redirect('/entrenadores');
+}
+
+const fotoUrl = entrenador.foto_key ? `/api/img/${entrenador.foto_key}` : null;
+const tierAjedrez = getTituloAjedrezTier(entrenador.titulo_ajedrez);
+const tierArbitraje = entrenador.titulo_arbitraje ? getTituloTier(entrenador.titulo_arbitraje) : null;
+const photoStyle = `--tier-color:${tierAjedrez.color}; --tier-color-bright:${tierAjedrez.colorBright}; --tier-glow:${tierAjedrez.glow}`;
+
+// Mismo criterio de consentimiento que árbitros: el email solo se muestra
+// si el propio entrenador ya reclamó su perfil.
+const mostrarEmail = !!entrenador.reclamado_en && !!entrenador.email;
+---
+<BaseLayout
+  title={`${entrenador.nombre_completo} - Entrenadores - La Hora del Arbitraje`}
+  description={entrenador.bio ?? undefined}
+  image={fotoUrl ?? undefined}
+>
+  <div class="container">
+    <article class="entrenador-detail">
+      <a class="back-link" href="/entrenadores">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver a entrenadores
+      </a>
+
+      <div class="entrenador-detail-header">
+        <div class="entrenador-detail-photo" data-tier={tierAjedrez.tier} style={photoStyle} transition:name={`entrenador-photo-${entrenador.slug}`}>
+          {fotoUrl ? (
+            <img src={fotoUrl} alt={entrenador.nombre_completo} />
+          ) : (
+            <QueenMark class="entrenador-detail-queen" />
+          )}
+          {tierAjedrez.short && <span class="entrenador-detail-rank" aria-hidden="true">{tierAjedrez.short}</span>}
+        </div>
+        <div>
+          <h1 transition:name={`entrenador-name-${entrenador.slug}`}>{entrenador.nombre_completo}</h1>
+
+          <div class="entrenador-detail-elo">
+            <span class="entrenador-detail-elo-value">{formatElo(entrenador.elo_clasico)}</span>
+            <span class="entrenador-detail-elo-label">ELO clásico</span>
+          </div>
+
+          <div class="entrenador-detail-meta">
+            {entrenador.titulo_ajedrez && (
+              <span class="badge-titulo" style={`color:${tierAjedrez.colorBright}; border-color:${tierAjedrez.color}`}>{entrenador.titulo_ajedrez}</span>
+            )}
+            {tierArbitraje && (
+              <span class="badge-titulo" style={`color:${tierArbitraje.color}; border-color:${tierArbitraje.color}`}>{entrenador.titulo_arbitraje}</span>
+            )}
+            {entrenador.estado_republica && <span class="badge">{entrenador.estado_republica}</span>}
+            {entrenador.fide_id && <span class="badge">FIDE ID {entrenador.fide_id}</span>}
+          </div>
+
+          {mostrarEmail && (
+            <p class="entrenador-detail-email">
+              <a href={`mailto:${entrenador.email}`}>{entrenador.email}</a>
+            </p>
+          )}
+        </div>
+      </div>
+
+      {entrenador.bio && <p class="entrenador-detail-bio">{entrenador.bio}</p>}
+    </article>
+  </div>
+</BaseLayout>
