@@ -353,78 +353,6 @@ nav.main-nav a.active::after {
   background: var(--green-bright);
 }
 
-.nav-dropdown {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.nav-dropdown-trigger {
-  display: flex !important;
-  align-items: center;
-  gap: 5px;
-}
-
-.nav-dropdown-trigger .chevron {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 1px;
-}
-
-.nav-dropdown:hover .nav-dropdown-trigger .chevron,
-.nav-dropdown:focus-within .nav-dropdown-trigger .chevron {
-  transform: rotate(180deg);
-}
-
-.nav-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translate(-50%, 6px);
-  margin-top: 14px;
-  min-width: 180px;
-  background: #0e1b14;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
-  z-index: 50;
-}
-
-.nav-dropdown:hover .nav-dropdown-menu,
-.nav-dropdown:focus-within .nav-dropdown-menu {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translate(-50%, 0);
-}
-
-.nav-dropdown-menu a {
-  padding: 9px 12px !important;
-  margin: 0 !important;
-  border-radius: 6px;
-  font-size: 14px !important;
-  color: var(--white);
-  transition: background 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
-  white-space: nowrap;
-}
-
-.nav-dropdown-menu a::after {
-  display: none;
-}
-
-.nav-dropdown-menu a:hover {
-  background: rgba(151, 204, 95, 0.12);
-  color: var(--green-bright);
-  padding-left: 16px !important;
-}
-
 .header-right {
   display: flex;
   align-items: center;
@@ -451,164 +379,15 @@ nav.main-nav a.active::after {
   transform: translateY(-1px);
 }
 
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.menu-toggle .bar {
-  width: 22px;
-  height: 2px;
-  background: var(--white);
-  border-radius: 2px;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-}
-
-.menu-toggle.is-open .bar:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
-}
-
-.menu-toggle.is-open .bar:nth-child(2) {
-  opacity: 0;
-}
-
-.menu-toggle.is-open .bar:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
-}
-
-.mobile-menu-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  z-index: 150;
-}
-
-.mobile-menu-overlay.is-open {
-  opacity: 1;
-  visibility: visible;
-}
-
-.mobile-menu {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(320px, 84vw);
-  background: #0e1b14;
-  border-left: 1px solid var(--border);
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  padding: 90px 28px 32px;
-  gap: 4px;
-  overflow-y: auto;
-  transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mobile-menu.is-open {
-  transform: translateX(0);
-}
-
-body.menu-open {
-  overflow: hidden;
-}
-
-.mobile-menu > a {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--white);
-  padding: 14px 4px;
-  border-bottom: 1px solid var(--border);
-  transition: color 0.2s ease, padding-left 0.2s ease;
-}
-
-.mobile-menu > a:hover,
-.mobile-menu > a.active {
-  color: var(--green-bright);
-  padding-left: 8px;
-}
-
-.mobile-accordion {
-  border-bottom: 1px solid var(--border);
-}
-
-.mobile-accordion-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
-  color: var(--white);
-  font-size: 17px;
-  font-weight: 600;
-  font-family: inherit;
-  padding: 14px 4px;
-  cursor: pointer;
-}
-
-.mobile-accordion-trigger .chevron {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mobile-accordion.is-open .mobile-accordion-trigger .chevron {
-  transform: rotate(180deg);
-}
-
-.mobile-accordion-panel {
-  max-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mobile-accordion.is-open .mobile-accordion-panel {
-  max-height: 300px;
-}
-
-.mobile-accordion-panel a {
-  font-size: 15px;
-  color: var(--gray);
-  padding: 10px 4px 10px 16px;
-  transition: color 0.2s ease, padding-left 0.2s ease;
-}
-
-.mobile-accordion-panel a:hover {
-  color: var(--green-bright);
-  padding-left: 20px;
-}
-
-@media (max-width: 1100px) {
-  .menu-toggle {
-    display: flex;
-  }
-}
-
 /* La barra de categorías es siempre visible (no depende del ancho): en
    pantallas angostas, en vez de esconderse detrás del hamburguesa, se
    vuelve una fila con scroll horizontal. Sin scrollbar visible, para que
    se lea como una fila de pestañas y no como un textarea.
-   Mismo breakpoint (1100px) que activa el hamburguesa del Header: por
-   debajo de ese ancho ya no hay garantía de que el nav completo + la
-   lupa entren en una sola fila, así que necesitan el scroll desde ahí
-   mismo, no solo desde 860px. Entre 861px y 1100px el nav no tenía
-   overflow-x ni podía encoger, así que desbordaba la fila y el
-   overflow-x:hidden del body terminaba cortando la lupa. */
+   Por debajo de 1100px ya no hay garantía de que el nav completo + la
+   lupa entren en una sola fila, así que el scroll empieza desde ahí,
+   no solo desde 860px. Entre 861px y 1100px el nav no tenía overflow-x
+   ni podía encoger, así que desbordaba la fila y el overflow-x:hidden
+   del body terminaba cortando la lupa. */
 @media (max-width: 1100px) {
   nav.main-nav {
     flex: 1;
@@ -889,14 +668,6 @@ body.menu-open {
   100% { background-position: 0 50%; }
 }
 
-@media (min-width: 1101px) {
-  .mobile-menu,
-  .mobile-menu-overlay,
-  .menu-toggle {
-    display: none;
-  }
-}
-
 @media (max-width: 860px) {
   .header-inner {
     padding: 16px 20px;
@@ -925,9 +696,8 @@ body.menu-open {
 /* ---------- CATEGORY BAR ----------
    Segunda fila, fija debajo del header, con la navegación principal y el
    buscador. Reemplaza tanto al masthead (foto+texto) como a la fila de
-   nav que antes vivía apretada dentro del header. El link a "Sobre
-   Nosotros" y las subcategorías de Artículos siguen accesibles desde el
-   hamburguesa del Header -- aquí solo va lo principal. */
+   nav que antes vivía apretada dentro del header. Las subcategorías de
+   Artículos se eligen con los chips de /articulos (.category-chips). */
 .category-bar {
   /* position/z-index explícitos: sin esto, la regla genérica
      "body > * { z-index: 1 }" convierte a .category-bar en su propio
@@ -3753,5 +3523,66 @@ table.admin-table tr:last-child td {
 @media (max-width: 480px) {
   .site-footer {
     padding: 44px 0 28px;
+  }
+}
+
+
+/* ---------- CHIPS DE CATEGORÍA (/articulos) ----------
+   Son la única forma de filtrar por categoría, en todas las pantallas.
+   Reemplazan al acordeón del hamburguesa y al desplegable de "Artículos"
+   en la barra (que además quedaba recortado en móvil). */
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -8px 0 36px;
+  font-family: var(--font-sans);
+}
+
+.category-chips .chip {
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray);
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+
+.category-chips .chip:hover {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.category-chips .chip.active {
+  color: var(--green-bright);
+  border-color: rgba(151, 204, 95, 0.45);
+  background: rgba(151, 204, 95, 0.08);
+}
+
+@media (max-width: 600px) {
+  /* Una sola fila con scroll horizontal (como la barra de navegación),
+     para que un chip no quede huérfano en una segunda línea. */
+  .category-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 8px;
+    margin: -8px -24px 28px;
+    padding: 0 24px;
+  }
+
+  .category-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-chips .chip {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .category-chips .chip {
+    padding: 7px 15px;
+    font-size: 13.5px;
   }
 }

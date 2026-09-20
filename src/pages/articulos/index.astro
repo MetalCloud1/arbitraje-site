@@ -27,6 +27,8 @@ const heading = buscar ? `Resultados para "${buscar}"` : categoria ? categoria :
 // así que ambos se marcan noindex hasta que existan rutas propias por
 // categoría (p. ej. /articulos/categoria/casos) que sí valga la pena indexar.
 const shouldNoindex = Boolean(buscar || categoria);
+
+const CATEGORIAS = ['Casos', 'Entrevistas', 'Análisis', 'Podcast'];
 ---
 <BaseLayout
   title={`${buscar ? `Buscar: ${buscar}` : 'Artículos'} - La Hora del Arbitraje`}
@@ -40,6 +42,21 @@ const shouldNoindex = Boolean(buscar || categoria);
           <span>{heading}</span>
         </div>
       </div>
+
+      <nav class="category-chips" aria-label="Filtrar por categoría">
+        <a
+          href="/articulos"
+          class={!categoria && !buscar ? 'chip active' : 'chip'}
+          aria-current={!categoria && !buscar ? 'page' : undefined}
+        >Todos</a>
+        {CATEGORIAS.map((c) => (
+          <a
+            href={`/articulos?categoria=${encodeURIComponent(c)}`}
+            class={categoria === c && !buscar ? 'chip active' : 'chip'}
+            aria-current={categoria === c && !buscar ? 'page' : undefined}
+          >{c}</a>
+        ))}
+      </nav>
 
       {articles.length === 0 && (
         buscar ? (

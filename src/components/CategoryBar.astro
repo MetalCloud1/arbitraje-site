@@ -2,10 +2,8 @@
 // Barra de navegación principal. Vive separada del header (que ahora es
 // solo identidad de marca) y se muestra en todas las pantallas: en
 // desktop como fila de enlaces, en mobile como una fila con scroll
-// horizontal (ver .main-nav en global.css). El hamburguesa del Header
-// sigue existiendo aparte para móvil (subcategorías de Artículos y
-// enlaces legales). "Sobre Nosotros" vive aquí para que también sea
-// visible en escritorio, donde el hamburguesa se oculta.
+// horizontal (ver .main-nav en global.css). Las subcategorías de Artículos
+// se eligen con los chips de /articulos, en todas las pantallas.
 import SearchBox from './SearchBox.astro';
 
 const path = Astro.url.pathname;
@@ -15,24 +13,7 @@ const isActive = (href: string) => (path === href ? 'active' : '');
   <div class="container category-bar-inner">
     <nav class="main-nav" aria-label="Categorías principales">
       <a href="/" class={isActive('/')}>Inicio</a>
-
-      <div class="nav-dropdown">
-        <a
-          href="/articulos"
-          class={`nav-dropdown-trigger ${path.startsWith('/articulos') ? 'active' : ''}`}
-          aria-haspopup="true"
-        >
-          Artículos
-          <svg class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
-        </a>
-        <div class="nav-dropdown-menu">
-          <a href="/articulos?categoria=Casos">Casos</a>
-          <a href="/articulos?categoria=Entrevistas">Entrevistas</a>
-          <a href="/articulos?categoria=Análisis">Análisis</a>
-          <a href="/articulos?categoria=Podcast">Podcast</a>
-        </div>
-      </div>
-
+      <a href="/articulos" class={path.startsWith('/articulos') ? 'active' : ''}>Artículos</a>
       <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
       <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
       <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
