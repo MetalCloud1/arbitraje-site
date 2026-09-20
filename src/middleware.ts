@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { readSession } from './lib/auth';
+import { isCrossOriginWrite, withSecurityHeaders } from './lib/security';
 
 const PUBLIC_ADMIN_PATHS = new Set(['/admin/login']);
 
@@ -12,6 +13,14 @@ const PUBLIC_API_PATHS = new Set(['/api/arbitros/directorio', '/api/entrenadores
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
   const env = context.locals.runtime.env;
+
+  // CSRF: las escrituras a /api solo se aceptan desde este mismo origen.
+  if (pathname.startsWith('/api/') && isCrossOriginWrite(context.request, context.url.origin)) {
+    return new Response(JSON.stringify({ error: 'Origen no permitido' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const cookieHeader = context.request.headers.get('cookie');
   const session = await readSession(env.SESSION_SECRET, cookieHeader);
@@ -36,5 +45,5 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect('/admin/login');
   }
 
-  return next();
+  return withSecurityHeaders(await next());
 });

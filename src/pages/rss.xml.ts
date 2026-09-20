@@ -13,6 +13,7 @@ import {
   toRfc822,
   type BuiltXml,
 } from '../lib/feed';
+import { simplifyWidgetsForFeed } from '../lib/text';
 
 // Feed RSS 2.0 con los últimos artículos. Pensado para MSN Partner Hub
 // (que lo consulta cada ~15 min) y para cualquier lector/agregador. Se arma
@@ -58,7 +59,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       const figure = image
         ? `<figure><img src="${escapeXml(image.url)}" alt="${escapeXml(article.title)}" /></figure>`
         : '';
-      const body = figure + absolutizeHtml(article.content_html, origin);
+      const body = figure + absolutizeHtml(simplifyWidgetsForFeed(article.content_html), origin);
 
       const abstract = toPlainText(article.excerpt);
 

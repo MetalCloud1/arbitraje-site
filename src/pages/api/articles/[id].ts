@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getArticleById, updateArticle, slugExists } from '../../../lib/db';
-import { slugify, sanitizeHtml, estimateReadMinutes, excerptFromHtml } from '../../../lib/text';
+import { slugify, sanitizeArticleHtml, estimateReadMinutes, excerptFromHtml } from '../../../lib/text';
 import { uploadCoverImage, deleteImage } from '../../../lib/images';
 import { parseVideoUrl } from '../../../lib/video';
 import { computeExpiresAt } from '../../../lib/expiry';
@@ -47,7 +47,11 @@ export const POST: APIRoute = async ({ request, params, locals, redirect }) => {
     }
   }
 
-  const contentHtml = sanitizeHtml(contentHtmlRaw);
+  const sanitized = sanitizeArticleHtml(contentHtmlRaw);
+  if (sanitized.errors.length > 0) {
+    return redirect(`/admin/editar/${id}?error=` + encodeURIComponent('Un widget del artículo no es válido: ' + sanitized.errors[0]));
+  }
+  const contentHtml = sanitized.html;
   if (!excerpt) excerpt = excerptFromHtml(contentHtml);
 
   let slug = existing.slug;

@@ -1,3 +1,5 @@
+@import './widgets.css';
+
 :root {
   --bg-black: #0a1410;
   --green: #81b64c;

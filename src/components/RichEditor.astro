@@ -3,7 +3,8 @@
 //  - Visual: editor basado en Tiptap/ProseMirror (reemplaza al antiguo
 //    contenteditable + document.execCommand, API obsoleta). Solo produce el
 //    HTML que el sitio sabe mostrar: párrafos <p>, H2/H3, negrita, cursiva,
-//    subrayado, listas, citas, enlaces y tablas. Al pegar desde Word, Google
+//    subrayado, listas, citas, enlaces, tablas y widgets (tablero, problema,
+//    trivia, incrustación; ver src/lib/widgets). Al pegar desde Word, Google
 //    Docs o una web, descarta estilos/colores/fuentes en vez de arrastrarlos.
 //  - HTML: cuadro de código para escribir o pegar HTML tal cual.
 // El valor viaja en un <input type="hidden"> con el mismo nombre de siempre,
@@ -32,6 +33,11 @@ const { name, initialHtml = '' } = Astro.props;
       <button type="button" data-action="table" title="Insertar tabla" aria-label="Insertar tabla">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>
       </button>
+      <span class="editor-sep" aria-hidden="true"></span>
+      <button type="button" class="editor-widget-btn" data-action="w-chess-board" title="Insertar tablero o partida de ajedrez" aria-label="Insertar tablero o partida">♟ Tablero</button>
+      <button type="button" class="editor-widget-btn" data-action="w-chess-puzzle" title="Insertar problema de ajedrez interactivo" aria-label="Insertar problema de ajedrez">Problema</button>
+      <button type="button" class="editor-widget-btn" data-action="w-quiz" title="Insertar trivia" aria-label="Insertar trivia">Trivia</button>
+      <button type="button" class="editor-widget-btn" data-action="w-embed" title="Incrustar contenido (Lichess, Chess.com, YouTube)" aria-label="Incrustar contenido externo">Incrustar</button>
       <span class="editor-sep" aria-hidden="true"></span>
       <button type="button" data-action="clear" title="Quitar formato" aria-label="Quitar formato">Tx</button>
       <button type="button" data-action="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↺</button>
@@ -68,7 +74,9 @@ const { name, initialHtml = '' } = Astro.props;
 
   <p class="editor-note" data-note hidden>
     Al volver al modo Visual solo se conserva el formato que el editor soporta (párrafos, títulos H2/H3,
-    negrita, cursiva, subrayado, listas, citas, enlaces y tablas). Estilos, clases e incrustaciones se descartan.
+    negrita, cursiva, subrayado, listas, citas, enlaces, tablas y widgets). Estilos, clases y cualquier otro
+    HTML se descartan. Los widgets se escriben como &lt;figure data-widget="…"&gt;; lo más cómodo es
+    insertarlos con los botones de la barra en modo Visual.
   </p>
 
   <input type="hidden" name={name} />
@@ -78,6 +86,11 @@ const { name, initialHtml = '' } = Astro.props;
   import { Editor } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+  import type { WidgetType } from '../lib/widgets/schema';
+  // Los widgets (nodo del editor, formularios, vista previa) se cargan con
+  // import() dinámico a propósito: comparten código (schema, dom, mount) con el
+  // sitio público, y un import estático haría que ese código quedara dentro de
+  // este chunk (Tiptap, ~440 KB) y los lectores tendrían que descargarlo.
 
   // Un enlace sin esquema ("chess.com/x") se guardaría como ruta relativa
   // del propio sitio y quedaría roto: se completa con https://.
@@ -104,9 +117,10 @@ const { name, initialHtml = '' } = Astro.props;
     );
   }
 
-  function initEditor(wrapper: HTMLElement) {
+  async function initEditor(wrapper: HTMLElement) {
     if (wrapper.dataset.ready === 'true') return;
     wrapper.dataset.ready = 'true';
+    const { Widget } = await import('../lib/widgets/editor/widget-node');
 
     const mount = wrapper.querySelector<HTMLElement>('[data-mount]')!;
     const source = wrapper.querySelector<HTMLTextAreaElement>('[data-source]')!;
@@ -141,6 +155,7 @@ const { name, initialHtml = '' } = Astro.props;
         TableRow,
         TableHeader,
         TableCell,
+        Widget,
       ],
       editorProps: {
         attributes: { 'aria-label': 'Contenido del artículo', spellcheck: 'true' },
@@ -205,7 +220,21 @@ const { name, initialHtml = '' } = Astro.props;
       chain.extendMarkRange('link').setLink({ href }).run();
     }
 
+    async function insertWidget(type: WidgetType) {
+      const { openWidgetDialog } = await import('../lib/widgets/editor/widget-dialog');
+      const data = await openWidgetDialog(type);
+      if (!data) {
+        editor.commands.focus();
+        return;
+      }
+      editor.chain().focus().insertContent({ type: 'widget', attrs: { wtype: type, data } }).run();
+    }
+
     const actions: Record<string, () => void> = {
+      'w-chess-board': () => void insertWidget('chess-board'),
+      'w-chess-puzzle': () => void insertWidget('chess-puzzle'),
+      'w-quiz': () => void insertWidget('quiz'),
+      'w-embed': () => void insertWidget('embed'),
       bold: () => editor.chain().focus().toggleBold().run(),
       italic: () => editor.chain().focus().toggleItalic().run(),
       underline: () => editor.chain().focus().toggleUnderline().run(),

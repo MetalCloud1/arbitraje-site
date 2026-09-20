@@ -136,4 +136,17 @@ const articleJsonLd = {
       </div>
     </div>
   </article>
+
+  <script>
+    // Widgets del artículo (tablero, problema, trivia, incrustación): el código
+    // solo se descarga si el artículo tiene alguno, y cada widget se inicia
+    // cuando se acerca a la pantalla. Ver src/lib/widgets.
+    const boot = () => {
+      if (document.querySelector('.article-body [data-widget]')) {
+        import('../../lib/widgets/client/mount').then((m) => m.hydrateWidgets());
+      }
+    };
+    boot();
+    document.addEventListener('astro:page-load', boot);
+  </script>
 </BaseLayout>

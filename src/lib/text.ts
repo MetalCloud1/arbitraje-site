@@ -10,39 +10,37 @@ export function slugify(text: string): string {
     .slice(0, 80);
 }
 
+// El sanitizador vive en widgets/sanitize.ts (lista blanca con parser HTML real,
+// más validación de widgets). Se re-exporta acá para no cambiar los imports.
+export { sanitizeHtml, sanitizeArticleHtml } from './widgets/sanitize';
+
 /**
- * Limpia el HTML que sale del editor del panel antes de guardarlo.
- * El admin es una sola persona de confianza, pero igual quitamos
- * scripts, handlers inline y esquemas peligrosos como defensa extra.
+ * Quita los widgets (<figure data-widget>…</figure>) del HTML. Su contenido
+ * alternativo (lista de jugadas, FEN, preguntas) no es texto del artículo:
+ * no debe contar para el tiempo de lectura ni terminar en el extracto.
+ * Seguro con una regex porque el sanitizador emite los widgets en forma
+ * canónica: el valor de los atributos va escapado y nunca anida otro <figure>.
  */
-export function sanitizeHtml(html: string): string {
-  return html
-    // Tags peligrosos completos (incluye contenido)
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    // Tags que embeben otros documentos/objetos, no hacen falta en un artículo
-    .replace(/<\/?(iframe|object|embed|link|meta|base)\b[^>]*>/gi, '')
-    // Manejadores de eventos on* con comillas dobles, simples, o SIN comillas
-    // (ej. <img src=x onerror=alert(1)> no llevaba comillas y antes pasaba el filtro)
-    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
-    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
-    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
-    // Esquemas javascript:/data: en atributos que navegan o cargan recursos
-    .replace(/\s(href|src|action|formaction)\s*=\s*"javascript:[^"]*"/gi, ' $1="#"')
-    .replace(/\s(href|src|action|formaction)\s*=\s*'javascript:[^']*'/gi, " $1='#'")
-    .replace(/\s(href|src|action|formaction)\s*=\s*javascript:[^\s>]*/gi, ' $1="#"')
-    // style="...url(javascript:...)" o expression() (viejo IE, pero barato de bloquear)
-    .replace(/\sstyle\s*=\s*"[^"]*(javascript:|expression\()[^"]*"/gi, '')
-    .replace(/\sstyle\s*=\s*'[^']*(javascript:|expression\()[^']*'/gi, '');
+export function stripWidgets(html: string): string {
+  return html.replace(/<figure\b[^>]*\bdata-widget=[^>]*>[\s\S]*?<\/figure>/gi, ' ');
+}
+
+/**
+ * Para el RSS: los lectores de feeds no ejecutan JavaScript, así que del widget
+ * solo sirve el contenido alternativo. Se quitan los data-* (p. ej. el JSON de
+ * una trivia) para no llenar el feed de atributos que nadie usa.
+ */
+export function simplifyWidgetsForFeed(html: string): string {
+  return html.replace(/<figure\b[^>]*\bdata-widget=[^>]*>/gi, '<figure>');
 }
 
 export function estimateReadMinutes(html: string): number {
-  const words = html.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  const words = stripWidgets(html).replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 }
 
 export function excerptFromHtml(html: string, maxLen = 160): string {
-  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const text = stripWidgets(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   return text.length > maxLen ? text.slice(0, maxLen - 1).trimEnd() + '…' : text;
 }
 

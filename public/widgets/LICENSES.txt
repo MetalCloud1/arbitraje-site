@@ -1,0 +1,14 @@
+Recursos de los widgets de ajedrez
+==================================
+
+pieces/standard.svg
+  Piezas de ajedrez de Colin M.L. Burnett (Wikimedia Commons), incluidas en el
+  paquete cm-chessboard.
+  Licencia: Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)
+  https://creativecommons.org/licenses/by-sa/3.0/
+  Si modificas las piezas, la versión modificada debe publicarse bajo la misma licencia.
+
+extensions/markers/markers.svg
+  Marcadores del paquete cm-chessboard (Stefan Haack). Licencia MIT.
+
+Codigo del tablero: cm-chessboard (MIT). Reglas de ajedrez: chess.js (BSD-2-Clause).
