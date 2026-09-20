@@ -271,26 +271,38 @@ header.site-header.is-scrolled .brand-divider {
   height: 24px;
 }
 
+/* Alianza, no afiliación: el logo propio manda y el de Chess.com queda como
+   respaldo, más chico y atenuado, precedido por "En alianza con". Antes ambos
+   logos tenían el mismo tamaño percibido y el sitio podía leerse como una
+   página de Chess.com. */
+.brand-ally {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.brand-ally-label {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--gray-dim);
+  white-space: nowrap;
+  transition: font-size 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .chess-logo-ally {
-  /* 47px y no 25px: site-title.webp tiene bastante aire alrededor del
-     dibujo (el logo real ocupa ~83% de la altura del archivo), mientras
-     que logo.svg está recortado casi al límite de su viewBox (~99%).
-     A la misma altura CSS, el segundo se ve visualmente más chico y
-     desalineado con el primero -- esta altura compensa esa diferencia
-     de recorte para que el tamaño *percibido* de ambos logos coincida. */
-  height: 47px;
+  height: 26px;
   width: auto;
   opacity: 0.8;
-  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.3s ease;
+  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 .brand-cluster:hover .chess-logo-ally {
   opacity: 1;
-  transform: scale(1.06);
 }
 
 header.site-header.is-scrolled .chess-logo-ally {
-  height: 36px;
+  height: 22px;
 }
 
 nav.main-nav {
@@ -899,15 +911,14 @@ body.menu-open {
   .brand-divider {
     height: 26px;
   }
-  .chess-logo-ally {
-    height: 34px;
+  .brand-ally-label {
+    font-size: 10.5px;
   }
-  /* Sin esto, el estado "scrolled" en mobile heredaba por especificidad
-     el height:36px de la regla desktop-scrolled (misma especificidad,
-     pero definida antes en el archivo), en vez de escalar junto con el
-     resto de los tamaños mobile. */
+  .chess-logo-ally {
+    height: 21px;
+  }
   header.site-header.is-scrolled .chess-logo-ally {
-    height: 27px;
+    height: 18px;
   }
 }
 
@@ -1409,73 +1420,6 @@ body.menu-open {
   .featured-media {
     aspect-ratio: 16 / 9;
   }
-}
-
-/* ---------- COMING SOON ---------- */
-.coming-soon {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 110px 24px 130px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.coming-soon-icon {
-  color: var(--green);
-  margin-bottom: 24px;
-  animation: floatPiece 3.2s ease-in-out infinite;
-}
-
-@keyframes floatPiece {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(4deg); }
-}
-
-.coming-soon h1 {
-  font-size: 30px;
-  font-weight: 800;
-  margin-bottom: 14px;
-}
-
-.coming-soon-msg {
-  font-size: 17px;
-  color: var(--white);
-  margin-bottom: 8px;
-}
-
-.coming-soon-sub {
-  font-size: 14px;
-  color: var(--gray-dim);
-  margin-bottom: 32px;
-}
-
-.coming-soon-back {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--green-bright);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  transition: gap 0.2s ease, border-color 0.25s ease, background 0.25s ease;
-}
-
-.coming-soon-back svg {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.coming-soon-back:hover {
-  gap: 10px;
-  border-color: rgba(151, 204, 95, 0.4);
-  background: rgba(151, 204, 95, 0.08);
-}
-
-.coming-soon-back:hover svg {
-  transform: translateX(3px);
 }
 
 /* ---------- ARTICLE DETAIL ---------- */
@@ -3024,7 +2968,7 @@ table.admin-table tr:last-child td {
 .postular-page {
   max-width: 640px;
   margin: 0 auto;
-  padding: 40px 0 80px;
+  padding: 40px 30px 80px;
 }
 
 .postular-page h1 {
@@ -3642,5 +3586,172 @@ table.admin-table tr:last-child td {
 
   .entrenador-detail-header h1 {
     font-size: 22px;
+  }
+}
+
+/* ---------- PÁGINAS DE TEXTO (Sobre Nosotros, Privacidad, Términos) ----------
+   Reutilizan .article-detail / .article-body (misma tipografía que un
+   artículo) con .article-body-cont para quitar la letra capital, que en un
+   texto legal no tiene sentido. Estos ajustes solo bajan la escala: los
+   documentos tienen muchos encabezados y no deben leerse como un artículo
+   de portada. */
+.doc-meta {
+  font-size: 14px;
+  color: var(--gray-dim);
+  margin: -6px 0 36px;
+}
+
+.doc-body {
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.doc-body h2 {
+  font-size: 24px;
+  margin: 46px 0 14px;
+}
+
+.doc-body h3 {
+  font-size: 19px;
+  margin: 30px 0 12px;
+}
+
+.doc-body .doc-lead {
+  font-size: 22px;
+  line-height: 1.65;
+  color: var(--white);
+  margin-bottom: 30px;
+}
+
+.doc-body .doc-mission {
+  font-style: normal;
+  font-size: 21px;
+  line-height: 1.6;
+  color: var(--white);
+  margin: 8px 0 8px;
+}
+
+@media (max-width: 600px) {
+  .doc-body {
+    font-size: 17px;
+  }
+
+  .doc-body .doc-lead {
+    font-size: 19.5px;
+  }
+
+  .doc-body .doc-mission {
+    font-size: 18.5px;
+    padding: 18px 18px;
+  }
+
+  .doc-body h2 {
+    font-size: 21px;
+    margin: 38px 0 12px;
+  }
+}
+
+/* ---------- MAIN + FOOTER ---------- */
+.site-main {
+  /* Evita que el footer suba a media pantalla en páginas cortas. */
+  min-height: 60vh;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: rgba(6, 12, 9, 0.9);
+  padding: 56px 0 32px;
+  font-family: var(--font-sans);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+
+.footer-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gray);
+  max-width: 340px;
+  margin-bottom: 18px;
+}
+
+.footer-social {
+  display: flex;
+  gap: 8px;
+}
+
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--gray);
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.footer-social a:hover {
+  color: var(--green-bright);
+  border-color: rgba(151, 204, 95, 0.4);
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.footer-col a {
+  font-size: 14px;
+  color: var(--gray);
+  padding: 5px 0;
+  transition: color var(--dur-fast) ease;
+}
+
+.footer-col a:hover {
+  color: var(--green-bright);
+}
+
+.footer-legal {
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--gray-dim);
+}
+
+@media (max-width: 860px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 24px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 44px 0 28px;
   }
 }

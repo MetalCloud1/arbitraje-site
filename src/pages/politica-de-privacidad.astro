@@ -1,0 +1,192 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL, LEGAL_UPDATED } from '../lib/site';
+---
+<BaseLayout
+  title={`Política de Privacidad - ${SITE_NAME}`}
+  description="Qué datos recopila La Hora del Arbitraje, para qué los usamos, con quién los compartimos y cómo puedes ejercer tus derechos."
+>
+  <div class="container">
+    <article class="article-detail doc-page">
+      <h1>Política de Privacidad</h1>
+      <p class="doc-meta">Última actualización: {LEGAL_UPDATED}</p>
+
+      <div class="article-body article-body-cont doc-body">
+        <p>
+          En {SITE_NAME} ({SITE_DOMAIN}, en adelante el «Sitio») nos importa la privacidad de quienes nos
+          leen y de quienes nos escriben. Esta política explica qué información recopilamos, para qué la
+          usamos, con quién la compartimos y qué puedes hacer para controlarla. Está redactada conforme a
+          la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (México) y
+          sirve también como aviso de privacidad.
+        </p>
+
+        <h2>1. Responsable de los datos</h2>
+        <p>
+          El responsable del tratamiento de tus datos personales es el equipo editorial de {SITE_NAME}.
+          Para cualquier asunto relacionado con esta política puedes escribirnos a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </p>
+
+        <h2>2. Qué información recopilamos</h2>
+        <h3>Información que tú nos das</h3>
+        <p>
+          Leer el Sitio no requiere crear una cuenta ni darnos datos personales. Solo recopilamos
+          información cuando tú decides enviarla:
+        </p>
+        <ul>
+          <li>
+            <strong>Formularios de postulación o reclamo de perfil</strong> (directorios de árbitros y
+            entrenadores): nombre completo, estado, título de arbitraje o de ajedrez, ELO clásico (en el
+            caso de entrenadores), ID FIDE, correo electrónico y una descripción de tu trayectoria.
+          </li>
+          <li>
+            <strong>Correos que nos envías</strong> a la dirección de contacto: tu dirección de correo y
+            el contenido del mensaje.
+          </li>
+        </ul>
+
+        <h3>Información que se genera de forma automática</h3>
+        <p>
+          Cuando envías un formulario registramos tu dirección IP, el agente de usuario de tu navegador y
+          la fecha del envío, con fines de seguridad y para detectar abusos o envíos automatizados.
+          También usamos tu dirección IP para limitar el número de intentos por hora en los formularios
+          y en el acceso de administración; ese contador se borra por sí solo al terminar el periodo de
+          limitación (15 minutos o 1 hora, según el caso).
+        </p>
+        <p>
+          Además, nuestros proveedores de infraestructura (ver la sección 6) pueden registrar datos
+          técnicos de las visitas, como IP, tipo de dispositivo y páginas solicitadas, para operar y
+          proteger el servicio.
+        </p>
+
+        <h2>3. Para qué usamos tu información</h2>
+        <ul>
+          <li>Revisar y responder las postulaciones y solicitudes de reclamo de perfil.</li>
+          <li>Crear, verificar y mantener actualizados los perfiles de los directorios.</li>
+          <li>Responder tus mensajes y consultas.</li>
+          <li>Proteger el Sitio contra spam, abusos y accesos no autorizados.</li>
+          <li>Mantener y mejorar el funcionamiento del Sitio.</li>
+        </ul>
+        <p>
+          No vendemos ni alquilamos tus datos personales. Al enviar un formulario aceptas que los
+          tratemos para las finalidades descritas.
+        </p>
+
+        <h2>4. Perfiles públicos en los directorios</h2>
+        <p>
+          Los directorios de árbitros y entrenadores muestran información profesional pública: nombre,
+          estado, títulos, ELO clásico (entrenadores), ID FIDE, fotografía y semblanza. Un perfil puede
+          haber sido creado por nuestro equipo a partir de información profesional disponible
+          públicamente. Tu correo electrónico solo se muestra en el perfil si tú mismo reclamaste y
+          verificaste ese perfil.
+        </p>
+        <p>
+          Si hay un perfil sobre ti y quieres corregirlo, reclamarlo o que lo retiremos, escríbenos a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> y lo atenderemos a la brevedad.
+        </p>
+
+        <h2>5. Cookies y tecnologías similares</h2>
+        <p>
+          El Sitio solo utiliza una cookie propia estrictamente necesaria: la de sesión del panel de
+          administración, que no se le asigna a los lectores. No usamos cookies propias de seguimiento ni
+          de análisis de comportamiento.
+        </p>
+        <p>
+          Algunos contenidos de terceros incrustados en los artículos (videos de YouTube, tableros de
+          Lichess o Chess.com) pueden establecer sus propias cookies o recopilar datos cuando los
+          reproduces. Usamos el modo de privacidad mejorada de YouTube (youtube-nocookie.com) siempre
+          que es posible. La verificación anti-bots de Cloudflare (Turnstile), que aparece en algunos
+          formularios, puede usar el almacenamiento de tu navegador para distinguir a personas de
+          programas automatizados. Puedes bloquear o eliminar las cookies desde la configuración de tu navegador;
+          hacerlo no impide leer el Sitio.
+        </p>
+
+        <h2>6. Servicios de terceros</h2>
+        <p>Para operar el Sitio nos apoyamos en proveedores que pueden procesar datos por nuestra cuenta:</p>
+        <ul>
+          <li>
+            <strong>Cloudflare</strong>: alojamiento, red de entrega de contenido, base de datos,
+            almacenamiento de imágenes y verificación anti-bots (Turnstile).
+          </li>
+          <li>
+            <strong>Resend</strong>: envío del correo interno de notificación cuando alguien completa un
+            formulario.
+          </li>
+          <li>
+            <strong>Google Fonts</strong>: carga de las tipografías del Sitio; Google recibe la dirección
+            IP del visitante para entregarlas.
+          </li>
+          <li>
+            <strong>YouTube, Lichess y Chess.com</strong>: contenido incrustado en algunos artículos.
+          </li>
+        </ul>
+        <p>
+          Algunos de estos proveedores están ubicados fuera de México, por lo que tus datos pueden
+          procesarse en otros países. Al usar el Sitio o enviarnos un formulario consientes esa
+          transferencia, necesaria para prestar el servicio.
+        </p>
+
+        <h2>7. Publicidad</h2>
+        <p>
+          El Sitio puede mostrar anuncios de Google AdSense u otras redes publicitarias. Cuando esto
+          ocurre, proveedores externos, incluido Google, utilizan cookies para mostrar anuncios basados en
+          tus visitas anteriores a este y a otros sitios web. El uso de cookies de publicidad permite a
+          Google y a sus socios mostrarte anuncios según tu navegación en Internet.
+        </p>
+        <p>
+          Puedes desactivar la publicidad personalizada en la
+          <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer nofollow">configuración de anuncios de Google</a>.
+          También puedes optar por no participar en el uso de cookies de proveedores externos para
+          publicidad personalizada en
+          <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer nofollow">aboutads.info</a>.
+          Para saber cómo Google usa la información de los sitios que utilizan sus servicios, consulta
+          <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer nofollow">policies.google.com/technologies/partner-sites</a>.
+        </p>
+
+        <h2>8. Cuánto tiempo conservamos tus datos</h2>
+        <p>
+          Conservamos los datos de las postulaciones y de los perfiles mientras sean necesarios para
+          mantener el directorio o atender tu solicitud, y los eliminamos o anonimizamos cuando lo
+          solicites o cuando dejen de ser necesarios. Los contadores de límite de intentos por IP se
+          eliminan automáticamente en un máximo de una hora.
+        </p>
+
+        <h2>9. Seguridad</h2>
+        <p>
+          Aplicamos medidas técnicas y administrativas razonables para proteger tu información: conexión
+          cifrada (HTTPS), acceso restringido al panel de administración, verificación anti-bots y
+          límites de intentos. Ningún sistema es infalible, pero trabajamos para reducir los riesgos.
+        </p>
+
+        <h2>10. Tus derechos</h2>
+        <p>
+          Puedes acceder a tus datos personales, rectificarlos si son inexactos, cancelarlos u oponerte a
+          su tratamiento (derechos ARCO), así como revocar el consentimiento que nos diste. Para
+          ejercerlos, envía un correo a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> indicando
+          tu nombre, el derecho que quieres ejercer y los datos a los que se refiere tu solicitud, de
+          modo que podamos verificar tu identidad y responderte.
+        </p>
+
+        <h2>11. Menores de edad</h2>
+        <p>
+          El Sitio no está dirigido a menores de 13 años y no recopilamos a sabiendas datos personales de
+          niños. Si eres menor de 18 años, pide autorización a tu madre, padre o tutor antes de enviarnos
+          información. Si crees que un menor nos envió datos sin permiso, escríbenos y los eliminaremos.
+        </p>
+
+        <h2>12. Cambios a esta política</h2>
+        <p>
+          Podemos actualizar esta política cuando cambien el Sitio o la normativa aplicable. La fecha de
+          la última revisión aparece al inicio de esta página; el uso continuado del Sitio después de un
+          cambio implica que lo aceptas.
+        </p>
+
+        <h2>13. Contacto</h2>
+        <p>
+          Si tienes preguntas sobre esta política o sobre el tratamiento de tus datos, escríbenos a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </p>
+      </div>
+    </article>
+  </div>
+</BaseLayout>

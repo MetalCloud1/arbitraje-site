@@ -3,8 +3,9 @@
 // solo identidad de marca) y se muestra en todas las pantallas: en
 // desktop como fila de enlaces, en mobile como una fila con scroll
 // horizontal (ver .main-nav en global.css). El hamburguesa del Header
-// sigue existiendo aparte, para lo que no es "principal" (Sobre Nosotros,
-// subcategorías de Artículos).
+// sigue existiendo aparte para móvil (subcategorías de Artículos y
+// enlaces legales). "Sobre Nosotros" vive aquí para que también sea
+// visible en escritorio, donde el hamburguesa se oculta.
 import SearchBox from './SearchBox.astro';
 
 const path = Astro.url.pathname;
@@ -33,8 +34,8 @@ const isActive = (href: string) => (path === href ? 'active' : '');
       </div>
 
       <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
-      <a href="/cursos" class={isActive('/cursos')}>Cursos</a>
       <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
+      <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
     </nav>
 
     <SearchBox />

@@ -120,10 +120,9 @@ export function getTituloAjedrezTier(titulo: string | null): TituloAjedrezTierMe
   return TIER_BY_TITULO[titulo] ?? DEFAULT_TIER;
 }
 
-/** Formatea el ELO clásico con separador de miles ("2 340"). null -> "—". */
 export function formatElo(elo: number | null): string {
   if (elo == null) return '—';
-  return elo.toLocaleString('es-MX');
+  return elo.toString();
 }
 
 export type EloClasicoParseResult = { ok: true; value: number | null } | { ok: false };

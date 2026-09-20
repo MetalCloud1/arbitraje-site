@@ -17,6 +17,8 @@ const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string 
   { path: '/arbitros', changefreq: 'weekly', priority: '0.7' },
   { path: '/entrenadores', changefreq: 'weekly', priority: '0.7' },
   { path: '/sobre-nosotros', changefreq: 'yearly', priority: '0.4' },
+  { path: '/politica-de-privacidad', changefreq: 'yearly', priority: '0.3' },
+  { path: '/terminos-y-condiciones', changefreq: 'yearly', priority: '0.3' },
 ];
 
 function escapeXml(value: string): string {

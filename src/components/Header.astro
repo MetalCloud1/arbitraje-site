@@ -15,7 +15,10 @@ const isActive = (href: string) => (path === href ? 'active' : '');
           />
         </h1>
       <div class="brand-divider"></div>
-      <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" width="92" height="26" />
+      <div class="brand-ally">
+        <span class="brand-ally-label">En alianza con</span>
+        <img class="chess-logo chess-logo-ally" src="/logo.svg" alt="Chess.com" width="92" height="26" />
+      </div>
     </a>
 
     <div class="header-right">
@@ -56,6 +59,8 @@ const isActive = (href: string) => (path === href ? 'active' : '');
   </div>
 
   <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
+  <a href="/politica-de-privacidad" class={isActive('/politica-de-privacidad')}>Política de Privacidad</a>
+  <a href="/terminos-y-condiciones" class={isActive('/terminos-y-condiciones')}>Términos y Condiciones</a>
 </nav>
 
 <script>
