@@ -4,6 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getEntrenadorBySlug } from '../../lib/entrenadores';
 import { getTituloAjedrezTier, formatElo } from '../../lib/titulos-ajedrez';
 import { getTituloTier } from '../../lib/postulacion';
+import { perfilTieneValorParaIndexar } from '../../lib/seo';
 import QueenMark from '../../components/QueenMark.astro';
 
 export const prerender = false;
@@ -15,6 +16,9 @@ const entrenador = slug ? await getEntrenadorBySlug(db, slug) : null;
 if (!entrenador) {
   return Astro.redirect('/entrenadores');
 }
+
+// Mismo criterio que árbitros: sin bio suficiente, no se indexa.
+const noindex = !perfilTieneValorParaIndexar(entrenador.bio);
 
 const fotoUrl = entrenador.foto_key ? `/api/img/${entrenador.foto_key}` : null;
 const tierAjedrez = getTituloAjedrezTier(entrenador.titulo_ajedrez);
@@ -29,6 +33,7 @@ const mostrarEmail = !!entrenador.reclamado_en && !!entrenador.email;
   title={`${entrenador.nombre_completo} - Entrenadores - La Hora del Arbitraje`}
   description={entrenador.bio ?? undefined}
   image={fotoUrl ?? undefined}
+  noindex={noindex}
 >
   <div class="container">
     <article class="entrenador-detail">

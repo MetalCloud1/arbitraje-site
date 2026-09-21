@@ -4,6 +4,7 @@ import { listAllArticles } from '../lib/db';
 import { listAllArbitros } from '../lib/arbitros';
 import { listAllEntrenadores } from '../lib/entrenadores';
 import { listAllClubes } from '../lib/clubes';
+import { perfilTieneValorParaIndexar } from '../lib/seo';
 
 // @astrojs/sitemap no sirve aquí: según su propia documentación, no puede
 // generar entradas para rutas dinámicas en modo SSR (nuestros artículos
@@ -58,35 +59,41 @@ export const GET: APIRoute = async ({ url }) => {
   </url>`;
   });
 
-  const arbitroEntries = arbitros.map((arbitro) => {
-    const lastmod = new Date(arbitro.updated_at ?? arbitro.created_at).toISOString();
-    return `  <url>
+  const arbitroEntries = arbitros
+    .filter((arbitro) => perfilTieneValorParaIndexar(arbitro.bio))
+    .map((arbitro) => {
+      const lastmod = new Date(arbitro.updated_at ?? arbitro.created_at).toISOString();
+      return `  <url>
     <loc>${escapeXml(`${url.origin}/arbitros/${arbitro.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`;
-  });
+    });
 
-  const entrenadorEntries = entrenadores.map((entrenador) => {
-    const lastmod = new Date(entrenador.updated_at ?? entrenador.created_at).toISOString();
-    return `  <url>
+  const entrenadorEntries = entrenadores
+    .filter((entrenador) => perfilTieneValorParaIndexar(entrenador.bio))
+    .map((entrenador) => {
+      const lastmod = new Date(entrenador.updated_at ?? entrenador.created_at).toISOString();
+      return `  <url>
     <loc>${escapeXml(`${url.origin}/entrenadores/${entrenador.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`;
-  });
+    });
 
-  const clubEntries = clubes.map((club) => {
-    const lastmod = new Date(club.updated_at ?? club.created_at).toISOString();
-    return `  <url>
+  const clubEntries = clubes
+    .filter((club) => perfilTieneValorParaIndexar(club.bio))
+    .map((club) => {
+      const lastmod = new Date(club.updated_at ?? club.created_at).toISOString();
+      return `  <url>
     <loc>${escapeXml(`${url.origin}/clubes/${club.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`;
-  });
+    });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

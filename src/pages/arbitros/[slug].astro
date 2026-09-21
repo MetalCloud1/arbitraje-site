@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArbitroBySlug } from '../../lib/arbitros';
 import { getTituloTier } from '../../lib/postulacion';
+import { perfilTieneValorParaIndexar } from '../../lib/seo';
 import PawnMark from '../../components/PawnMark.astro';
 
 export const prerender = false;
@@ -14,6 +15,13 @@ const arbitro = slug ? await getArbitroBySlug(db, slug) : null;
 if (!arbitro) {
   return Astro.redirect('/arbitros');
 }
+
+// Perfiles sin bio o con bio muy corta no se indexan: son la parte del
+// directorio que crece sola y sin texto propio, justo el patrón de "thin
+// content" que puede arrastrar la percepción de calidad de todo el sitio.
+// En cuanto el árbitro reclame su perfil y escriba una bio real, esta misma
+// página se indexa sola sin tocar nada.
+const noindex = !perfilTieneValorParaIndexar(arbitro.bio);
 
 const fotoUrl = arbitro.foto_key ? `/api/img/${arbitro.foto_key}` : null;
 const tier = getTituloTier(arbitro.titulo);
@@ -29,6 +37,7 @@ const mostrarEmail = !!arbitro.reclamado_en && !!arbitro.email;
   title={`${arbitro.nombre_completo} - Árbitros - La Hora del Arbitraje`}
   description={arbitro.bio ?? undefined}
   image={fotoUrl ?? undefined}
+  noindex={noindex}
 >
   <div class="container">
     <article class="arbitro-detail">

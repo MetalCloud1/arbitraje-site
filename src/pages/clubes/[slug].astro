@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getClubBySlug, diasImparteToArray } from '../../lib/clubes';
+import { perfilTieneValorParaIndexar } from '../../lib/seo';
 
 export const prerender = false;
 
@@ -12,6 +13,9 @@ const club = slug ? await getClubBySlug(db, slug) : null;
 if (!club) {
   return Astro.redirect('/clubes');
 }
+
+// Mismo criterio que árbitros y entrenadores: sin bio suficiente, no se indexa.
+const noindex = !perfilTieneValorParaIndexar(club.bio);
 
 const logoUrl = club.logo_key ? `/api/img/${club.logo_key}` : null;
 const dias = diasImparteToArray(club.dias_imparte);
@@ -26,6 +30,7 @@ const MODALIDAD_LABEL: Record<string, string> = {
   title={`${club.nombre} - Clubes - La Hora del Arbitraje`}
   description={club.bio ?? undefined}
   image={logoUrl ?? undefined}
+  noindex={noindex}
 >
   <div class="container">
     <article class="club-detail">
