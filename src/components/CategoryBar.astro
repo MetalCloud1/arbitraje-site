@@ -4,6 +4,8 @@
 // desktop como fila de enlaces, en mobile como una fila con scroll
 // horizontal (ver .main-nav en global.css). Las subcategorías de Artículos
 // se eligen con los chips de /articulos, en todas las pantallas.
+// En mobile esta barra no se muestra: la navegación vive en el menú lateral
+// que abre la hamburguesa del header (ver Header.astro).
 import SearchBox from './SearchBox.astro';
 
 const path = Astro.url.pathname;
@@ -21,22 +23,5 @@ const isActive = (href: string) => (path === href ? 'active' : '');
     </nav>
 
     <SearchBox />
-  </div>
-
-  {/* Panel del menú hamburguesa (mobile). Vive dentro de .category-bar
-      (no de .category-bar-inner) para no depender del layout del nav de
-      escritorio; se muestra/oculta por completo con la clase
-      body.mobile-nav-open que activa el botón de Header.astro. Solo trae
-      los enlaces -- el buscador para mobile vive en el header, al lado de
-      la hamburguesa, no acá adentro. */}
-  <div class="container">
-    <nav id="mobile-nav-panel" class="mobile-nav-panel" aria-label="Menú de navegación">
-      <a href="/" class={`mobile-nav-link ${isActive('/')}`}>Inicio</a>
-      <a href="/articulos" class={`mobile-nav-link ${path.startsWith('/articulos') ? 'active' : ''}`}>Artículos</a>
-      <a href="/arbitros" class={`mobile-nav-link ${isActive('/arbitros')}`}>Árbitros</a>
-      <a href="/entrenadores" class={`mobile-nav-link ${isActive('/entrenadores')}`}>Entrenadores</a>
-      <a href="/clubes" class={`mobile-nav-link ${path.startsWith('/clubes') ? 'active' : ''}`}>Clubes</a>
-      <a href="/sobre-nosotros" class={`mobile-nav-link ${isActive('/sobre-nosotros')}`}>Sobre Nosotros</a>
-    </nav>
   </div>
 </div>

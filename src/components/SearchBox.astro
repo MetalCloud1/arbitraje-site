@@ -30,6 +30,10 @@ const { panelId = 'search-panel' } = Astro.props;
     </svg>
   </button>
 
+  {/* Fondo oscuro que se ve solo en mobile (ver .search-backdrop en
+      global.css): oscurece la página bajo el panel y, al tocarlo, cierra. */}
+  <div class="search-backdrop" data-search-backdrop aria-hidden="true"></div>
+
   <div class="search-panel" id={panelId} data-search-panel hidden>
     <form class="search-form" role="search" data-search-form>
       <svg class="search-form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -43,6 +47,9 @@ const { panelId = 'search-panel' } = Astro.props;
         placeholder="Buscar artículos, categorías…"
         aria-label="Buscar artículos"
         autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        enterkeyhint="search"
       />
       <button type="button" class="search-clear" data-search-clear hidden aria-label="Limpiar búsqueda">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -78,6 +85,7 @@ const { panelId = 'search-panel' } = Astro.props;
     const input = root.querySelector('[data-search-input]');
     const clearBtn = root.querySelector('[data-search-clear]');
     const resultsBox = root.querySelector('[data-search-results]');
+    const backdrop = root.querySelector('[data-search-backdrop]');
 
     if (
       !(trigger instanceof HTMLButtonElement) ||
@@ -241,6 +249,7 @@ const { panelId = 'search-panel' } = Astro.props;
     };
 
     trigger.addEventListener('click', onTriggerClick);
+    backdrop?.addEventListener('click', closePanel);
     clearBtn.addEventListener('click', onClear);
     input.addEventListener('input', onInput);
     input.addEventListener('keydown', onInputKeydown);

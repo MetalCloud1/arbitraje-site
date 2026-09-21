@@ -387,10 +387,6 @@ nav.main-nav a.active::after {
   display: none;
 }
 
-.mobile-search .search-panel {
-  right: -8px;
-}
-
 /* Botón hamburguesa: solo existe visualmente en mobile (ver @media abajo),
    donde toma el lugar de .social-links en el header. */
 .mobile-menu-toggle {
@@ -404,18 +400,6 @@ nav.main-nav a.active::after {
   background: transparent;
   border: none;
   cursor: pointer;
-}
-
-.mobile-menu-toggle .icon-close {
-  display: none;
-}
-
-.mobile-menu-toggle[aria-expanded='true'] .icon-menu {
-  display: none;
-}
-
-.mobile-menu-toggle[aria-expanded='true'] .icon-close {
-  display: block;
 }
 
 @media (max-width: 860px) {
@@ -574,6 +558,10 @@ nav.main-nav a.active::after {
   cursor: pointer;
   flex-shrink: 0;
   transition: color var(--dur-fast) ease;
+}
+
+.search-clear[hidden] {
+  display: none; /* el display:flex de arriba pisaba el atributo hidden y la X se veía con el campo vacío */
 }
 
 .search-clear svg {
@@ -746,6 +734,151 @@ nav.main-nav a.active::after {
   }
 }
 
+/* Por debajo de ~480px el header-inner ya no entra en una sola fila: el
+   logo propio + el sello "En alianza con Chess.com" + la lupa + la
+   hamburguesa suman más ancho que el viewport, y como .brand-cluster no
+   puede encoger (su contenido tiene un ancho mínimo: el logo no se puede
+   achicar más ni el texto partir), lo que cede es el .header-right,
+   empujado fuera de la pantalla -- ahí es donde se cortaba la hamburguesa.
+   El sello de alianza es la pieza menos esencial de esa fila (ya está
+   igual en el footer), así que es la que se quita para liberar espacio;
+   el propio logo y los controles (buscador, menú) se quedan siempre
+   visibles, que es lo que de verdad hace falta para navegar. */
+@media (max-width: 480px) {
+  .brand-divider,
+  .brand-ally {
+    display: none;
+  }
+}
+
+/* ---------- SEARCH (mobile) ----------
+   En mobile el panel deja de ser una tarjeta anclada al botón (que se
+   salía de la pantalla por la izquierda: el botón está a la derecha pero no
+   en el borde) y pasa a ser una hoja que baja pegada al header, a todo el
+   ancho, con un fondo oscuro debajo.
+   Truco: se "desancla" al botón (.search-box static) para que el panel se
+   posicione respecto del <header> sticky. Así queda siempre justo debajo,
+   aunque el header cambie de alto al hacer scroll. */
+.search-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .mobile-search .search-box {
+    position: static;
+  }
+
+  .mobile-search .search-panel {
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: auto;
+    padding: 12px 20px 16px;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid rgba(151, 204, 95, 0.18);
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 28px 56px rgba(0, 0, 0, 0.55);
+    transform-origin: top center;
+    animation: searchSheetIn 320ms var(--ease-editorial) both;
+  }
+
+  .mobile-search .search-box.is-open .search-backdrop {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(3, 8, 5, 0.62);
+    animation: fadeIn 240ms ease both;
+    z-index: 89; /* justo debajo del panel (90) */
+  }
+
+  /* 16px: por debajo de eso Safari en iPhone hace zoom al enfocar el campo. */
+  .mobile-search .search-form {
+    padding: 4px 6px 4px 14px;
+    border-radius: 12px;
+    transition: border-color var(--dur-fast) ease;
+  }
+
+  .mobile-search .search-form:focus-within {
+    border-color: rgba(151, 204, 95, 0.5);
+  }
+
+  .mobile-search .search-form-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-search .search-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .mobile-search .search-clear {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mobile-search .search-clear svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-search .search-results {
+    max-height: 50vh;
+    max-height: 50dvh;
+    margin-top: 10px;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-search .search-hint {
+    padding: 10px 4px 2px;
+    font-size: 14px;
+  }
+
+  .mobile-search .search-result {
+    gap: 14px;
+    padding: 10px 6px;
+    min-height: 64px;
+  }
+
+  .mobile-search .search-result-thumb {
+    width: 76px;
+    height: 52px;
+  }
+
+  .mobile-search .search-result-category {
+    font-size: 11px;
+  }
+
+  .mobile-search .search-result-title {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .mobile-search .search-view-all {
+    padding: 14px 4px 4px;
+    font-size: 14px;
+  }
+
+  .mobile-search .search-skeleton-row {
+    height: 52px;
+  }
+
+  /* Mientras el buscador está abierto la página de abajo no scrollea. */
+  html:has(.mobile-search .search-box.is-open) {
+    overflow: hidden;
+  }
+}
+
+@keyframes searchSheetIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ---------- CATEGORY BAR ----------
    Segunda fila, fija debajo del header, con la navegación principal y el
    buscador. Reemplaza tanto al masthead (foto+texto) como a la fila de
@@ -791,54 +924,199 @@ nav.main-nav a.active::after {
 /* En mobile, la fila de categorías con scroll horizontal desaparece del
    todo -- no era clara como navegación ahí (nada avisa que hay más
    pestañas fuera de pantalla) -- y en su lugar el menú hamburguesa del
-   header abre .mobile-nav-panel con los mismos enlaces en una lista
-   vertical. En desktop nada de esto aplica: se sigue viendo la fila de
-   siempre. */
+   header abre el menú lateral (.mobile-drawer, más abajo) con los mismos
+   enlaces en una lista vertical. En desktop nada de esto aplica: se sigue
+   viendo la fila de siempre. */
 @media (max-width: 860px) {
   .category-bar {
     display: none;
   }
-
-  body.mobile-nav-open .category-bar {
-    display: block;
-  }
-
-  .category-bar-inner {
-    display: none;
-  }
 }
 
-.mobile-nav-panel {
-  display: none;
-  flex-direction: column;
-  padding: 14px 0 20px;
-}
+/* ---------- MOBILE DRAWER (menú lateral) ----------
+   <dialog> modal que entra desde la derecha. Técnicas usadas:
+   - top layer: showModal() lo saca del flujo de apilamiento normal, así que
+     no compite con z-index ni queda atrapado por el header sticky.
+   - @starting-style + transition-behavior: allow-discrete: permiten animar
+     la entrada Y la salida de un elemento que pasa de display:none a
+     visible, sin JS ni esperar transitionend. En navegadores que no lo
+     soportan el menú simplemente aparece sin animar (sigue funcionando).
+   - Apertura un poco más lenta que el cierre: al abrir el usuario mira, al
+     cerrar ya quiere seguir con lo suyo.
+   Los ms y la curva están juntos acá abajo para ajustarlos en un solo lugar. */
+.mobile-drawer {
+  --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --drawer-open: 380ms;
+  --drawer-close: 260ms;
 
-.mobile-nav-link {
-  padding: 14px 4px;
-  font-size: 15px;
-  font-weight: 600;
+  /* Reset del <dialog> nativo (centrado, con borde y tamaño máximo). */
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--border);
+  max-width: none;
+  max-height: none;
+  width: min(340px, 86vw);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #0c1812;
   color: var(--white);
-  border-bottom: 1px solid var(--border);
+  box-shadow: -24px 0 64px rgba(0, 0, 0, 0.55);
+  overscroll-behavior: contain;
+  touch-action: pan-y; /* el scroll vertical es del navegador; el horizontal lo maneja el gesto de cerrar */
+
+  /* Estado cerrado (y punto de partida/llegada de las animaciones). */
+  translate: 100% 0;
+  transition:
+    translate var(--drawer-close) var(--drawer-ease),
+    overlay var(--drawer-close) allow-discrete,
+    display var(--drawer-close) allow-discrete;
 }
 
-.mobile-nav-link:last-child {
-  border-bottom: none;
+.mobile-drawer[open] {
+  translate: 0 0;
+  transition-duration: var(--drawer-open);
 }
 
-.mobile-nav-link.active {
+@starting-style {
+  .mobile-drawer[open] {
+    translate: 100% 0;
+  }
+}
+
+.mobile-drawer::backdrop {
+  background: rgba(3, 8, 5, 0);
+  transition:
+    background-color var(--drawer-close, 260ms) ease,
+    overlay var(--drawer-close, 260ms) allow-discrete,
+    display var(--drawer-close, 260ms) allow-discrete;
+}
+
+.mobile-drawer[open]::backdrop {
+  background: rgba(3, 8, 5, 0.66);
+  transition-duration: 380ms;
+}
+
+@starting-style {
+  .mobile-drawer[open]::backdrop {
+    background: rgba(3, 8, 5, 0);
+  }
+}
+
+/* Con la página tapada por el menú, que no siga scrolleando por debajo. */
+html:has(.mobile-drawer[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* El reset global de arriba usa "*", que no alcanza a ::backdrop. */
+  .mobile-drawer,
+  .mobile-drawer::backdrop {
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.drawer-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  /* Este es el contenedor que scrollea, y touch-action solo se hereda
+     hasta el contenedor de scroll más cercano: tiene que repetirse acá
+     (no basta con ponerlo en el <dialog>) para que el gesto horizontal de
+     "arrastrar para cerrar" llegue al JS sin que el navegador lo cancele. */
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding: 8px 20px max(24px, env(safe-area-inset-bottom));
+}
+
+.drawer-head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0 12px;
+}
+
+.drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px; /* alinea la X con el borde de contenido */
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray);
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.drawer-close:hover,
+.drawer-close:focus-visible {
+  background: rgba(151, 204, 95, 0.12);
   color: var(--green-bright);
 }
 
-/* Esta regla tiene que venir DESPUÉS de la definición base de
-   .mobile-nav-panel (arriba) para ganarle en la cascada -- misma
-   especificidad, así que gana quien esté más abajo en el archivo. Antes
-   estaba antes que la base y la base (display:none) la pisaba, por eso el
-   panel nunca se veía y solo quedaba la línea del borde de .category-bar. */
-@media (max-width: 860px) {
-  .mobile-nav-panel {
-    display: flex;
-  }
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-link {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 14px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--white);
+  border-bottom: 1px solid var(--border);
+  transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+
+.drawer-link:hover,
+.drawer-link:focus-visible {
+  background: rgba(151, 204, 95, 0.06);
+  color: var(--green-bright);
+}
+
+/* La página actual se marca con la barra verde a la izquierda, no solo con
+   el color, para que se distinga sin depender de percibir el verde. */
+.drawer-link.active {
+  color: var(--green-bright);
+  background: rgba(151, 204, 95, 0.08);
+  box-shadow: inset 3px 0 0 var(--green-bright);
+}
+
+.drawer-foot {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.drawer-social {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.drawer-social:hover,
+.drawer-social:focus-visible {
+  color: var(--green-bright);
+  border-color: rgba(151, 204, 95, 0.35);
 }
 
 /* ---------- ARTICLE SECTIONS / CARDS ---------- */
