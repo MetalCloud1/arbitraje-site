@@ -1,6 +1,6 @@
 export interface Env {
   DB: D1Database;
-  IMAGES: R2Bucket;
+  R2_IMAGES: R2Bucket;
 }
 
 export default {
@@ -31,7 +31,7 @@ async function runCleanup(env: Env): Promise<void> {
 
   for (const row of expired) {
     if (row.cover_key) {
-      await env.IMAGES.delete(row.cover_key);
+      await env.R2_IMAGES.delete(row.cover_key);
     }
   }
 

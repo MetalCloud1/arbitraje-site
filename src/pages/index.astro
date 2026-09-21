@@ -3,14 +3,31 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import FeaturedArticles from '../components/FeaturedArticles.astro';
+import ArbitroRow from '../components/ArbitroRow.astro';
+import EntrenadorRow from '../components/EntrenadorRow.astro';
 import KnightMark from '../components/KnightMark.astro';
+import PawnMark from '../components/PawnMark.astro';
+import QueenMark from '../components/QueenMark.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { listRecentArticles } from '../lib/db';
+import { listArbitrosPage } from '../lib/arbitros';
+import { listEntrenadoresPage } from '../lib/entrenadores';
+import { listClubesPage } from '../lib/clubes';
 
 export const prerender = false;
 
+// Tamaño de la vista previa de cada directorio en la home. Deliberadamente
+// chico: la home es una vitrina de cada sección, no un listado; el listado
+// completo vive en /arbitros, /entrenadores y /clubes.
+const PREVIEW_SIZE = 5;
+
 const db = env.DB;
-const articles = await listRecentArticles(db, 8);
+const [articles, { items: arbitros }, { items: entrenadores }, { items: clubes }] = await Promise.all([
+  listRecentArticles(db, 8),
+  listArbitrosPage(db, { limit: PREVIEW_SIZE }),
+  listEntrenadoresPage(db, { limit: PREVIEW_SIZE }),
+  listClubesPage(db, { limit: PREVIEW_SIZE }),
+]);
 
 const featured = articles[0] ?? null;
 const secondary = articles.slice(1, 4);
@@ -54,6 +71,77 @@ const recentGrid = articles.slice(4, 8);
             {recentGrid.map((article) => <ArticleCard article={article} />)}
           </div>
         )}
+      </div>
+    </section>
+  )}
+
+  {arbitros.length > 0 && (
+    <section class="home-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <PawnMark class="section-mark" />
+            <span>Árbitros</span>
+          </div>
+          <a class="view-all" href="/arbitros">
+            Ver todos los árbitros
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+        <div class="arbitros-list">
+          {arbitros.map((a) => <ArbitroRow arbitro={a} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {entrenadores.length > 0 && (
+    <section class="home-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <QueenMark class="section-mark" />
+            <span>Entrenadores</span>
+          </div>
+          <a class="view-all" href="/entrenadores">
+            Ver todos los entrenadores
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+        <div class="entrenadores-list">
+          {entrenadores.map((e) => <EntrenadorRow entrenador={e} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {clubes.length > 0 && (
+    <section class="home-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <svg class="section-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 4h2V2h2v2h2V1h2v3h2V2h2v2h2v3l-1.5 2v9H6.5v-9L5 7V4Zm2 6v7h10v-7l1-2H6l1 2Z"/></svg>
+            <span>Clubes</span>
+          </div>
+          <a class="view-all" href="/clubes">
+            Ver todos los clubes
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+        <div class="clubes-grid">
+          {clubes.map((c) => (
+            <a class="club-card" href={`/clubes/${encodeURIComponent(c.slug)}`}>
+              <div class="club-card-logo">
+                {c.logo_key ? (
+                  <img src={`/api/img/${c.logo_key}`} alt={c.nombre} loading="lazy" />
+                ) : (
+                  <span class="club-card-logo-fallback" aria-hidden="true">{c.nombre.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <span class="club-card-nombre">{c.nombre}</span>
+            </a>
+          ))}
+        </div>
       </div>
     </section>
   )}
