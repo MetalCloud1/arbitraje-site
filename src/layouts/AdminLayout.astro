@@ -1,0 +1,59 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const path = Astro.url.pathname;
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} - Admin</title>
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand">La Hora del Arbitraje</div>
+      <a href="/admin" class={path === '/admin' ? 'active' : ''}>Artículos</a>
+      <a href="/admin/nuevo" class={path === '/admin/nuevo' ? 'active' : ''}>Nuevo artículo</a>
+      <a href="/admin/arbitros" class={path.startsWith('/admin/arbitros') ? 'active' : ''}>Árbitros</a>
+      <a href="/admin/entrenadores" class={path.startsWith('/admin/entrenadores') ? 'active' : ''}>Entrenadores</a>
+      <a href="/admin/clubes" class={path.startsWith('/admin/clubes') ? 'active' : ''}>Clubes</a>
+      <a href="/" target="_blank">Ver sitio ↗</a>
+      <form method="POST" action="/api/auth/logout">
+        <button class="btn btn-secondary" type="submit" style="width:100%; justify-content:center;">
+          Cerrar sesión
+        </button>
+      </form>
+    </aside>
+    <main class="admin-main">
+      <slot />
+    </main>
+  </div>
+
+  <script>
+    // Estado de carga genérico para cualquier <form> del panel: al enviar,
+    // deshabilita el botón de submit y le agrega el spinner (.is-loading),
+    // tanto para evitar doble-envío como para dar feedback durante subidas
+    // de imagen que pueden tardar unos segundos.
+    // event.defaultPrevented ya refleja, en este punto, si un onsubmit
+    // inline (como el "confirm()" del botón Borrar) canceló el envío —
+    // así no mostramos "cargando" en un formulario que en realidad no se envió.
+    document.addEventListener('submit', (event) => {
+      if (event.defaultPrevented) return;
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const submitBtn = form.querySelector('button[type="submit"], button:not([type])');
+      if (!(submitBtn instanceof HTMLButtonElement) || submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      submitBtn.setAttribute('aria-busy', 'true');
+    });
+  </script>
+</body>
+</html>

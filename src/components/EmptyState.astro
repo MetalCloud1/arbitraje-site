@@ -1,0 +1,23 @@
+---
+// Estado vacío reutilizable. Cubre tanto "todavía no hay nada" (colección
+// realmente vacía) como "sin resultados" (filtro/categoría sin coincidencias),
+// distinguidos por el texto y por si se ofrece o no una acción de salida.
+import KnightMark from './KnightMark.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  actionLabel?: string;
+  actionHref?: string;
+}
+
+const { title, description, actionLabel, actionHref } = Astro.props;
+---
+<div class="empty-state">
+  <KnightMark class="empty-state-icon" />
+  <p class="empty-state-title">{title}</p>
+  {description && <p class="empty-state-description">{description}</p>}
+  {actionLabel && actionHref && (
+    <a class="btn btn-secondary empty-state-action" href={actionHref}>{actionLabel}</a>
+  )}
+</div>

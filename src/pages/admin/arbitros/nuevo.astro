@@ -1,0 +1,93 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { ESTADOS_MX, TITULOS_ARBITRO } from '../../../lib/postulacion';
+
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+---
+<AdminLayout title="Nuevo árbitro">
+  <div class="admin-header">
+    <h1>Nuevo árbitro</h1>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+
+  <form class="form-card" method="POST" action="/api/arbitros" enctype="multipart/form-data">
+    <div class="field">
+      <label for="nombre_completo">Nombre completo</label>
+      <input type="text" id="nombre_completo" name="nombre_completo" required maxlength="100" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="estado_republica">Estado</label>
+        <select id="estado_republica" name="estado_republica">
+          <option value="">Sin especificar</option>
+          {ESTADOS_MX.map((e) => <option value={e}>{e}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label for="titulo">Título</label>
+        <select id="titulo" name="titulo">
+          <option value="">Sin especificar</option>
+          {TITULOS_ARBITRO.map((t) => <option value={t}>{t}</option>)}
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="fide_id">ID de FIDE (opcional)</label>
+        <input type="text" id="fide_id" name="fide_id" maxlength="10" />
+      </div>
+      <div class="field">
+        <label for="email">Correo de contacto (opcional)</label>
+        <input type="email" id="email" name="email" maxlength="254" />
+        <p class="field-hint">Solo se muestra públicamente si el perfil está marcado como reclamado.</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="bio">Descripción / trayectoria</label>
+      <textarea id="bio" name="bio" rows="5" maxlength="1000"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="foto">Foto (opcional)</label>
+      <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <p class="field-hint">JPG, PNG, WEBP o GIF, hasta 5 MB.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="actividad">Actividad</label>
+        <select id="actividad" name="actividad">
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+      <div class="field field-checkbox">
+        <label>
+          <input type="checkbox" name="reclamado" />
+          Identidad ya verificada (reclamado)
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="orden_destacado">Destacar en el directorio (opcional)</label>
+      <input type="number" id="orden_destacado" name="orden_destacado" min="1" step="1" style="max-width:140px" />
+      <p class="field-hint">
+        Vacío = orden alfabético normal, como el resto. Si le pones un número, aparece antes que los
+        alfabéticos (1 primero, 2 después, etc.), sin importar el nombre. Es una excepción editorial puntual,
+        no un ranking.
+      </p>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">Crear árbitro</button>
+      <a class="btn btn-secondary" href="/admin/arbitros">Cancelar</a>
+    </div>
+  </form>
+</AdminLayout>

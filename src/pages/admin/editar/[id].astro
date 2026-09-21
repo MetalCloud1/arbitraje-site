@@ -1,0 +1,101 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import RichEditor from '../../../components/RichEditor.astro';
+import { getArticleById } from '../../../lib/db';
+import { EXPIRY_OPTIONS, daysUntil } from '../../../lib/expiry';
+
+export const prerender = false;
+
+const db = env.DB;
+const id = Number(Astro.params.id);
+
+if (!Number.isInteger(id) || id <= 0) {
+  return Astro.redirect('/admin?error=' + encodeURIComponent('Identificador de artículo inválido.'));
+}
+
+const article = await getArticleById(db, id);
+
+if (!article) {
+  return Astro.redirect('/admin?error=' + encodeURIComponent('Artículo no encontrado.'));
+}
+
+const error = Astro.url.searchParams.get('error');
+const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast'];
+const currentExpiry = daysUntil(article.expires_at);
+const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
+---
+<AdminLayout title={`Editar: ${article.title}`}>
+  <div class="admin-header">
+    <h1>Editar artículo</h1>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+
+  <form class="form-card" method="POST" action={`/api/articles/${article.id}`} enctype="multipart/form-data">
+    <div class="field">
+      <label for="title">Título</label>
+      <input type="text" id="title" name="title" required value={article.title} />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="category">Categoría</label>
+        <select id="category" name="category" required>
+          {categories.map((c) => <option value={c} selected={c === article.category}>{c}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label for="published_at">Fecha de publicación</label>
+        <input type="date" id="published_at" name="published_at" value={article.published_at.slice(0, 10)} required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="excerpt">Resumen breve</label>
+      <textarea id="excerpt" name="excerpt" rows="2">{article.excerpt}</textarea>
+    </div>
+
+    <div class="field">
+      <label for="cover">Imagen de portada</label>
+      {coverUrl && <img class="cover-preview" src={coverUrl} alt="Portada actual" />}
+      <input type="file" id="cover" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" style="margin-top:10px;" />
+      <p class="field-hint">Sube una nueva imagen para reemplazar la actual. Si el video es de Facebook, esta imagen se usa como miniatura en el listado.</p>
+      {coverUrl && (
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:400;">
+          <input type="checkbox" name="remove_cover" style="width:auto;" />
+          Quitar la imagen de portada
+        </label>
+      )}
+    </div>
+
+    <div class="field">
+      <label for="video_url">Link de video de Facebook o YouTube (opcional)</label>
+      <input type="url" id="video_url" name="video_url" placeholder="https://www.facebook.com/.../videos/... o https://youtu.be/..." value={article.video_url ?? ''} />
+      <p class="field-hint">Si hay un link acá, se muestra el video embebido en vez de la imagen de portada.</p>
+      {article.video_url && (
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:400;">
+          <input type="checkbox" name="remove_video" style="width:auto;" />
+          Quitar el video
+        </label>
+      )}
+    </div>
+
+    <div class="field">
+      <label>Contenido</label>
+      <RichEditor name="content_html" initialHtml={article.content_html} />
+    </div>
+
+    <div class="field">
+      <label for="expires_option">Eliminación automática</label>
+      <select id="expires_option" name="expires_option">
+        {EXPIRY_OPTIONS.map((opt) => <option value={opt.value} selected={opt.value === currentExpiry}>{opt.label}</option>)}
+      </select>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">Guardar cambios</button>
+      <a class="btn btn-secondary" href="/admin">Cancelar</a>
+    </div>
+  </form>
+</AdminLayout>

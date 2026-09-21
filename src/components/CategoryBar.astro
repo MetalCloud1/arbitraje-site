@@ -1,0 +1,25 @@
+---
+// Barra de navegación principal. Vive separada del header (que ahora es
+// solo identidad de marca) y se muestra en todas las pantallas: en
+// desktop como fila de enlaces, en mobile como una fila con scroll
+// horizontal (ver .main-nav en global.css). Las subcategorías de Artículos
+// se eligen con los chips de /articulos, en todas las pantallas.
+import SearchBox from './SearchBox.astro';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => (path === href ? 'active' : '');
+---
+<div class="category-bar">
+  <div class="container category-bar-inner">
+    <nav class="main-nav" aria-label="Categorías principales">
+      <a href="/" class={isActive('/')}>Inicio</a>
+      <a href="/articulos" class={path.startsWith('/articulos') ? 'active' : ''}>Artículos</a>
+      <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
+      <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
+      <a href="/clubes" class={path.startsWith('/clubes') ? 'active' : ''}>Clubes</a>
+      <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>
+    </nav>
+
+    <SearchBox />
+  </div>
+</div>

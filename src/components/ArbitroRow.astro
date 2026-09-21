@@ -1,0 +1,57 @@
+---
+import { getTituloTier } from '../lib/postulacion';
+import PawnMark from './PawnMark.astro';
+
+// Subconjunto de Arbitro/ArbitroResumen que la fila realmente pinta. Ambos
+// tipos (el registro completo del admin y el resumen liviano del
+// directorio paginado) lo cumplen, así que esta fila sirve para los dos.
+interface ArbitroRowData {
+  slug: string;
+  nombre_completo: string;
+  estado_republica: string | null;
+  titulo: string | null;
+  foto_key: string | null;
+}
+
+interface Props {
+  arbitro: ArbitroRowData;
+}
+
+const { arbitro } = Astro.props;
+const fotoUrl = arbitro.foto_key ? `/api/img/${arbitro.foto_key}` : null;
+// El tier ya no maneja glow/aura acá, solo un color de texto sobrio para
+// distinguir la categoría de un vistazo (sin efectos).
+const tier = getTituloTier(arbitro.titulo);
+---
+<a class="arbitro-row" href={`/arbitros/${arbitro.slug}`}>
+  <div class="arbitro-row-photo" transition:name={`arbitro-photo-${arbitro.slug}`}>
+    {fotoUrl && (
+      <img
+        src={fotoUrl}
+        alt={arbitro.nombre_completo}
+        loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='';"
+      />
+    )}
+    <PawnMark class="arbitro-row-pawn" style={fotoUrl ? { display: 'none' } : undefined} />
+  </div>
+
+  <div class="arbitro-row-main">
+    <h3 class="arbitro-row-name" transition:name={`arbitro-name-${arbitro.slug}`}>{arbitro.nombre_completo}</h3>
+    {arbitro.titulo && <div class="arbitro-row-titulo" style={`color:${tier.color}`}>{arbitro.titulo}</div>}
+  </div>
+
+  {arbitro.estado_republica && (
+    <div class="arbitro-row-location">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+      </svg>
+      {arbitro.estado_republica}
+    </div>
+  )}
+
+  <span class="arbitro-row-cta" aria-hidden="true">
+    <span>Ver perfil</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+  </span>
+</a>

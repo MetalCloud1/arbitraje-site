@@ -1,0 +1,76 @@
+---
+import type { Article } from '../lib/db';
+import { formatDateEs } from '../lib/text';
+import { resolveThumbnail } from '../lib/video';
+import MediaFrame from './MediaFrame.astro';
+
+interface Props {
+  /** Artículo principal, se muestra arriba con el texto y luego la imagen. */
+  featured: Article;
+  /** Hasta 3 artículos secundarios, se muestran en la lista de la derecha. */
+  secondary: Article[];
+}
+
+const { featured, secondary } = Astro.props;
+const featuredThumb = resolveThumbnail(featured);
+---
+<div class="featured-grid">
+  <div class="featured-main">
+    <div class="featured-info">
+      <div class="article-category">{featured.category}</div>
+      <a class="article-title-link" href={`/articulos/${featured.slug}`}>
+        <h2 class="featured-title" transition:name={`article-title-${featured.slug}`}>{featured.title}</h2>
+      </a>
+      {featured.excerpt && <p class="featured-excerpt">{featured.excerpt}</p>}
+      <div class="article-meta">
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          {featured.read_minutes} min
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          {formatDateEs(featured.published_at)}
+        </span>
+      </div>
+    </div>
+
+    <a class="featured-media" href={`/articulos/${featured.slug}`} aria-label={featured.title}>
+      <MediaFrame
+        imageUrl={featuredThumb.imageUrl}
+        alt={featured.title}
+        isVideo={featuredThumb.isVideo}
+        eager
+        transitionName={`article-cover-${featured.slug}`}
+      />
+    </a>
+  </div>
+
+  {secondary.length > 0 && (
+    <div class="featured-list">
+      {secondary.map((article) => {
+        const thumb = resolveThumbnail(article);
+        return (
+          <a class="featured-list-item" href={`/articulos/${article.slug}`}>
+            <div class="featured-list-thumb">
+              <MediaFrame
+                imageUrl={thumb.imageUrl}
+                alt={article.title}
+                isVideo={thumb.isVideo}
+                playSize="sm"
+                transitionName={`article-cover-${article.slug}`}
+              />
+            </div>
+            <div class="featured-list-body">
+              <div class="featured-list-category">{article.category}</div>
+              <h3 class="featured-list-title" transition:name={`article-title-${article.slug}`}>{article.title}</h3>
+              <div class="featured-list-meta">
+                <span>{article.read_minutes} min</span>
+                <span>{formatDateEs(article.published_at)}</span>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  )}
+</div>

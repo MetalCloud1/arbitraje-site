@@ -1,0 +1,257 @@
+---
+// Buscador contextual del header.
+// Estados cubiertos (ver el script): cerrado → abierto → escribiendo →
+// resultados sugeridos → sin resultados → error, y "Enter"/"ver todos"
+// llevan a /articulos?buscar=… para los resultados completos.
+---
+<div class="search-box" data-search-root>
+  <button
+    type="button"
+    class="search-trigger"
+    data-search-trigger
+    aria-expanded="false"
+    aria-controls="search-panel"
+    aria-label="Buscar artículos"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  </button>
+
+  <div class="search-panel" id="search-panel" data-search-panel hidden>
+    <form class="search-form" role="search" data-search-form>
+      <svg class="search-form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.3-4.3" />
+      </svg>
+      <input
+        type="search"
+        class="search-input"
+        data-search-input
+        placeholder="Buscar artículos, categorías…"
+        aria-label="Buscar artículos"
+        autocomplete="off"
+      />
+      <button type="button" class="search-clear" data-search-clear hidden aria-label="Limpiar búsqueda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </form>
+    <div class="search-results" data-search-results aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  const MIN_QUERY_LENGTH = 2;
+  const DEBOUNCE_MS = 300;
+
+  function escapeHtml(value: string): string {
+    return value.replace(
+      /[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string
+    );
+  }
+
+  interface SearchResult {
+    slug: string;
+    title: string;
+    category: string;
+    imageUrl: string | null;
+  }
+
+  function initSearch(root: Element) {
+    const trigger = root.querySelector('[data-search-trigger]');
+    const panel = root.querySelector('[data-search-panel]');
+    const input = root.querySelector('[data-search-input]');
+    const clearBtn = root.querySelector('[data-search-clear]');
+    const resultsBox = root.querySelector('[data-search-results]');
+
+    if (
+      !(trigger instanceof HTMLButtonElement) ||
+      !(panel instanceof HTMLElement) ||
+      !(input instanceof HTMLInputElement) ||
+      !(clearBtn instanceof HTMLButtonElement) ||
+      !(resultsBox instanceof HTMLElement)
+    ) {
+      return;
+    }
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
+    let lastQuery = '';
+
+    // ---- Estado: cerrado / abierto ----
+    const openPanel = () => {
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      root.classList.add('is-open');
+      requestAnimationFrame(() => input.focus());
+    };
+
+    const closePanel = () => {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      root.classList.remove('is-open');
+    };
+
+    // ---- Renderers por estado ----
+    const renderIdle = () => {
+      resultsBox.innerHTML = `<p class="search-hint">Escribe al menos ${MIN_QUERY_LENGTH} letras para buscar.</p>`;
+    };
+
+    const renderLoading = () => {
+      resultsBox.innerHTML = `
+        <div class="search-skeleton">
+          <div class="search-skeleton-row"></div>
+          <div class="search-skeleton-row"></div>
+          <div class="search-skeleton-row"></div>
+        </div>`;
+    };
+
+    const renderError = () => {
+      resultsBox.innerHTML = `<p class="search-error">No se pudo completar la búsqueda. Intenta de nuevo.</p>`;
+    };
+
+    const renderEmpty = (query: string) => {
+      resultsBox.innerHTML = `
+        <div class="search-empty">
+          <p class="search-empty-title">Sin resultados para &ldquo;${escapeHtml(query)}&rdquo;</p>
+          <p class="search-empty-description">Probá con otra palabra o revisá la ortografía.</p>
+        </div>`;
+    };
+
+    const renderResults = (query: string, results: SearchResult[]) => {
+      const items = results
+        .map(
+          (r) => `
+        <a class="search-result" href="/articulos/${encodeURIComponent(r.slug)}">
+          <span class="search-result-thumb">
+            ${
+              r.imageUrl
+                ? `<img src="${r.imageUrl}" alt="" loading="lazy" onerror="this.closest('.search-result-thumb').classList.add('is-broken')" />`
+                : ''
+            }
+          </span>
+          <span class="search-result-body">
+            <span class="search-result-category">${escapeHtml(r.category)}</span>
+            <span class="search-result-title">${escapeHtml(r.title)}</span>
+          </span>
+        </a>`
+        )
+        .join('');
+
+      resultsBox.innerHTML = `
+        <div class="search-result-list">${items}</div>
+        <a class="search-view-all" href="/articulos?buscar=${encodeURIComponent(query)}">
+          Ver todos los resultados para &ldquo;${escapeHtml(query)}&rdquo;
+        </a>`;
+    };
+
+    // ---- Estado: escribiendo → resultados / sin resultados / error ----
+    const runSearch = async (query: string) => {
+      controller?.abort();
+      controller = new AbortController();
+      renderLoading();
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: { results: SearchResult[] } = await res.json();
+        if (data.results.length === 0) {
+          renderEmpty(query);
+        } else {
+          renderResults(query, data.results);
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        renderError();
+      }
+    };
+
+    const onInput = () => {
+      const value = input.value.trim();
+      clearBtn.hidden = value.length === 0;
+
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      if (value.length < MIN_QUERY_LENGTH) {
+        controller?.abort();
+        lastQuery = '';
+        renderIdle();
+        return;
+      }
+
+      if (value === lastQuery) return;
+
+      debounceTimer = setTimeout(() => {
+        lastQuery = value;
+        runSearch(value);
+      }, DEBOUNCE_MS);
+    };
+
+    const onClear = () => {
+      input.value = '';
+      clearBtn.hidden = true;
+      lastQuery = '';
+      controller?.abort();
+      renderIdle();
+      input.focus();
+    };
+
+    const onTriggerClick = () => {
+      root.classList.contains('is-open') ? closePanel() : openPanel();
+    };
+
+    const onInputKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closePanel();
+        trigger.focus();
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const value = input.value.trim();
+        if (value.length >= MIN_QUERY_LENGTH) {
+          window.location.href = `/articulos?buscar=${encodeURIComponent(value)}`;
+        }
+      }
+    };
+
+    // Cerrar al hacer click afuera o con Escape en cualquier parte de la
+    // página. Van en 'document' (sobrevive a la navegación del
+    // ClientRouter), así que se registran una sola vez y se limpian antes
+    // de cada swap para no acumularse ni apuntar a nodos ya removidos.
+    const onDocumentClick = (e: MouseEvent) => {
+      if (!root.contains(e.target as Node)) closePanel();
+    };
+
+    const onDocumentKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && root.classList.contains('is-open')) closePanel();
+    };
+
+    trigger.addEventListener('click', onTriggerClick);
+    clearBtn.addEventListener('click', onClear);
+    input.addEventListener('input', onInput);
+    input.addEventListener('keydown', onInputKeydown);
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onDocumentKeydown);
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        document.removeEventListener('click', onDocumentClick);
+        document.removeEventListener('keydown', onDocumentKeydown);
+        controller?.abort();
+      },
+      { once: true }
+    );
+
+    renderIdle();
+  }
+
+  function initAllSearchBoxes() {
+    document.querySelectorAll('[data-search-root]').forEach(initSearch);
+  }
+
+  document.addEventListener('astro:page-load', initAllSearchBoxes);
+</script>

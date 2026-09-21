@@ -1,0 +1,85 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { listAllEntrenadores } from '../../../lib/entrenadores';
+import EmptyState from '../../../components/EmptyState.astro';
+
+export const prerender = false;
+
+const db = env.DB;
+const entrenadores = (await listAllEntrenadores(db)).sort((a, b) => {
+  const ra = a.orden_destacado ?? Infinity;
+  const rb = b.orden_destacado ?? Infinity;
+  if (ra !== rb) return ra - rb;
+  return a.nombre_completo.localeCompare(b.nombre_completo, 'es');
+});
+
+const created = Astro.url.searchParams.get('created');
+const updated = Astro.url.searchParams.get('updated');
+const deleted = Astro.url.searchParams.get('deleted');
+const error = Astro.url.searchParams.get('error');
+---
+<AdminLayout title="Entrenadores">
+  <div class="admin-header">
+    <h1>Entrenadores</h1>
+    <a class="btn btn-primary" href="/admin/entrenadores/nuevo">+ Nuevo entrenador</a>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+  {created && <div class="alert alert-success">Entrenador creado correctamente.</div>}
+  {updated && <div class="alert alert-success">Entrenador actualizado correctamente.</div>}
+  {deleted && <div class="alert alert-success">Entrenador eliminado.</div>}
+
+  {entrenadores.length === 0 ? (
+    <EmptyState
+      title="Todavía no hay entrenadores cargados"
+      description="Los perfiles que agregues acá van a aparecer en el directorio público."
+      actionLabel="+ Nuevo entrenador"
+      actionHref="/admin/entrenadores/nuevo"
+    />
+  ) : (
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Título de ajedrez</th>
+          <th>Título de arbitraje</th>
+          <th>ELO clásico</th>
+          <th>Estado</th>
+          <th>Destacado</th>
+          <th>Actividad</th>
+          <th>Reclamado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {entrenadores.map((e) => (
+          <tr>
+            <td>
+              <a href={`/entrenadores/${e.slug}`} target="_blank">{e.nombre_completo}</a>
+            </td>
+            <td>{e.titulo_ajedrez ?? '—'}</td>
+            <td>{e.titulo_arbitraje ?? '—'}</td>
+            <td>{e.elo_clasico ?? '—'}</td>
+            <td>{e.estado_republica ?? '—'}</td>
+            <td>{e.orden_destacado != null ? <span class="badge">#{e.orden_destacado}</span> : '—'}</td>
+            <td>
+              <span class={`badge ${e.actividad === 'inactivo' ? 'expiring' : ''}`}>{e.actividad}</span>
+            </td>
+            <td>
+              {e.reclamado_en ? <span class="badge">sí</span> : <span class="badge expiring">no</span>}
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-secondary" href={`/admin/entrenadores/editar/${e.id}`}>Editar</a>
+                <form method="POST" action={`/api/entrenadores/${e.id}/delete`} onsubmit="return confirm('¿Borrar este entrenador? Esta acción no se puede deshacer.')">
+                  <button class="btn btn-danger" type="submit">Borrar</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</AdminLayout>

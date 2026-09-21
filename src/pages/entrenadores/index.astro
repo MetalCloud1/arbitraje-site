@@ -1,0 +1,350 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { listEntrenadoresPage, countEntrenadores, listEstadosConEntrenadores } from '../../lib/entrenadores';
+import { TITULOS_AJEDREZ } from '../../lib/titulos-ajedrez';
+import EntrenadorRow from '../../components/EntrenadorRow.astro';
+import EmptyState from '../../components/EmptyState.astro';
+
+export const prerender = false;
+
+const PAGE_SIZE = 5;
+
+const db = env.DB;
+const estadoFiltro = Astro.url.searchParams.get('estado');
+const tituloFiltro = Astro.url.searchParams.get('titulo');
+
+const [{ items: entrenadores, nextCursor }, total, estados] = await Promise.all([
+  listEntrenadoresPage(db, { estado: estadoFiltro, tituloAjedrez: tituloFiltro, limit: PAGE_SIZE }),
+  countEntrenadores(db),
+  listEstadosConEntrenadores(db),
+]);
+
+const descripcion = `Entrenadores de ajedrez con título y ELO verificados. ${total} entrenadores registrados.`;
+---
+<BaseLayout
+  title="Entrenadores - La Hora del Arbitraje"
+  description="Directorio de entrenadores de ajedrez: título, ELO clásico y trayectoria de cada uno."
+>
+  <div class="container entrenadores-page">
+    <div class="entrenadores-header">
+      <div class="entrenadores-header-copy">
+        <h1>Entrenadores</h1>
+        <p class="entrenadores-intro">{descripcion}</p>
+      </div>
+      <a class="btn btn-primary entrenadores-cta" href="/postular?tipo=entrenador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Registrarme como entrenador
+      </a>
+    </div>
+
+    <div class="entrenadores-controls">
+      <div class="entrenadores-search-wrap">
+        <svg class="entrenadores-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+        </svg>
+        <input
+          type="search"
+          class="entrenadores-search-input"
+          data-entrenadores-search-input
+          placeholder="Buscar entrenador por nombre, título o estado…"
+          aria-label="Buscar entrenador"
+          autocomplete="off"
+        />
+      </div>
+      <select class="entrenadores-select" data-entrenadores-titulo-select aria-label="Filtrar por título">
+        <option value="">Todos los títulos</option>
+        {TITULOS_AJEDREZ.map((t) => <option value={t} selected={tituloFiltro === t}>{t}</option>)}
+      </select>
+    </div>
+
+    {estados.length > 0 && (
+      <div class="entrenadores-filtros-wrap">
+        <div class="entrenadores-filtros">
+          <a class={`filtro-chip ${!estadoFiltro ? 'active' : ''}`} href="/entrenadores">Todos</a>
+          {estados.map((e) => (
+            <a class={`filtro-chip ${estadoFiltro === e ? 'active' : ''}`} href={`/entrenadores?estado=${encodeURIComponent(e)}`}>{e}</a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div
+      class="entrenadores-root"
+      data-entrenadores-root
+      data-estado={estadoFiltro ?? ''}
+      data-titulo={tituloFiltro ?? ''}
+      data-cursor={nextCursor ?? ''}
+    >
+      {entrenadores.length === 0 ? (
+        <EmptyState
+          title={estadoFiltro || tituloFiltro ? 'Ningún entrenador registrado con ese filtro todavía' : 'Todavía no hay entrenadores registrados'}
+          description="¿Eres entrenador y quieres aparecer acá?"
+          actionLabel="Registrarme como entrenador"
+          actionHref="/postular?tipo=entrenador"
+        />
+      ) : (
+        <div class="entrenadores-list reveal-stagger" data-entrenadores-list>
+          {entrenadores.map((e) => <EntrenadorRow entrenador={e} />)}
+        </div>
+      )}
+      <div class="entrenadores-sentinel" data-entrenadores-sentinel>
+        <div class="entrenadores-loading" data-entrenadores-loading hidden>
+          <span class="entrenadores-loading-dot"></span>
+          <span class="entrenadores-loading-dot"></span>
+          <span class="entrenadores-loading-dot"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // ---------- Filas de entrenador por JS (mismos datos que EntrenadorRow.astro) ----------
+  // Mantener esto en sync con getTituloAjedrezTier() en src/lib/titulos-ajedrez.ts
+  // y getTituloTier() en src/lib/postulacion.ts.
+  const TIER_AJEDREZ_BY_TITULO: Record<string, { tier: string; short: string; color: string; colorBright: string }> = {
+    'Gran Maestro (GM)': { tier: 'gm', short: 'GM', color: '#e3b341', colorBright: '#f5d379' },
+    'Gran Maestra Internacional (WGM)': { tier: 'gm', short: 'WGM', color: '#e3b341', colorBright: '#f5d379' },
+    'Maestro Internacional (IM)': { tier: 'im', short: 'IM', color: '#7ea8c4', colorBright: '#a7c9df' },
+    'Maestra Internacional (WIM)': { tier: 'im', short: 'WIM', color: '#7ea8c4', colorBright: '#a7c9df' },
+    'Maestro FIDE (FM)': { tier: 'fm', short: 'FM', color: '#c7d0d6', colorBright: '#eef2f4' },
+    'Maestra FIDE (WFM)': { tier: 'fm', short: 'WFM', color: '#c7d0d6', colorBright: '#eef2f4' },
+    'Maestro Candidato (CM)': { tier: 'cm', short: 'CM', color: '#c17f4a', colorBright: '#e0a06c' },
+    'Maestra Candidata (WCM)': { tier: 'cm', short: 'WCM', color: '#c17f4a', colorBright: '#e0a06c' },
+    'Maestro Nacional (NM)': { tier: 'nm', short: '', color: '#7c8a80', colorBright: '#a8b3ac' },
+    'Maestra Nacional (WNM)': { tier: 'nm', short: '', color: '#7c8a80', colorBright: '#a8b3ac' },
+  };
+  const DEFAULT_TIER_AJEDREZ = { tier: 'nm', short: '', color: '#7c8a80', colorBright: '#a8b3ac' };
+  const getTierAjedrez = (titulo: string | null) => (titulo && TIER_AJEDREZ_BY_TITULO[titulo]) || DEFAULT_TIER_AJEDREZ;
+
+  const TIER_ARBITRAJE_BY_TITULO: Record<string, { color: string }> = {
+    'Árbitro Internacional (AI)': { color: '#e3b341' },
+    'Árbitro FIDE (FA)': { color: '#c7d0d6' },
+    'Árbitro Nacional (AN)': { color: '#c17f4a' },
+    'Árbitro de Club': { color: '#81b64c' },
+    'En formación / Sin título': { color: '#7c8a80' },
+  };
+
+  const QUEEN_SVG = `<svg class="queen-mark entrenador-row-queen" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M11 5C11 4.44772 11.4477 4 12 4C12.5523 4 13 4.44772 13 5C13 5.55228 12.5523 6 12 6C11.4477 6 11 5.55228 11 5ZM13.3272 7.6912C14.3183 7.20148 15 6.18034 15 5C15 3.34315 13.6569 2 12 2C10.3431 2 9 3.34315 9 5C9 6.18034 9.68167 7.20148 10.6728 7.6912L8.50616 13.4689L5.06585 11.1754C5.64125 10.6288 6 9.85629 6 9C6 7.34315 4.65685 6 3 6C1.34315 6 0 7.34315 0 9C0 10.3768 0.927457 11.537 2.19169 11.8898L3.96922 19L3.34051 21.5149C3.02494 22.7772 3.97966 24 5.28079 24H18.7192C20.0204 24 20.9751 22.7772 20.6595 21.5149L20.0308 19L21.8083 11.8898C23.0725 11.537 24 10.3768 24 9C24 7.34315 22.6569 6 21 6C19.3431 6 18 7.34315 18 9C18 9.85629 18.3588 10.6288 18.9341 11.1754L15.4938 13.4689L13.3272 7.6912ZM20.9996 10C20.9997 10 20.9999 10 21 10C21.5523 10 22 9.55228 22 9C22 8.44772 21.5523 8 21 8C20.4477 8 20 8.44772 20 9C20 9.55214 20.4475 9.99976 20.9996 10ZM4 9C4 9.55214 3.55252 9.99976 3.00044 10H3C2.44772 10 2 9.55228 2 9C2 8.44772 2.44772 8 3 8C3.55228 8 4 8.44772 4 9ZM5.28079 22L5.78078 20H18.2192L18.7192 22H5.28079ZM19.4025 13.2668L18.2192 18H5.78078L4.59749 13.2668L8.4453 15.8321C8.69922 16.0013 9.01654 16.0454 9.30697 15.9517C9.59741 15.858 9.82918 15.6369 9.93633 15.3511L12 9.848L14.0637 15.3511C14.1708 15.6369 14.4026 15.858 14.693 15.9517C14.9835 16.0454 15.3008 16.0013 15.5547 15.8321L19.4025 13.2668Z" fill="currentColor" />
+  </svg>`;
+
+  function escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatElo(elo: number | null): string {
+    return elo == null ? '—' : elo.toLocaleString('es-MX');
+  }
+
+  interface EntrenadorResumen {
+    id: number;
+    slug: string;
+    nombre_completo: string;
+    estado_republica: string | null;
+    titulo_ajedrez: string | null;
+    titulo_arbitraje: string | null;
+    elo_clasico: number | null;
+    foto_key: string | null;
+  }
+
+  function rowHtml(e: EntrenadorResumen): string {
+    const tierAjedrez = getTierAjedrez(e.titulo_ajedrez);
+    const tierArbitraje = e.titulo_arbitraje ? TIER_ARBITRAJE_BY_TITULO[e.titulo_arbitraje] : null;
+    // Sin encodeURIComponent sobre foto_key (ver nota en arbitros/index.astro):
+    // codificaría la "/" y la ruta catch-all /api/img/[...key] no matchearía.
+    const fotoUrl = e.foto_key ? `/api/img/${e.foto_key}` : null;
+    return `
+      <a class="entrenador-row" href="/entrenadores/${encodeURIComponent(e.slug)}">
+        <div class="entrenador-row-photo" style="--tier-color:${tierAjedrez.color}">
+          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(e.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
+          ${QUEEN_SVG.replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
+        </div>
+        <div class="entrenador-row-main">
+          <h3 class="entrenador-row-name">${escapeHtml(e.nombre_completo)}</h3>
+          ${e.titulo_ajedrez || tierArbitraje ? `
+            <div class="entrenador-row-titulos">
+              ${e.titulo_ajedrez ? `<span class="entrenador-row-titulo" style="color:${tierAjedrez.color}">${escapeHtml(e.titulo_ajedrez)}</span>` : ''}
+              ${tierArbitraje ? `<span class="entrenador-row-titulo entrenador-row-titulo-arbitraje" style="color:${tierArbitraje.color}">${escapeHtml(e.titulo_arbitraje as string)}</span>` : ''}
+            </div>` : ''}
+        </div>
+        <div class="entrenador-row-elo">
+          <span class="entrenador-row-elo-value">${formatElo(e.elo_clasico)}</span>
+          <span class="entrenador-row-elo-label">ELO</span>
+        </div>
+        ${e.estado_republica ? `
+          <div class="entrenador-row-location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+            </svg>
+            ${escapeHtml(e.estado_republica)}
+          </div>` : ''}
+        <span class="entrenador-row-cta" aria-hidden="true">
+          <span>Ver perfil</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </a>`;
+  }
+
+  const PAGE_SIZE = 5;
+  const MIN_QUERY_LENGTH = 2;
+  const DEBOUNCE_MS = 300;
+
+  function initEntrenadoresPage(root: Element) {
+    if (root.getAttribute('data-entrenadores-bound') === 'true') return;
+    root.setAttribute('data-entrenadores-bound', 'true');
+
+    const searchInput = document.querySelector('[data-entrenadores-search-input]');
+    const tituloSelect = document.querySelector('[data-entrenadores-titulo-select]');
+    const sentinel = root.querySelector('[data-entrenadores-sentinel]');
+    const loadingEl = root.querySelector('[data-entrenadores-loading]');
+    if (!(sentinel instanceof HTMLElement) || !(loadingEl instanceof HTMLElement)) return;
+
+    const estado = root.getAttribute('data-estado') || '';
+    let titulo = root.getAttribute('data-titulo') || '';
+    let cursor = root.getAttribute('data-cursor') || '';
+    let query = '';
+    let loading = false;
+    let requestId = 0;
+
+    const ensureList = (): HTMLElement => {
+      const existing = root.querySelector('[data-entrenadores-list]');
+      if (existing instanceof HTMLElement) return existing;
+      const el = document.createElement('div');
+      el.className = 'entrenadores-list reveal-stagger is-visible';
+      el.setAttribute('data-entrenadores-list', '');
+      root.insertBefore(el, sentinel);
+      return el;
+    };
+
+    const showEmpty = () => {
+      const existing = root.querySelector('[data-entrenadores-list]');
+      existing?.remove();
+      let empty = root.querySelector('[data-entrenadores-empty]');
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.setAttribute('data-entrenadores-empty', '');
+        empty.className = 'empty-state';
+        root.insertBefore(empty, sentinel);
+      }
+      empty.innerHTML = `
+        <p class="empty-state-title">Sin resultados${query ? ` para “${escapeHtml(query)}”` : ''}</p>
+        <p class="empty-state-description">Probá con otro nombre, título o estado.</p>`;
+    };
+
+    const clearEmpty = () => root.querySelector('[data-entrenadores-empty]')?.remove();
+
+    const fetchPage = async (reset: boolean) => {
+      if (loading) return;
+      if (!reset && !cursor) return;
+      loading = true;
+      loadingEl.hidden = false;
+      const myRequestId = ++requestId;
+
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+      if (estado) params.set('estado', estado);
+      if (titulo) params.set('titulo', titulo);
+      if (query.length >= MIN_QUERY_LENGTH) params.set('q', query);
+      if (!reset && cursor) params.set('cursor', cursor);
+
+      try {
+        const res = await fetch(`/api/entrenadores/directorio?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: { items: EntrenadorResumen[]; nextCursor: string | null } = await res.json();
+        if (myRequestId !== requestId) return;
+
+        cursor = data.nextCursor || '';
+
+        if (reset && data.items.length === 0) {
+          showEmpty();
+        } else {
+          clearEmpty();
+          const listEl = ensureList();
+          if (reset) listEl.innerHTML = '';
+          listEl.insertAdjacentHTML('beforeend', data.items.map(rowHtml).join(''));
+        }
+
+        // Ver la nota gemela en arbitros/index.astro: el observer solo avisa
+        // en un cambio de estado, y en pantallas anchas una página de 5 puede
+        // no alcanzar a sacar al sentinel de la zona observada (viewport +
+        // rootMargin), así que se queda callado aunque queden más
+        // entrenadores. Forzamos una re-evaluación después de insertar.
+        if (cursor) {
+          requestAnimationFrame(() => {
+            if (loading || !cursor) return;
+            const rect = sentinel.getBoundingClientRect();
+            if (rect.top <= window.innerHeight + 400) fetchPage(false);
+          });
+        }
+      } catch {
+        if (myRequestId !== requestId) return;
+        loadingEl.hidden = true;
+      } finally {
+        if (myRequestId === requestId) {
+          loading = false;
+          loadingEl.hidden = true;
+        }
+      }
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !loading && cursor) fetchPage(false);
+        }
+      },
+      { rootMargin: '400px 0px' }
+    );
+    io.observe(sentinel);
+
+    if (searchInput instanceof HTMLInputElement) {
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      searchInput.addEventListener('input', () => {
+        const value = searchInput.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          if (value.length > 0 && value.length < MIN_QUERY_LENGTH) return;
+          query = value;
+          fetchPage(true);
+        }, DEBOUNCE_MS);
+      });
+    }
+
+    if (tituloSelect instanceof HTMLSelectElement) {
+      tituloSelect.addEventListener('change', () => {
+        titulo = tituloSelect.value;
+        fetchPage(true);
+      });
+    }
+  }
+
+  function initAllEntrenadoresPages() {
+    document.querySelectorAll('[data-entrenadores-root]').forEach(initEntrenadoresPage);
+  }
+
+  document.addEventListener('astro:page-load', initAllEntrenadoresPages);
+</script>
+
+<script>
+  function initEntrenadoresReveal() {
+    const list = document.querySelector('.entrenadores-list.reveal-stagger:not(.is-visible)');
+    if (!list || list.getAttribute('data-reveal-bound') === 'true') return;
+    list.setAttribute('data-reveal-bound', 'true');
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.08 }
+    );
+    io.observe(list);
+  }
+
+  document.addEventListener('astro:page-load', initEntrenadoresReveal);
+</script>

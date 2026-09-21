@@ -1,0 +1,59 @@
+---
+// Barra de progreso de lectura. Mide el avance del scroll específicamente
+// contra el bloque de contenido del artículo (no contra toda la página),
+// para que llegue al 100% justo cuando se termina de leer el cuerpo,
+// sin importar el alto del header, la portada o los comentarios futuros.
+interface Props {
+  targetSelector?: string;
+}
+
+const { targetSelector = '.article-body' } = Astro.props;
+---
+<div class="reading-progress" aria-hidden="true">
+  <div class="reading-progress-bar" data-reading-progress-bar></div>
+</div>
+
+<script define:vars={{ targetSelector }}>
+  function initReadingProgress() {
+    const bar = document.querySelector('[data-reading-progress-bar]');
+    const target = document.querySelector(targetSelector);
+    if (!bar || !target) return;
+
+    let ticking = false;
+
+    const update = () => {
+      const rect = target.getBoundingClientRect();
+      const docTop = rect.top + window.scrollY;
+      const total = rect.height - window.innerHeight * 0.5;
+      const scrolled = window.scrollY - docTop + window.innerHeight * 0.5;
+      const ratio = total > 0 ? Math.min(Math.max(scrolled / total, 0), 1) : 0;
+      bar.style.transform = `scaleX(${ratio})`;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+
+    // Limpieza al salir de la página vía ClientRouter, para no acumular
+    // listeners fantasma en navegaciones sucesivas.
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onScroll);
+      },
+      { once: true }
+    );
+  }
+
+  // Se ejecuta en la carga inicial y en cada navegación por View Transitions.
+  document.addEventListener('astro:page-load', initReadingProgress);
+</script>

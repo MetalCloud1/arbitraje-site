@@ -1,0 +1,32 @@
+{
+  "name": "la-hora-del-arbitraje",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro build && astro preview",
+    "deploy": "astro build && wrangler deploy",
+    "db:migrate:local": "wrangler d1 execute arbitraje_db --local --file=./migrations/0001_init.sql",
+    "db:migrate:remote": "wrangler d1 execute arbitraje_db --remote --file=./migrations/0001_init.sql",
+    "hash-password": "node scripts/hash-password.mjs"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.2",
+    "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-table": "^3.31.3",
+    "@tiptap/extension-table-cell": "^3.31.3",
+    "@tiptap/extension-table-header": "^3.31.3",
+    "@tiptap/extension-table-row": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "astro": "^7.3.3",
+    "chess.js": "^1.4.0",
+    "cm-chessboard": "^8.14.0",
+    "htmlparser2": "^12.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260916.1",
+    "wrangler": "^4.130.0"
+  }
+}

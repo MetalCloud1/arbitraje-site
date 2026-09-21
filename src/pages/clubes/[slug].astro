@@ -1,0 +1,87 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getClubBySlug, diasImparteToArray } from '../../lib/clubes';
+
+export const prerender = false;
+
+const db = env.DB;
+const { slug } = Astro.params;
+const club = slug ? await getClubBySlug(db, slug) : null;
+
+if (!club) {
+  return Astro.redirect('/clubes');
+}
+
+const logoUrl = club.logo_key ? `/api/img/${club.logo_key}` : null;
+const dias = diasImparteToArray(club.dias_imparte);
+
+const MODALIDAD_LABEL: Record<string, string> = {
+  presencial: 'Presencial',
+  virtual: 'Virtual',
+  ambas: 'Presencial y virtual',
+};
+---
+<BaseLayout
+  title={`${club.nombre} - Clubes - La Hora del Arbitraje`}
+  description={club.bio ?? undefined}
+  image={logoUrl ?? undefined}
+>
+  <div class="container">
+    <article class="club-detail">
+      <a class="back-link" href="/clubes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver a clubes
+      </a>
+
+      <div class="club-detail-header">
+        <div class="club-detail-logo">
+          {logoUrl ? (
+            <img src={logoUrl} alt={club.nombre} />
+          ) : (
+            <span class="club-detail-logo-fallback" aria-hidden="true">{club.nombre.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
+        <div>
+          <h1>{club.nombre}</h1>
+          <div class="club-detail-meta">
+            <span class="badge">{club.pais}</span>
+            <span class="badge">{MODALIDAD_LABEL[club.modalidad]}</span>
+          </div>
+        </div>
+      </div>
+
+      {club.bio && <p class="club-detail-bio">{club.bio}</p>}
+
+      <div class="club-detail-info">
+        {club.direccion && (
+          <div class="club-detail-info-item">
+            <h3>Dirección</h3>
+            <p>{club.direccion}</p>
+          </div>
+        )}
+
+        {dias.length > 0 && (
+          <div class="club-detail-info-item">
+            <h3>Días de clase</h3>
+            <div class="club-detail-dias">
+              {dias.map((d) => <span class="badge">{d}</span>)}
+            </div>
+          </div>
+        )}
+
+        <div class="club-detail-info-item">
+          <h3>Contacto</h3>
+          <ul class="club-detail-contacto">
+            {club.telefono && <li><a href={`tel:${club.telefono}`}>{club.telefono}</a></li>}
+            {club.whatsapp && (
+              <li><a href={`https://wa.me/${club.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer">WhatsApp: {club.whatsapp}</a></li>
+            )}
+            {club.email && <li><a href={`mailto:${club.email}`}>{club.email}</a></li>}
+            {club.sitio_web && <li><a href={club.sitio_web} target="_blank" rel="noopener noreferrer">{club.sitio_web}</a></li>}
+          </ul>
+        </div>
+      </div>
+    </article>
+  </div>
+</BaseLayout>

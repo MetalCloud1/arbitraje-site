@@ -1,0 +1,108 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { PAISES_CLUBES } from '../../../lib/paises';
+import { DIAS_SEMANA, MODALIDADES } from '../../../lib/clubes';
+
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+---
+<AdminLayout title="Nuevo club">
+  <div class="admin-header">
+    <h1>Nuevo club</h1>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+
+  <form class="form-card" method="POST" action="/api/clubes" enctype="multipart/form-data">
+    <div class="field">
+      <label for="nombre">Nombre del club</label>
+      <input type="text" id="nombre" name="nombre" required maxlength="120" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="pais">País</label>
+        <select id="pais" name="pais" required>
+          <option value="" disabled selected>Selecciona un país</option>
+          {PAISES_CLUBES.map((p) => <option value={p}>{p}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label for="modalidad">Modalidad</label>
+        <select id="modalidad" name="modalidad">
+          {MODALIDADES.map((m) => <option value={m.value}>{m.label}</option>)}
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="direccion">Dirección (estado/provincia, ciudad, calle)</label>
+      <input type="text" id="direccion" name="direccion" maxlength="300" placeholder="Ej. Jalisco, Guadalajara, Av. Chapultepec 123" />
+    </div>
+
+    <div class="field">
+      <label>Días que imparten clases</label>
+      <div class="dias-checkboxes">
+        {DIAS_SEMANA.map((d) => (
+          <label class="dia-checkbox">
+            <input type="checkbox" name="dias" value={d} />
+            {d}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="telefono">Teléfono (opcional)</label>
+        <input type="tel" id="telefono" name="telefono" maxlength="20" />
+      </div>
+      <div class="field">
+        <label for="whatsapp">WhatsApp (opcional)</label>
+        <input type="tel" id="whatsapp" name="whatsapp" maxlength="20" />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="email">Correo de contacto (opcional)</label>
+        <input type="email" id="email" name="email" maxlength="254" />
+      </div>
+      <div class="field">
+        <label for="sitio_web">Sitio web o red social (opcional)</label>
+        <input type="url" id="sitio_web" name="sitio_web" maxlength="300" placeholder="https://..." />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="bio">Descripción del club</label>
+      <textarea id="bio" name="bio" rows="5" maxlength="1000"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="logo">Logo (opcional, se muestra circular en el directorio)</label>
+      <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <p class="field-hint">JPG, PNG, WEBP o GIF, hasta 5 MB. Se recorta a un círculo automáticamente — una imagen cuadrada y centrada se ve mejor.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="actividad">Actividad</label>
+        <select id="actividad" name="actividad">
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="orden_destacado">Destacar en el directorio (opcional)</label>
+        <input type="number" id="orden_destacado" name="orden_destacado" min="1" step="1" style="max-width:140px" />
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">Crear club</button>
+      <a class="btn btn-secondary" href="/admin/clubes">Cancelar</a>
+    </div>
+  </form>
+</AdminLayout>

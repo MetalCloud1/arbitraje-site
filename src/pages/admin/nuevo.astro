@@ -1,0 +1,74 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import RichEditor from '../../components/RichEditor.astro';
+import { EXPIRY_OPTIONS } from '../../lib/expiry';
+
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+const today = new Date().toISOString().slice(0, 10);
+const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast'];
+---
+<AdminLayout title="Nuevo artículo">
+  <div class="admin-header">
+    <h1>Nuevo artículo</h1>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+
+  <form class="form-card" method="POST" action="/api/articles" enctype="multipart/form-data">
+    <div class="field">
+      <label for="title">Título</label>
+      <input type="text" id="title" name="title" required />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="category">Categoría</label>
+        <select id="category" name="category" required>
+          {categories.map((c) => <option value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label for="published_at">Fecha de publicación</label>
+        <input type="date" id="published_at" name="published_at" value={today} required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="excerpt">Resumen breve (opcional)</label>
+      <textarea id="excerpt" name="excerpt" rows="2"></textarea>
+      <p class="field-hint">Si lo dejas vacío, se genera automáticamente a partir del contenido.</p>
+    </div>
+
+    <div class="field">
+      <label for="cover">Imagen de portada (opcional)</label>
+      <input type="file" id="cover" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <p class="field-hint">JPG, PNG, WEBP o GIF, hasta 5 MB. Si el video es de Facebook, subí una imagen acá: se usa como miniatura en el listado (Facebook no ofrece una automática).</p>
+    </div>
+
+    <div class="field">
+      <label for="video_url">Link de video de Facebook o YouTube (opcional)</label>
+      <input type="url" id="video_url" name="video_url" placeholder="https://www.facebook.com/.../videos/... o https://youtu.be/..." />
+      <p class="field-hint">Si pegas un link acá, el video se muestra embebido en la página del artículo. En YouTube la miniatura del listado se genera sola; en Facebook se usa la imagen de portada de arriba.</p>
+    </div>
+
+    <div class="field">
+      <label>Contenido</label>
+      <RichEditor name="content_html" />
+    </div>
+
+    <div class="field">
+      <label for="expires_option">Eliminación automática</label>
+      <select id="expires_option" name="expires_option">
+        {EXPIRY_OPTIONS.map((opt) => <option value={opt.value}>{opt.label}</option>)}
+      </select>
+      <p class="field-hint">Usa esto para artículos temporales y mantener el sitio dentro de los límites gratuitos.</p>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">Publicar artículo</button>
+      <a class="btn btn-secondary" href="/admin">Cancelar</a>
+    </div>
+  </form>
+</AdminLayout>

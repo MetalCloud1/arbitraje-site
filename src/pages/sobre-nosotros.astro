@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME, CONTACT_EMAIL, SOCIAL_LINKS } from '../lib/site';
+
+const origin = Astro.url.origin;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: `Sobre Nosotros - ${SITE_NAME}`,
+    url: `${origin}/sobre-nosotros`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE_NAME,
+    url: origin,
+    email: CONTACT_EMAIL,
+    sameAs: [SOCIAL_LINKS.facebook, SOCIAL_LINKS.youtube],
+  },
+];
+---
+<BaseLayout
+  title={`Sobre Nosotros - ${SITE_NAME}`}
+  description="Somos una plataforma digital dedicada a la difusión, el análisis y la cobertura del ajedrez, con el arbitraje y el juego limpio como sello propio."
+  jsonLd={jsonLd}
+>
+  <div class="container">
+    <article class="article-detail doc-page">
+      <h1>Sobre Nosotros</h1>
+
+      <div class="article-body article-body-cont doc-body">
+        <p class="doc-lead">
+          En La Hora del Arbitraje somos una plataforma digital dedicada a la difusión, el análisis y la
+          cobertura del ajedrez en todas sus dimensiones. Nuestras raíces y nuestro sello nacen de la
+          pasión por el reglamento, la labor arbitral y la transparencia en la competencia, pero nos
+          apasiona el ajedrez global en su totalidad.
+        </p>
+
+        <p>
+          Combinamos la actualidad del ajedrez internacional (noticias, análisis de eventos de élite y
+          cobertura de torneos) con un enfoque técnico y educativo riguroso. Ofrecemos a jugadores,
+          entrenadores, árbitros y aficionados un punto de encuentro donde el análisis del juego y la
+          comprensión de sus leyes se unen para enriquecer la experiencia competitiva.
+        </p>
+
+        <p>
+          Somos un espacio en alianza con Chess.com, y trabajamos para que la información sobre el
+          ajedrez competitivo llegue con claridad a quien la necesita, sea para jugar un torneo, dirigirlo
+          o simplemente seguirlo.
+        </p>
+
+        <h2>Nuestra misión</h2>
+        <blockquote class="doc-mission">
+          Conectar a la comunidad hispanohablante de ajedrez a través de información de calidad, análisis
+          técnico imparcial y herramientas prácticas que promuevan el crecimiento del juego limpio, la
+          formación de nuevos talentos y el fortalecimiento de clubes y torneos en todos los niveles.
+        </blockquote>
+
+        <h2>Qué encontrarás en el sitio</h2>
+        <ul>
+          <li>
+            <strong>Artículos.</strong> Casos arbitrales, entrevistas, análisis y podcast sobre el ajedrez
+            competitivo y las reglas que lo rigen. <a href="/articulos">Ver artículos</a>.
+          </li>
+          <li>
+            <strong>Actualidad y torneos.</strong> Noticias del ajedrez internacional y cobertura de
+            eventos, con contexto para entender lo que pasó en el tablero y en la mesa arbitral.
+          </li>
+          <li>
+            <strong>Directorios.</strong> Árbitros y entrenadores de ajedrez de México, con sus títulos y
+            trayectoria. <a href="/arbitros">Árbitros</a> · <a href="/entrenadores">Entrenadores</a>.
+          </li>
+          <li>
+            <strong>Contenido interactivo.</strong> Tableros, problemas y cuestionarios dentro de los
+            artículos para practicar lo que se explica.
+          </li>
+        </ul>
+
+        <h2>Cómo trabajamos</h2>
+        <ul>
+          <li>
+            <strong>Imparcialidad.</strong> Analizamos las decisiones y los casos a partir del reglamento
+            vigente, no de simpatías por jugadores, clubes o federaciones.
+          </li>
+          <li>
+            <strong>Rigor.</strong> Contrastamos los datos y citamos las reglas que aplican antes de
+            publicar.
+          </li>
+          <li>
+            <strong>Transparencia.</strong> Si detectas un error, escríbenos: lo revisamos y, cuando
+            corresponde, corregimos el artículo.
+          </li>
+        </ul>
+
+        <h2>Contacto</h2>
+        <p>
+          ¿Quieres proponer un tema, colaborar, corregir un dato o resolver una duda? Escríbenos a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </p>
+        <p>
+          Si eres árbitro o entrenador y quieres aparecer en el directorio, puedes enviar tu solicitud
+          desde <a href="/arbitros/postular">el formulario de árbitros</a> o
+          <a href="/entrenadores/postular">el de entrenadores</a>. También nos encuentras en
+          <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer nofollow">Facebook</a> y
+          <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer nofollow">YouTube</a>.
+        </p>
+      </div>
+    </article>
+  </div>
+</BaseLayout>

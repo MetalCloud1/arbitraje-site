@@ -1,0 +1,644 @@
+/* ==========================================================================
+   WIDGETS DE ARTÍCULOS (tablero, problema, trivia, incrustación)
+   Los módulos JS viven en src/lib/widgets. Acá solo la apariencia.
+   Se apoya en las variables de global.css (--green, --border, --white…) y
+   define pocos tokens propios para el tablero.
+   ========================================================================== */
+
+figure[data-widget] {
+  --wg-surface: rgba(255, 255, 255, 0.035);
+  --wg-surface-2: rgba(255, 255, 255, 0.07);
+  --wg-line: rgba(255, 255, 255, 0.1);
+  --wg-light-sq: #ebecd0;
+  --wg-dark-sq: #739552;
+  --wg-last: rgba(255, 221, 51, 0.42);
+  --wg-ok: var(--green-bright);
+  --wg-bad: var(--danger);
+
+  margin: 40px 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: #dde3de;
+}
+
+/* Contenido alternativo (RSS / sin JS): se ve sobrio hasta que el widget arranca. */
+figure[data-widget]:not([data-ready='true']) {
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--wg-surface);
+}
+figure[data-widget]:not([data-ready='true']) p,
+figure[data-widget]:not([data-ready='true']) li {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+figure[data-widget]:not([data-ready='true']) details {
+  margin-top: 8px;
+}
+figure[data-widget]:not([data-ready='true']) summary {
+  cursor: pointer;
+  color: var(--green-bright);
+}
+
+figure[data-widget][data-ready='true'] {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.wg {
+  padding: 16px;
+  border: 1px solid var(--wg-line);
+  border-radius: 14px;
+  background: var(--wg-surface);
+}
+
+.wg-caption {
+  margin: 12px 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--gray);
+}
+
+.wg-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Tablero + panel lateral ---------- */
+.wg-game {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 720px) {
+  .wg-game {
+    grid-template-columns: minmax(0, 1.3fr) minmax(220px, 1fr);
+  }
+  .wg-game.wg-static {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 460px;
+    margin-inline: auto;
+  }
+}
+
+.wg-game.wg-static {
+  max-width: 460px;
+  margin-inline: auto;
+}
+
+.wg-stage {
+  min-width: 0;
+}
+
+.wg-board-host {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
+}
+
+.wg-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ---------- Tema del tablero (cm-chessboard, clase "lha") ---------- */
+.cm-chessboard.lha .board .square.white {
+  fill: var(--wg-light-sq, #ebecd0);
+}
+.cm-chessboard.lha .board .square.black {
+  fill: var(--wg-dark-sq, #739552);
+}
+.cm-chessboard.lha.border-type-none .board .border {
+  stroke-width: 0;
+  fill: var(--wg-dark-sq, #739552);
+}
+.cm-chessboard.lha .coordinates .coordinate {
+  font-family: var(--font-sans);
+  font-size: 6.4px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+.cm-chessboard.lha .coordinates .coordinate.white {
+  fill: var(--wg-dark-sq, #739552);
+}
+.cm-chessboard.lha .coordinates .coordinate.black {
+  fill: var(--wg-light-sq, #ebecd0);
+}
+.cm-chessboard.lha .markers .marker.marker-square {
+  fill: var(--wg-last, rgba(255, 221, 51, 0.42));
+  opacity: 1;
+}
+.cm-chessboard.lha .markers .marker.marker-circle-primary {
+  stroke: #3b8fd9;
+  stroke-width: 3.4px;
+  opacity: 0.9;
+}
+.cm-chessboard.lha .markers .marker.marker-dot,
+.cm-chessboard.lha .markers .marker.marker-bevel {
+  fill: #14210f;
+  opacity: 0.28;
+}
+.cm-chessboard.lha .markers .marker.marker-frame {
+  stroke: #fff;
+  stroke-width: 1.6px;
+  opacity: 0.7;
+}
+
+/* ---------- Botones ---------- */
+.wg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--wg-line);
+  border-radius: 8px;
+  background: var(--wg-surface-2);
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-instant) ease, border-color var(--dur-instant) ease, transform var(--dur-instant) ease;
+}
+.wg-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.wg-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.wg-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.wg-btn:focus-visible,
+.wg-move:focus-visible,
+.wg-opt:focus-visible,
+.wg-input:focus-visible {
+  outline: 2px solid var(--green-bright);
+  outline-offset: 2px;
+}
+.wg-btn-primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0a1410;
+}
+.wg-btn-primary:hover:not(:disabled) {
+  background: var(--green-bright);
+}
+.wg-ico {
+  display: inline-flex;
+}
+
+.wg-controls,
+.wg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wg-controls .wg-btn {
+  min-width: 40px;
+  padding: 0 10px;
+}
+
+/* ---------- Lista de jugadas ---------- */
+.wg-moves {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 2px 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  font-variant-numeric: tabular-nums;
+}
+.wg-num {
+  padding: 4px 0 4px 6px;
+  color: var(--gray-dim);
+  font-size: 13px;
+}
+.wg-move {
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #dde3de;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wg-move:hover {
+  background: var(--wg-surface-2);
+}
+.wg-move[aria-current='step'] {
+  background: var(--green);
+  color: #0a1410;
+}
+
+/* ---------- Problema ---------- */
+.wg-turn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+.wg-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+.wg-dot-w {
+  background: #f5f7f4;
+}
+.wg-dot-b {
+  background: #161a17;
+}
+.wg-status {
+  min-height: 3em;
+  padding: 10px 12px;
+  border-left: 3px solid var(--wg-line);
+  border-radius: 4px 10px 10px 4px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #dde3de;
+}
+.wg-status[data-tone='ok'] {
+  border-left-color: var(--wg-ok);
+}
+.wg-status[data-tone='bad'] {
+  border-left-color: var(--wg-bad);
+}
+.wg-puzzle.is-solved .wg-status {
+  border-left-color: var(--wg-ok);
+}
+.wg-details summary {
+  cursor: pointer;
+  color: var(--gray);
+  font-size: 14px;
+}
+.wg-typed {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.wg-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--wg-line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--white);
+  font: inherit;
+}
+
+/* ---------- Trivia ---------- */
+.wg-quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 640px;
+  margin-inline: auto;
+}
+.wg-progress {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--wg-surface-2);
+  overflow: hidden;
+}
+.wg-progress span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width var(--dur-fast) ease;
+}
+.wg-quiz-meta {
+  color: var(--gray);
+  font-size: 13px;
+}
+.wg-quiz-q {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--white);
+}
+.wg-quiz-options {
+  display: grid;
+  gap: 8px;
+}
+.wg-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--wg-line);
+  border-radius: 10px;
+  background: var(--wg-surface);
+  color: #dde3de;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-instant) ease, border-color var(--dur-instant) ease;
+}
+.wg-opt:hover:not(:disabled) {
+  background: var(--wg-surface-2);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.wg-opt:disabled {
+  cursor: default;
+}
+.wg-opt-key {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--wg-surface-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+.wg-opt.is-correct {
+  border-color: var(--wg-ok);
+  background: rgba(129, 182, 76, 0.16);
+}
+.wg-opt.is-correct .wg-opt-key {
+  background: var(--green);
+  color: #0a1410;
+}
+.wg-opt.is-wrong {
+  border-color: var(--wg-bad);
+  background: rgba(217, 97, 79, 0.14);
+}
+.wg-opt.is-wrong .wg-opt-key {
+  background: var(--wg-bad);
+  color: #fff;
+}
+.wg-quiz-feedback:empty {
+  display: none;
+}
+.wg-quiz-feedback {
+  padding: 10px 12px;
+  border-left: 3px solid var(--wg-line);
+  border-radius: 4px 10px 10px 4px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.wg-quiz-feedback[data-tone='ok'] {
+  border-left-color: var(--wg-ok);
+}
+.wg-quiz-feedback[data-tone='bad'] {
+  border-left-color: var(--wg-bad);
+}
+.wg-quiz-next {
+  align-self: flex-start;
+}
+.wg-quiz-next[hidden] {
+  display: none;
+}
+.wg-quiz-score {
+  font-size: 44px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: var(--green-bright);
+}
+.wg-quiz-verdict {
+  font-size: 18px;
+  color: var(--white);
+}
+
+/* ---------- Incrustación ---------- */
+.wg-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--wg-ratio, 16 / 9);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+.wg-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.wg-source {
+  display: inline-block;
+  margin: 10px 4px 0;
+  font-size: 14px;
+  color: var(--gray);
+  text-decoration: none;
+}
+.wg-source:hover {
+  color: var(--green-bright);
+  text-decoration: underline;
+}
+
+/* ---------- Editor del panel: bloque de widget y formularios ---------- */
+.editor-toolbar .editor-widget-btn {
+  width: auto;
+  padding: 0 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.widget-block {
+  margin: 18px 0;
+  border: 1px dashed rgba(129, 182, 76, 0.45);
+  border-radius: 12px;
+  background: rgba(129, 182, 76, 0.04);
+}
+.widget-block.is-selected {
+  border-style: solid;
+  border-color: var(--green-bright);
+}
+.widget-block-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-bright);
+}
+.widget-block-actions {
+  display: flex;
+  gap: 6px;
+}
+.widget-block-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.widget-block-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+}
+.widget-block-btn.is-danger:hover {
+  background: rgba(217, 97, 79, 0.18);
+  color: #ffb3a8;
+}
+.widget-block-preview {
+  margin: 0 12px 12px;
+}
+.widget-block-error {
+  color: var(--gray);
+  font-size: 14px;
+}
+
+.wg-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--wg-line, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  background: #101c16;
+  color: #dde3de;
+  font-family: var(--font-sans);
+  overflow: auto;
+}
+.wg-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+.wg-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+}
+.wg-dialog h3 {
+  font-size: 18px;
+  color: var(--white);
+}
+.wg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.wg-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+}
+.wg-field small,
+.wg-hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--gray-dim);
+}
+.wg-dialog input[type='text'],
+.wg-dialog textarea,
+.wg-dialog select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+}
+.wg-dialog textarea {
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+.wg-dialog input:focus-visible,
+.wg-dialog textarea:focus-visible,
+.wg-dialog select:focus-visible {
+  outline: 2px solid var(--green-bright);
+  outline-offset: 1px;
+}
+.wg-dialog-error {
+  padding: 10px 12px;
+  border-left: 3px solid var(--danger);
+  border-radius: 4px 8px 8px 4px;
+  background: rgba(217, 97, 79, 0.12);
+  color: #ffb3a8;
+  font-size: 14px;
+}
+.wg-dialog-error[hidden] {
+  display: none;
+}
+.wg-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.wg-qlist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.wg-qcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+}
+.wg-qcard legend {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-bright);
+}
+.wg-optrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wg-optrow input[type='radio'] {
+  flex: none;
+  accent-color: var(--green);
+}
+.wg-link-danger {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffb3a8;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}

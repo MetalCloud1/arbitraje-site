@@ -1,0 +1,13 @@
+---
+// Mismo alias que /arbitros/postular, para el otro directorio.
+export const prerender = false;
+
+const target = new URL('/postular', Astro.url.origin);
+target.searchParams.set('tipo', 'entrenador');
+for (const key of ['reclamo', 'error', 'enviado']) {
+  const value = Astro.url.searchParams.get(key);
+  if (value) target.searchParams.set(key, value);
+}
+
+return Astro.redirect(target.pathname + target.search, 301);
+---

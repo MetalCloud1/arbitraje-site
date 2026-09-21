@@ -1,0 +1,153 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getArticleBySlug } from '../../lib/db';
+import { formatDateEs, splitAfterFirstParagraph, wrapTables } from '../../lib/text';
+import { parseVideoUrlSafe } from '../../lib/video';
+import MediaFrame from '../../components/MediaFrame.astro';
+import ReadingProgress from '../../components/ReadingProgress.astro';
+
+export const prerender = false;
+
+const db = env.DB;
+const { slug } = Astro.params;
+const article = slug ? await getArticleBySlug(db, slug) : null;
+
+if (!article) {
+  return Astro.redirect('/articulos');
+}
+
+const video = parseVideoUrlSafe(article.video_url);
+const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` : null;
+
+// Imagen de fondo del encabezado (desenfocada y oscurecida por CSS). Sale de
+// la portada subida si existe (mejor calidad, también en artículos con
+// video) o, si no, de la miniatura de YouTube. Un video de Facebook sin
+// portada no tiene imagen posible: el encabezado queda liso.
+const heroUrl = article.cover_key ? `/api/img/${article.cover_key}` : (video?.thumbnailUrl ?? null);
+
+// La imagen nítida o el video van después del primer párrafo: el lector
+// arranca directo en el texto y la media aparece cuando ya está leyendo,
+// no al final donde casi nadie llega. Sin media no hay nada que insertar.
+const hasInlineMedia = Boolean(video || coverUrl);
+const { head, tail } = hasInlineMedia
+  ? splitAfterFirstParagraph(article.content_html)
+  : { head: article.content_html, tail: '' };
+
+const publishedIso = new Date(article.published_at).toISOString();
+const modifiedIso = new Date(article.updated_at ?? article.published_at).toISOString();
+const canonicalArticleUrl = new URL(`/articulos/${article.slug}`, Astro.url.origin).toString();
+
+// NewsArticle en vez de Article genérico: es el tipo correcto de schema.org
+// para contenido periodístico/editorial como el de este sitio.
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: article.title,
+  description: article.excerpt ?? undefined,
+  image: coverUrl ? [new URL(coverUrl, Astro.url.origin).toString()] : undefined,
+  datePublished: publishedIso,
+  dateModified: modifiedIso,
+  articleSection: article.category,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalArticleUrl },
+  author: { '@type': 'Organization', name: 'La Hora del Arbitraje' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'La Hora del Arbitraje',
+    logo: { '@type': 'ImageObject', url: new URL('/logo.svg', Astro.url.origin).toString() },
+  },
+};
+---
+<BaseLayout
+  title={`${article.title} - La Hora del Arbitraje`}
+  description={article.excerpt ?? undefined}
+  image={coverUrl ?? undefined}
+  type="article"
+  publishedTime={publishedIso}
+  modifiedTime={modifiedIso}
+  jsonLd={articleJsonLd}
+>
+  <ReadingProgress targetSelector=".article-content" />
+  <article class="article-page">
+    <header class={`article-hero${heroUrl ? ' has-image' : ''}`}>
+      {heroUrl && (
+        <div class="article-hero-media" aria-hidden="true" transition:name={`article-cover-${article.slug}`}>
+          <img
+            class="article-hero-img"
+            src={heroUrl}
+            alt=""
+            loading="eager"
+            fetchpriority="high"
+            onerror="this.parentElement.style.display='none'"
+          />
+        </div>
+      )}
+      <div class="container">
+        <div class="article-hero-inner">
+          <a class="back-link" href="/articulos">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Volver a artículos
+          </a>
+
+          <div class="article-category">{article.category}</div>
+          <h1 transition:name={`article-title-${article.slug}`}>{article.title}</h1>
+
+          <div class="article-meta">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {formatDateEs(article.published_at)}
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              {article.read_minutes} min de lectura
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="article-detail article-detail-body">
+        {/* .article-content agrupa texto + media para que la barra de progreso
+            de lectura mida el artículo completo, no solo el primer tramo. */}
+        <div class="article-content">
+          {head && <div class="article-body" set:html={wrapTables(head)} />}
+
+          {video && (
+            <div class="article-video-embed">
+              <iframe
+                src={video.embedUrl}
+                title={article.title}
+                loading="lazy"
+                allow="autoplay; encrypted-media; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+          )}
+          {coverUrl && (
+            <div class="article-cover-frame">
+              {/* El view-transition de la portada vive en el fondo del
+                  encabezado (arriba, siempre visible), no acá. */}
+              <MediaFrame imageUrl={coverUrl} alt={article.title} />
+            </div>
+          )}
+
+          {tail && <div class={head ? 'article-body article-body-cont' : 'article-body'} set:html={wrapTables(tail)} />}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <script>
+    // Widgets del artículo (tablero, problema, trivia, incrustación): el código
+    // solo se descarga si el artículo tiene alguno, y cada widget se inicia
+    // cuando se acerca a la pantalla. Ver src/lib/widgets.
+    const boot = () => {
+      if (document.querySelector('.article-body [data-widget]')) {
+        import('../../lib/widgets/client/mount').then((m) => m.hydrateWidgets());
+      }
+    };
+    boot();
+    document.addEventListener('astro:page-load', boot);
+  </script>
+</BaseLayout>

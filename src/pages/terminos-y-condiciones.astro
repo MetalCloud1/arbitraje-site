@@ -1,0 +1,126 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME, SITE_DOMAIN, CONTACT_EMAIL, LEGAL_UPDATED } from '../lib/site';
+---
+<BaseLayout
+  title={`Términos y Condiciones - ${SITE_NAME}`}
+  description="Condiciones de uso de La Hora del Arbitraje: contenido, propiedad intelectual, directorios, enlaces de terceros y limitación de responsabilidad."
+>
+  <div class="container">
+    <article class="article-detail doc-page">
+      <h1>Términos y Condiciones</h1>
+      <p class="doc-meta">Última actualización: {LEGAL_UPDATED}</p>
+
+      <div class="article-body article-body-cont doc-body">
+        <p>
+          Bienvenido a {SITE_NAME} ({SITE_DOMAIN}, en adelante el «Sitio»). Al acceder y usar el Sitio
+          aceptas estos Términos y Condiciones. Si no estás de acuerdo con ellos, te pedimos que no
+          utilices el Sitio.
+        </p>
+
+        <h2>1. Qué es el Sitio</h2>
+        <p>
+          {SITE_NAME} es una plataforma de contenido dedicada a la difusión, el análisis y la cobertura
+          del ajedrez a nivel nacional e internacional. El Sitio publica noticias, artículos, entrevistas,
+          análisis técnicos de partidas e incidentes reglamentarios, y mantiene directorios de árbitros y
+          entrenadores de ajedrez.
+        </p>
+
+        <h2>2. Uso permitido</h2>
+        <p>Te comprometes a usar el Sitio de forma lícita y respetuosa. En particular, no debes:</p>
+        <ul>
+          <li>Intentar acceder sin autorización a áreas restringidas, como el panel de administración.</li>
+          <li>Interferir con el funcionamiento del Sitio ni sobrecargarlo con envíos o consultas automatizadas.</li>
+          <li>Usar los formularios para enviar spam, contenido ofensivo o información falsa.</li>
+          <li>Suplantar la identidad de otra persona, en especial al postular o reclamar un perfil.</li>
+          <li>Extraer contenido del Sitio de forma masiva o con fines comerciales sin nuestro permiso.</li>
+        </ul>
+
+        <h2>3. Propiedad intelectual</h2>
+        <p>
+          Los textos, el diseño, el logotipo y demás elementos originales del Sitio pertenecen a
+          {SITE_NAME} o se usan con autorización, y están protegidos por la legislación de propiedad
+          intelectual aplicable. Puedes compartir enlaces a nuestros artículos y citar fragmentos breves
+          indicando la fuente y enlazando al original. Cualquier otra reproducción, total o parcial,
+          requiere autorización previa por escrito.
+        </p>
+        <p>
+          Las marcas y nombres de terceros (por ejemplo, Chess.com, Lichess, FIDE o YouTube) pertenecen a
+          sus respectivos titulares y se mencionan solo con fines informativos.
+        </p>
+
+        <h2>4. Contenido informativo</h2>
+        <p>
+          El contenido del Sitio tiene fines informativos, educativos y de opinión. Nos esforzamos por
+          que sea exacto y esté actualizado, pero no garantizamos que carezca de errores u omisiones. Los
+          análisis de casos arbitrales reflejan una interpretación del reglamento y no sustituyen la
+          decisión de un árbitro, un comité de apelaciones ni una interpretación oficial de la FIDE u otra
+          federación. Si detectas un error, escríbenos y lo revisaremos.
+        </p>
+
+        <h2>5. Directorios de árbitros y entrenadores</h2>
+        <p>
+          Los directorios muestran información profesional de árbitros y entrenadores. Las solicitudes de
+          alta o de reclamo de perfil se revisan manualmente y podemos aceptarlas, modificarlas o
+          rechazarlas. Al enviar una solicitud declaras que los datos son verdaderos y que tienes derecho
+          a proporcionarlos. Aparecer en un directorio no implica que {SITE_NAME} certifique, avale o
+          recomiende a la persona listada, ni que sus títulos hayan sido verificados por nosotros ante la
+          FIDE o una federación, salvo que se indique expresamente.
+        </p>
+        <p>
+          Puedes pedir la corrección o el retiro de un perfil en cualquier momento escribiendo a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </p>
+
+        <h2>6. Enlaces y contenido de terceros</h2>
+        <p>
+          El Sitio puede enlazar o incrustar contenido de terceros (videos, tableros, redes sociales). No
+          controlamos esos sitios ni somos responsables de su contenido, disponibilidad o prácticas de
+          privacidad; su uso se rige por sus propios términos.
+        </p>
+
+        <h2>7. Publicidad</h2>
+        <p>
+          El Sitio puede incluir anuncios de terceros, como Google AdSense. Los anunciantes son
+          responsables de sus anuncios, y su presencia no implica que {SITE_NAME} respalde los productos
+          o servicios anunciados. Consulta nuestra <a href="/politica-de-privacidad">Política de Privacidad</a>
+          para saber cómo se tratan los datos relacionados con la publicidad.
+        </p>
+
+        <h2>8. Limitación de responsabilidad</h2>
+        <p>
+          El Sitio se ofrece «tal cual» y «según disponibilidad». En la medida permitida por la ley,
+          {SITE_NAME} no será responsable por daños derivados del uso del Sitio o de la imposibilidad de
+          usarlo, de interrupciones del servicio, de errores en el contenido o de decisiones que tomes con
+          base en él.
+        </p>
+
+        <h2>9. Privacidad</h2>
+        <p>
+          El tratamiento de tus datos personales se rige por nuestra
+          <a href="/politica-de-privacidad">Política de Privacidad</a>, que forma parte de estos términos.
+        </p>
+
+        <h2>10. Cambios a estos términos</h2>
+        <p>
+          Podemos modificar estos términos en cualquier momento. La versión vigente es la publicada en
+          esta página, con su fecha de actualización. Si sigues usando el Sitio después de un cambio,
+          entendemos que lo aceptas.
+        </p>
+
+        <h2>11. Legislación aplicable</h2>
+        <p>
+          Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Para cualquier
+          controversia, las partes se someten a los tribunales competentes de México, sin perjuicio de
+          los derechos que la ley reconozca a los consumidores.
+        </p>
+
+        <h2>12. Contacto</h2>
+        <p>
+          Para dudas sobre estos términos escríbenos a
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </p>
+      </div>
+    </article>
+  </div>
+</BaseLayout>

@@ -1,0 +1,73 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getArbitroBySlug } from '../../lib/arbitros';
+import { getTituloTier } from '../../lib/postulacion';
+import PawnMark from '../../components/PawnMark.astro';
+
+export const prerender = false;
+
+const db = env.DB;
+const { slug } = Astro.params;
+const arbitro = slug ? await getArbitroBySlug(db, slug) : null;
+
+if (!arbitro) {
+  return Astro.redirect('/arbitros');
+}
+
+const fotoUrl = arbitro.foto_key ? `/api/img/${arbitro.foto_key}` : null;
+const tier = getTituloTier(arbitro.titulo);
+const photoStyle = `--tier-color:${tier.color}; --tier-color-bright:${tier.colorBright}; --tier-glow:${tier.glow}`;
+
+// El email solo se muestra si el propio árbitro ya reclamó su perfil:
+// solo ahí hay consentimiento explícito de esa persona para ser
+// contactada públicamente. En un perfil sin reclamar, el dato lo cargó
+// el admin sin que la persona lo haya confirmado todavía.
+const mostrarEmail = !!arbitro.reclamado_en && !!arbitro.email;
+---
+<BaseLayout
+  title={`${arbitro.nombre_completo} - Árbitros - La Hora del Arbitraje`}
+  description={arbitro.bio ?? undefined}
+  image={fotoUrl ?? undefined}
+>
+  <div class="container">
+    <article class="arbitro-detail">
+      <a class="back-link" href="/arbitros">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver a árbitros
+      </a>
+
+      <div class="arbitro-detail-header">
+        <div class="arbitro-detail-photo" data-tier={tier.tier} style={photoStyle} transition:name={`arbitro-photo-${arbitro.slug}`}>
+          {fotoUrl ? (
+            <img src={fotoUrl} alt={arbitro.nombre_completo} />
+          ) : (
+            <PawnMark class="arbitro-detail-pawn" />
+          )}
+          {tier.short && <span class="arbitro-detail-rank" aria-hidden="true">{tier.short}</span>}
+        </div>
+        <div>
+          <h1 transition:name={`arbitro-name-${arbitro.slug}`}>{arbitro.nombre_completo}</h1>
+          <div class="arbitro-detail-meta">
+            {arbitro.titulo && <span class="badge">{arbitro.titulo}</span>}
+            {arbitro.estado_republica && <span class="badge">{arbitro.estado_republica}</span>}
+            {arbitro.fide_id && <span class="badge">FIDE ID {arbitro.fide_id}</span>}
+          </div>
+          {mostrarEmail && (
+            <p class="arbitro-detail-email">
+              <a href={`mailto:${arbitro.email}`}>{arbitro.email}</a>
+            </p>
+          )}
+        </div>
+      </div>
+
+      {arbitro.bio && <p class="arbitro-detail-bio">{arbitro.bio}</p>}
+
+      {!arbitro.reclamado_en && (
+        <p class="claim-hint">
+          ¿Este perfil es tuyo? <a href={`/postular?tipo=arbitro&reclamo=${arbitro.id}`}>Reclámalo</a> para confirmar tus datos y agregar tu contacto.
+        </p>
+      )}
+    </article>
+  </div>
+</BaseLayout>

@@ -1,0 +1,60 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import FeaturedArticles from '../components/FeaturedArticles.astro';
+import KnightMark from '../components/KnightMark.astro';
+import EmptyState from '../components/EmptyState.astro';
+import { listRecentArticles } from '../lib/db';
+
+export const prerender = false;
+
+const db = env.DB;
+const articles = await listRecentArticles(db, 8);
+
+const featured = articles[0] ?? null;
+const secondary = articles.slice(1, 4);
+const recentGrid = articles.slice(4, 8);
+---
+<BaseLayout
+  title="La Hora del Arbitraje - Noticias y análisis de arbitraje en ajedrez"
+  description="Noticias, entrevistas y análisis sobre arbitraje y ajedrez competitivo, de la mano de Chess.com."
+>
+  {featured && (
+    <section class="featured-section">
+      <div class="container">
+        <FeaturedArticles featured={featured} secondary={secondary} />
+      </div>
+    </section>
+  )}
+
+  {(recentGrid.length > 0 || articles.length === 0) && (
+    <section class="articles-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title">
+            <KnightMark class="section-mark" />
+            <span>Artículos Recientes</span>
+          </div>
+          <a class="view-all" href="/articulos">
+            Ver todos los artículos
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        {articles.length === 0 && (
+          <EmptyState
+            title="Todavía no hay artículos publicados"
+            description="Vuelve pronto para ver las últimas noticias y análisis de arbitraje."
+          />
+        )}
+
+        {recentGrid.length > 0 && (
+          <div class="articles-grid">
+            {recentGrid.map((article) => <ArticleCard article={article} />)}
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+</BaseLayout>

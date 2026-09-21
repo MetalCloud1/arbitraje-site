@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import CategoryBar from '../components/CategoryBar.astro';
+import Footer from '../components/Footer.astro';
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** URL absoluta o relativa de la imagen para compartir (og:image / twitter:image). */
+  image?: string;
+  /** 'article' en páginas de artículo individual, 'website' en el resto (default). */
+  type?: 'website' | 'article';
+  /** Evita indexación: usar en páginas de búsqueda, filtros, login, etc. */
+  noindex?: boolean;
+  /** ISO date. Solo aplica con type="article". */
+  publishedTime?: string;
+  modifiedTime?: string;
+  /** Uno o varios objetos JSON-LD (schema.org) específicos de esta página. */
+  jsonLd?: object | object[];
+}
+
+const {
+  title,
+  description = 'Noticias, entrevistas y análisis sobre arbitraje y ajedrez competitivo, de la mano de Chess.com.',
+  image = '/og-default.webp',
+  type = 'website',
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  jsonLd,
+} = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.url.origin).toString();
+const absoluteImage = new URL(image, Astro.url.origin).toString();
+const siteName = 'La Hora del Arbitraje';
+
+// Schema.org Organization/WebSite: se repite igual en todas las páginas, así
+// que sirve de "identidad" consistente para buscadores. Cada página puede
+// añadir además su propio jsonLd (p. ej. NewsArticle) vía la prop.
+const baseJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteName,
+  url: Astro.url.origin,
+  description,
+};
+
+const jsonLdBlocks = [baseJsonLd, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{title}</title>
+  <link rel="canonical" href={canonicalUrl} />
+  {noindex && <meta name="robots" content="noindex, follow" />}
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="alternate" type="application/rss+xml" title={`${siteName} - Artículos`} href={`${Astro.url.origin}/rss.xml`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content={type} />
+  <meta property="og:site_name" content={siteName} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={absoluteImage} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  {type === 'article' && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {type === 'article' && modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={absoluteImage} />
+
+  {jsonLdBlocks.map((block) => (
+    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+  ))}
+
+  <ClientRouter />
+</head>
+<body>
+  <Header />
+  <CategoryBar />
+  <main class="site-main">
+    <slot />
+  </main>
+  <Footer />
+</body>
+</html>

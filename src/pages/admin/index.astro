@@ -1,0 +1,97 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { listAllArticles } from '../../lib/db';
+import { formatDateEs } from '../../lib/text';
+import EmptyState from '../../components/EmptyState.astro';
+
+export const prerender = false;
+
+const db = env.DB;
+const articles = await listAllArticles(db);
+
+const created = Astro.url.searchParams.get('created');
+const updated = Astro.url.searchParams.get('updated');
+const deleted = Astro.url.searchParams.get('deleted');
+const cleaned = Astro.url.searchParams.get('cleaned');
+const error = Astro.url.searchParams.get('error');
+
+const scheduled = articles.filter((a) => a.expires_at);
+
+function daysLeft(expiresAt: string): number {
+  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+---
+<AdminLayout title="Artículos">
+  <div class="admin-header">
+    <h1>Artículos</h1>
+    <a class="btn btn-primary" href="/admin/nuevo">+ Nuevo artículo</a>
+  </div>
+
+  {error && <div class="alert alert-error">{error}</div>}
+  {created && <div class="alert alert-success">Artículo publicado correctamente.</div>}
+  {updated && <div class="alert alert-success">Artículo actualizado correctamente.</div>}
+  {deleted && <div class="alert alert-success">Artículo eliminado.</div>}
+  {cleaned !== null && <div class="alert alert-success">Limpieza ejecutada: {cleaned} artículo(s) vencido(s) eliminado(s).</div>}
+
+  <div class="cleanup-box">
+    <h2>Limpieza automática</h2>
+    <p>
+      Los artículos con eliminación programada se borran solos (junto con su imagen) para no acercarte
+      a los límites del plan gratuito de Cloudflare.
+      {scheduled.length > 0
+        ? ` Actualmente hay ${scheduled.length} artículo(s) con eliminación programada.`
+        : ' Ahora mismo ningún artículo tiene eliminación programada.'}
+    </p>
+    <form method="POST" action="/api/cleanup">
+      <button class="btn btn-secondary" type="submit">Ejecutar limpieza ahora</button>
+    </form>
+  </div>
+
+  {articles.length === 0 ? (
+    <EmptyState
+      title="Todavía no has publicado ningún artículo"
+      description="Los artículos que publiques van a aparecer acá, con su estado y fecha de eliminación."
+      actionLabel="+ Nuevo artículo"
+      actionHref="/admin/nuevo"
+    />
+  ) : (
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Categoría</th>
+          <th>Publicado</th>
+          <th>Eliminación</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {articles.map((a) => (
+          <tr>
+            <td>
+              <a href={`/articulos/${a.slug}`} target="_blank">{a.title}</a>
+            </td>
+            <td>{a.category}</td>
+            <td>{formatDateEs(a.published_at)}</td>
+            <td>
+              {a.expires_at ? (
+                <span class="badge expiring">en {daysLeft(a.expires_at)} día(s)</span>
+              ) : (
+                <span class="badge">indefinido</span>
+              )}
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-secondary" href={`/admin/editar/${a.id}`}>Editar</a>
+                <form method="POST" action={`/api/articles/${a.id}/delete`} onsubmit="return confirm('¿Borrar este artículo? Esta acción no se puede deshacer.')">
+                  <button class="btn btn-danger" type="submit">Borrar</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</AdminLayout>
