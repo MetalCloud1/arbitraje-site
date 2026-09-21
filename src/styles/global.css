@@ -379,6 +379,18 @@ nav.main-nav a.active::after {
   transform: translateY(-1px);
 }
 
+/* Buscador que vive en el header junto a la hamburguesa: solo se ve en
+   mobile (ver @media abajo). En desktop el buscador de siempre sigue
+   siendo el de la barra de categorías; este queda oculto para no
+   duplicarlo visualmente. */
+.mobile-search {
+  display: none;
+}
+
+.mobile-search .search-panel {
+  right: -8px;
+}
+
 /* Botón hamburguesa: solo existe visualmente en mobile (ver @media abajo),
    donde toma el lugar de .social-links en el header. */
 .mobile-menu-toggle {
@@ -409,6 +421,10 @@ nav.main-nav a.active::after {
 @media (max-width: 860px) {
   .social-links {
     display: none;
+  }
+
+  .mobile-search {
+    display: block;
   }
 
   .mobile-menu-toggle {
@@ -790,50 +806,12 @@ nav.main-nav a.active::after {
   .category-bar-inner {
     display: none;
   }
-
-  .mobile-nav-panel {
-    display: flex;
-  }
 }
 
 .mobile-nav-panel {
   display: none;
   flex-direction: column;
   padding: 14px 0 20px;
-}
-
-.mobile-search-form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.mobile-search-form svg {
-  flex-shrink: 0;
-  color: var(--gray);
-}
-
-.mobile-search-form input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--white);
-  font-size: 15px;
-  font-family: inherit;
-}
-
-.mobile-search-form input:focus {
-  outline: none;
-}
-
-.mobile-search-form input::placeholder {
-  color: var(--gray-dim);
 }
 
 .mobile-nav-link {
@@ -850,6 +828,17 @@ nav.main-nav a.active::after {
 
 .mobile-nav-link.active {
   color: var(--green-bright);
+}
+
+/* Esta regla tiene que venir DESPUÉS de la definición base de
+   .mobile-nav-panel (arriba) para ganarle en la cascada -- misma
+   especificidad, así que gana quien esté más abajo en el archivo. Antes
+   estaba antes que la base y la base (display:none) la pisaba, por eso el
+   panel nunca se veía y solo quedaba la línea del borde de .category-bar. */
+@media (max-width: 860px) {
+  .mobile-nav-panel {
+    display: flex;
+  }
 }
 
 /* ---------- ARTICLE SECTIONS / CARDS ---------- */

@@ -1,4 +1,5 @@
 ---
+import SearchBox from './SearchBox.astro';
 ---
 <header class="site-header">
   <div class="header-inner">
@@ -27,6 +28,14 @@
         <a href="https://www.youtube.com/@lahoradelarbitraje" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="La Hora del Arbitraje en YouTube">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M21.582 7.186a2.51 2.51 0 0 0-1.768-1.778C18.254 5 12 5 12 5s-6.254 0-7.814.408a2.51 2.51 0 0 0-1.768 1.778C2 8.756 2 12 2 12s0 3.244.418 4.814a2.51 2.51 0 0 0 1.768 1.778C5.746 19 12 19 12 19s6.254 0 7.814-.408a2.51 2.51 0 0 0 1.768-1.778C22 15.244 22 12 22 12s0-3.244-.418-4.814ZM10 15.5v-7l6 3.5-6 3.5Z"/></svg>
         </a>
+      </div>
+
+      {/* Solo visible en mobile (ver @media en global.css): en desktop el
+          buscador sigue viviendo únicamente en la barra de categorías, de
+          siempre. panelId distinto para no repetir el id del otro
+          <SearchBox /> en la misma página. */}
+      <div class="mobile-search">
+        <SearchBox panelId="search-panel-mobile" />
       </div>
 
       {/* Solo visible en mobile (ver @media en global.css), donde reemplaza

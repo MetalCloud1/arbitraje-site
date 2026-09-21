@@ -3,6 +3,17 @@
 // Estados cubiertos (ver el script): cerrado → abierto → escribiendo →
 // resultados sugeridos → sin resultados → error, y "Enter"/"ver todos"
 // llevan a /articulos?buscar=… para los resultados completos.
+//
+// panelId: se usa este componente dos veces en la misma página (la fila de
+// categorías en desktop y, en mobile, junto al botón hamburguesa del
+// header), así que el id del panel tiene que poder cambiar -- si no, hay
+// dos elementos con el mismo id en el documento y aria-controls apunta a
+// cualquiera de los dos, no al que corresponde.
+interface Props {
+  panelId?: string;
+}
+
+const { panelId = 'search-panel' } = Astro.props;
 ---
 <div class="search-box" data-search-root>
   <button
@@ -10,7 +21,7 @@
     class="search-trigger"
     data-search-trigger
     aria-expanded="false"
-    aria-controls="search-panel"
+    aria-controls={panelId}
     aria-label="Buscar artículos"
   >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -19,7 +30,7 @@
     </svg>
   </button>
 
-  <div class="search-panel" id="search-panel" data-search-panel hidden>
+  <div class="search-panel" id={panelId} data-search-panel hidden>
     <form class="search-form" role="search" data-search-form>
       <svg class="search-form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="7" />
