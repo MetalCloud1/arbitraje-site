@@ -28,6 +28,23 @@
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M21.582 7.186a2.51 2.51 0 0 0-1.768-1.778C18.254 5 12 5 12 5s-6.254 0-7.814.408a2.51 2.51 0 0 0-1.768 1.778C2 8.756 2 12 2 12s0 3.244.418 4.814a2.51 2.51 0 0 0 1.768 1.778C5.746 19 12 19 12 19s6.254 0 7.814-.408a2.51 2.51 0 0 0 1.768-1.778C22 15.244 22 12 22 12s0-3.244-.418-4.814ZM10 15.5v-7l6 3.5-6 3.5Z"/></svg>
         </a>
       </div>
+
+      {/* Solo visible en mobile (ver @media en global.css), donde reemplaza
+          a .social-links: esos enlaces ya están en el footer y son una
+          salida del sitio que no aporta en la pantalla más apretada; en su
+          lugar va el acceso al menú, que sí es navegación imprescindible
+          ahí. En desktop no compite con nada porque sigue oculto. */}
+      <button
+        type="button"
+        class="mobile-menu-toggle"
+        id="mobile-menu-toggle"
+        aria-expanded="false"
+        aria-controls="mobile-nav-panel"
+        aria-label="Abrir menú"
+      >
+        <svg class="icon-menu" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="icon-close" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
     </div>
   </div>
 </header>
@@ -58,4 +75,69 @@
   // Se registra una sola vez, pero corre en cada carga: tanto la inicial
   // como cada navegación SPA disparan 'astro:page-load'.
   document.addEventListener('astro:page-load', initHeader);
+
+  // Menú hamburguesa (mobile): el botón vive acá en el header, pero el
+  // panel que controla (#mobile-nav-panel) vive en CategoryBar.astro,
+  // justo debajo. Se conectan por id/aria-controls nada más -- no hace
+  // falta que sean el mismo componente.
+  function initMobileMenu() {
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const panel = document.getElementById('mobile-nav-panel');
+    if (!(toggle instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) return;
+
+    const closeMenu = () => {
+      document.body.classList.remove('mobile-nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      document.body.classList.add('mobile-nav-open');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    const onToggleClick = () => {
+      document.body.classList.contains('mobile-nav-open') ? closeMenu() : openMenu();
+    };
+
+    const onDocumentClick = (e: MouseEvent) => {
+      if (!document.body.classList.contains('mobile-nav-open')) return;
+      const target = e.target as Node;
+      if (toggle.contains(target) || panel.contains(target)) return;
+      closeMenu();
+    };
+
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && document.body.classList.contains('mobile-nav-open')) {
+        closeMenu();
+        toggle.focus();
+      }
+    };
+
+    // Si la pantalla pasa a tamaño desktop con el menú abierto (rotar el
+    // teléfono, resize de ventana), lo cerramos: a ese ancho el botón y el
+    // panel ya ni se muestran, y no queremos dejar el body marcado como
+    // "menú abierto" sin forma de cerrarlo desde la UI.
+    const desktopQuery = window.matchMedia('(min-width: 861px)');
+    const onDesktopChange = (e: MediaQueryListEvent) => {
+      if (e.matches) closeMenu();
+    };
+
+    toggle.addEventListener('click', onToggleClick);
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onKeydown);
+    desktopQuery.addEventListener('change', onDesktopChange);
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        closeMenu();
+        document.removeEventListener('click', onDocumentClick);
+        document.removeEventListener('keydown', onKeydown);
+        desktopQuery.removeEventListener('change', onDesktopChange);
+      },
+      { once: true }
+    );
+  }
+
+  document.addEventListener('astro:page-load', initMobileMenu);
 </script>

@@ -379,6 +379,43 @@ nav.main-nav a.active::after {
   transform: translateY(-1px);
 }
 
+/* Botón hamburguesa: solo existe visualmente en mobile (ver @media abajo),
+   donde toma el lugar de .social-links en el header. */
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--white);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.mobile-menu-toggle .icon-close {
+  display: none;
+}
+
+.mobile-menu-toggle[aria-expanded='true'] .icon-menu {
+  display: none;
+}
+
+.mobile-menu-toggle[aria-expanded='true'] .icon-close {
+  display: block;
+}
+
+@media (max-width: 860px) {
+  .social-links {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+}
+
 /* La barra de categorías es siempre visible (no depende del ancho): en
    pantallas angostas, en vez de esconderse detrás del hamburguesa, se
    vuelve una fila con scroll horizontal. Sin scrollbar visible, para que
@@ -733,6 +770,86 @@ nav.main-nav a.active::after {
     padding-top: 8px;
     padding-bottom: 8px;
   }
+}
+
+/* En mobile, la fila de categorías con scroll horizontal desaparece del
+   todo -- no era clara como navegación ahí (nada avisa que hay más
+   pestañas fuera de pantalla) -- y en su lugar el menú hamburguesa del
+   header abre .mobile-nav-panel con los mismos enlaces en una lista
+   vertical. En desktop nada de esto aplica: se sigue viendo la fila de
+   siempre. */
+@media (max-width: 860px) {
+  .category-bar {
+    display: none;
+  }
+
+  body.mobile-nav-open .category-bar {
+    display: block;
+  }
+
+  .category-bar-inner {
+    display: none;
+  }
+
+  .mobile-nav-panel {
+    display: flex;
+  }
+}
+
+.mobile-nav-panel {
+  display: none;
+  flex-direction: column;
+  padding: 14px 0 20px;
+}
+
+.mobile-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mobile-search-form svg {
+  flex-shrink: 0;
+  color: var(--gray);
+}
+
+.mobile-search-form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--white);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.mobile-search-form input:focus {
+  outline: none;
+}
+
+.mobile-search-form input::placeholder {
+  color: var(--gray-dim);
+}
+
+.mobile-nav-link {
+  padding: 14px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-nav-link:last-child {
+  border-bottom: none;
+}
+
+.mobile-nav-link.active {
+  color: var(--green-bright);
 }
 
 /* ---------- ARTICLE SECTIONS / CARDS ---------- */
