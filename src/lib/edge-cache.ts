@@ -13,3 +13,36 @@ export interface EdgeCache {
 export function getEdgeCache(): EdgeCache {
   return (globalThis as unknown as { caches: { default: EdgeCache } }).caches.default;
 }
+
+// Páginas públicas (HTML, sin sesión) seguras para cachear en el borde: no
+// dependen de Astro.locals.session ni fijan cookies (verificado a mano, no
+// hay locals.session ni Set-Cookie fuera de /admin y /api/auth). Los
+// listados cambian más seguido (nuevo artículo, nueva alta) que las fichas
+// de detalle (una vez publicadas, rara vez cambian), de ahí el TTL distinto.
+// Se excluyen a propósito los formularios /postular: son POST-Redirect-GET
+// y no vale la pena cachear su estado de confirmación (?enviado=1/?error=).
+const CACHEABLE_STATIC_PAGES = new Set([
+  '/',
+  '/sobre-nosotros',
+  '/politica-de-privacidad',
+  '/terminos-y-condiciones',
+  '/cursos',
+]);
+
+const CACHEABLE_SECTION_PREFIXES = ['/articulos', '/arbitros', '/entrenadores', '/clubes'];
+
+const LISTING_TTL_SECONDS = 60;
+const DETAIL_TTL_SECONDS = 300;
+
+export function isCacheablePagePath(pathname: string): boolean {
+  if (CACHEABLE_STATIC_PAGES.has(pathname)) return true;
+  return CACHEABLE_SECTION_PREFIXES.some(
+    (prefix) =>
+      pathname === prefix || (pathname.startsWith(prefix + '/') && !pathname.endsWith('/postular'))
+  );
+}
+
+export function ttlForPagePath(pathname: string): number {
+  const isListing = CACHEABLE_STATIC_PAGES.has(pathname) || CACHEABLE_SECTION_PREFIXES.includes(pathname);
+  return isListing ? LISTING_TTL_SECONDS : DETAIL_TTL_SECONDS;
+}

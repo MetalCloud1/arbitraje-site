@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
+  site: 'https://lahoradelarbitraje.pro',
   output: 'server',
   adapter: cloudflare({
     // `platformProxy` ya no existe: `astro dev` corre directamente en workerd

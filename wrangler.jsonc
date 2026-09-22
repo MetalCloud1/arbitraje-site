@@ -6,7 +6,23 @@
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2025-05-21",
   "compatibility_flags": ["nodejs_compat"],
-  // No hace falta declarar "assets": el adaptador lo genera (binding ASSETS).
+  // No hace falta declarar el resto de "assets" (directory/binding): el
+  // adaptador lo genera. Solo agregamos run_worker_first para las páginas
+  // prerenderizadas: por defecto Cloudflare las serviría como archivo
+  // estático saltándose el Worker (y por lo tanto el middleware) por
+  // completo, lo que dejaría sin efecto el redirect 301 www->apex para
+  // justo estas rutas. La solución completa (que cubre TODO el sitio, no
+  // solo estas 4 rutas) es un Bulk Redirect a nivel de dominio en el
+  // dashboard de Cloudflare -- esto es solo el respaldo de código mientras
+  // tanto.
+  "assets": {
+    "run_worker_first": [
+      "/sobre-nosotros",
+      "/politica-de-privacidad",
+      "/terminos-y-condiciones",
+      "/cursos"
+    ]
+  },
   "d1_databases": [
     {
       "binding": "DB",
