@@ -16,6 +16,7 @@ const modules: Record<string, () => Promise<{ mount: Loader }>> = {
   'chess-puzzle': () => import('./chess-puzzle'),
   quiz: () => import('./quiz'),
   embed: () => import('./embed'),
+  gallery: () => import('./gallery'),
 };
 
 const disposers = new Set<Disposer>();

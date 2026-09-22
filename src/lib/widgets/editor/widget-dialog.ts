@@ -2,7 +2,7 @@
 // campos; al aceptar se valida con el MISMO esquema que usa el servidor, así el
 // autor ve el error en el momento y no al guardar el artículo.
 
-import { EMBED_HOSTS, EMBED_RATIOS, START_FEN, WIDGET_LABELS, formatMovetext, normalizeWidget, parseGameText, suggestEmbedUrl, type RawWidget, type WidgetType } from '../schema';
+import { EMBED_HOSTS, EMBED_RATIOS, MAX_GALLERY_IMAGES, START_FEN, WIDGET_LABELS, formatMovetext, normalizeWidget, parseGameText, suggestEmbedUrl, type RawWidget, type WidgetType } from '../schema';
 import { add, h } from '../client/dom';
 
 type Data = Record<string, string>;
@@ -146,11 +146,121 @@ function embedForm(initial: Data): Form {
   return { el, read: () => ({ src: suggestEmbedUrl(url.value), title: title.value, ratio: ratio.value }) };
 }
 
+// ---------- Imagen / Galería ----------
+interface GalleryEntry {
+  key: string;
+  alt: string;
+  caption: string;
+}
+
+/** Sube un archivo al endpoint de imágenes sueltas; lanza con el mensaje del servidor si falla. */
+async function uploadImageFile(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/api/upload/image', { method: 'POST', body: fd });
+  const data = (await res.json().catch(() => ({}))) as { key?: string; error?: string };
+  if (!res.ok || !data.key) throw new Error(data.error ?? 'No se pudo subir la imagen.');
+  return data.key;
+}
+
+function galleryForm(initial: Data): Form {
+  let entries: GalleryEntry[] = [];
+  try {
+    const parsed = initial.images ? (JSON.parse(initial.images) as { key: string; alt?: string; caption?: string }[]) : [];
+    entries = parsed.map((im) => ({ key: im.key, alt: im.alt ?? '', caption: im.caption ?? '' }));
+  } catch {
+    entries = [];
+  }
+
+  const list = h('div', { class: 'wg-glist' });
+  const status = h('p', { class: 'wg-hint', 'aria-live': 'polite' });
+  let pending = 0;
+
+  function renderList() {
+    list.replaceChildren();
+    entries.forEach((entry, i) => {
+      const thumb = h('img', { class: 'wg-gcard-thumb', src: `/api/img/${entry.key}`, alt: '' });
+      const altInput = input(entry.alt, { maxlength: '300', placeholder: 'Describe la imagen (para accesibilidad)' });
+      const capInput = input(entry.caption, { maxlength: '200', placeholder: 'Pie de foto (opcional, ej.: crédito)' });
+      const remove = h('button', { type: 'button', class: 'wg-link-danger' }, 'Quitar');
+      altInput.addEventListener('input', () => (entry.alt = altInput.value));
+      capInput.addEventListener('input', () => (entry.caption = capInput.value));
+      remove.addEventListener('click', () => {
+        entries = entries.filter((e) => e !== entry);
+        renderList();
+      });
+      add(
+        list,
+        h(
+          'div',
+          { class: 'wg-gcard' },
+          thumb,
+          h('div', { class: 'wg-gcard-fields' }, field(`Descripción de la imagen ${i + 1}`, altInput), field('Pie de foto', capInput), remove)
+        )
+      );
+    });
+  }
+  renderList();
+
+  const fileInput = input('', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', multiple: '' }) as HTMLInputElement;
+  fileInput.className = 'wg-sr';
+  const addBtn = h('button', { type: 'button', class: 'wg-btn' }, '+ Agregar imágenes');
+  addBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const files = Array.from(fileInput.files ?? []);
+    fileInput.value = '';
+    if (!files.length) return;
+    if (entries.length + files.length > MAX_GALLERY_IMAGES) {
+      status.textContent = `Como máximo ${MAX_GALLERY_IMAGES} imágenes por galería.`;
+      return;
+    }
+    pending += files.length;
+    addBtn.disabled = true;
+    for (const file of files) {
+      status.textContent = `Subiendo ${file.name}…`;
+      try {
+        const key = await uploadImageFile(file);
+        entries.push({ key, alt: '', caption: '' });
+        renderList();
+      } catch (err) {
+        status.textContent = err instanceof Error ? err.message : 'No se pudo subir una imagen.';
+      } finally {
+        pending--;
+      }
+    }
+    if (pending <= 0) {
+      addBtn.disabled = false;
+      status.textContent = '';
+    }
+  });
+
+  const el = h(
+    'div',
+    {},
+    list,
+    addBtn,
+    fileInput,
+    status,
+    h('p', { class: 'wg-hint' }, `Hasta ${MAX_GALLERY_IMAGES} imágenes. Una sola se ve a ancho completo, con su pie debajo; varias arman una cuadrícula que se amplía al tocarla.`)
+  );
+
+  return {
+    el,
+    read() {
+      if (pending > 0) throw new Error('Esperá a que terminen de subirse las imágenes.');
+      if (entries.length === 0) throw new Error('Agrega al menos una imagen.');
+      return { images: JSON.stringify(entries.map((e) => ({ key: e.key, alt: e.alt, caption: e.caption }))) };
+    },
+  };
+}
+
 const FORMS: Record<WidgetType, (initial: Data) => Form> = {
   'chess-board': boardForm,
   'chess-puzzle': puzzleForm,
   quiz: quizForm,
   embed: embedForm,
+  gallery: galleryForm,
 };
 
 /**

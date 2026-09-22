@@ -16,7 +16,7 @@ import { Chess, validateFen } from 'chess.js';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-export const WIDGET_TYPES = ['chess-board', 'chess-puzzle', 'quiz', 'embed'] as const;
+export const WIDGET_TYPES = ['chess-board', 'chess-puzzle', 'quiz', 'embed', 'gallery'] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export const WIDGET_LABELS: Record<WidgetType, string> = {
@@ -24,7 +24,10 @@ export const WIDGET_LABELS: Record<WidgetType, string> = {
   'chess-puzzle': 'Problema',
   quiz: 'Trivia',
   embed: 'Incrustar',
+  gallery: 'Imagen / Galería',
 };
+
+export const MAX_GALLERY_IMAGES = 12;
 
 /**
  * Sitios desde los que se permite incrustar contenido, con los prefijos de
@@ -52,11 +55,18 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+export interface GalleryImage {
+  key: string;
+  alt: string;
+  caption?: string;
+}
+
 export type WidgetProps =
   | { type: 'chess-board'; fen: string; moves: string[]; orientation: 'white' | 'black'; caption?: string }
   | { type: 'chess-puzzle'; fen: string; solution: string[]; caption?: string; hint?: string }
   | { type: 'quiz'; quiz: Quiz }
-  | { type: 'embed'; src: string; title: string; ratio: EmbedRatio };
+  | { type: 'embed'; src: string; title: string; ratio: EmbedRatio }
+  | { type: 'gallery'; images: GalleryImage[] };
 
 export type WidgetResult =
   | {
@@ -102,6 +112,21 @@ function checkFen(value: string | null | undefined, label = 'La posición (FEN)'
   const result = validateFen(fen);
   if (!result.ok) fail(`${label} no es válida: ${result.error}`);
   return fen;
+}
+
+/**
+ * Forma de las claves que devuelve uploadCoverImage() (src/lib/images.ts):
+ * "<prefijo>/<timestamp>-<8 hex>.<ext>". Se revalida acá (no solo se confía
+ * en lo que mande el cliente) para que un data-images escrito a mano no
+ * pueda apuntar a rutas arbitrarias del bucket.
+ */
+const IMAGE_KEY_RE = /^[a-z][a-z-]{0,20}\/\d{10,14}-[0-9a-f]{8}\.(jpg|png|webp|gif)$/;
+
+function checkImageKey(value: string | null | undefined, label: string): string {
+  const v = (value ?? '').trim();
+  if (!v) fail(`${label} es obligatoria.`);
+  if (!IMAGE_KEY_RE.test(v)) fail(`${label} no es válida.`);
+  return v;
 }
 
 // ---------- Jugadas ----------
@@ -288,6 +313,37 @@ function normalizeQuiz(raw: RawWidget): WidgetResult & { ok: true } {
   return { ok: true, props: { type: 'quiz', quiz }, attrs: { quiz: json }, fallback };
 }
 
+function normalizeGallery(raw: RawWidget): WidgetResult & { ok: true } {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw.images ?? '');
+  } catch {
+    return fail('No se pudo leer la galería.');
+  }
+  if (!Array.isArray(data)) fail('No se pudo leer la galería.');
+  const list = data as unknown[];
+  if (list.length < 1) fail('Agrega al menos una imagen.');
+  if (list.length > MAX_GALLERY_IMAGES) fail(`Como máximo ${MAX_GALLERY_IMAGES} imágenes por galería.`);
+
+  const images: GalleryImage[] = list.map((item, i) => {
+    const n = i + 1;
+    const entry = item as { key?: unknown; alt?: unknown; caption?: unknown };
+    const key = checkImageKey(typeof entry.key === 'string' ? entry.key : '', `La imagen ${n}`);
+    const alt = line(typeof entry.alt === 'string' ? entry.alt : '', `El texto alternativo de la imagen ${n}`, 300, true);
+    const caption = line(typeof entry.caption === 'string' ? entry.caption : '', `El pie de la imagen ${n}`, 200);
+    const out: GalleryImage = { key, alt };
+    if (caption) out.caption = caption;
+    return out;
+  });
+
+  const attrs: Record<string, string> = { images: JSON.stringify(images) };
+  const fallback = images
+    .map((im) => `<img src="/api/img/${escapeAttr(im.key)}" alt="${escapeAttr(im.alt)}" loading="lazy">${im.caption ? `<figcaption>${escapeHtml(im.caption)}</figcaption>` : ''}`)
+    .join('');
+
+  return { ok: true, props: { type: 'gallery', images }, attrs, fallback };
+}
+
 /** Valida una URL de embed contra la lista blanca de sitios y rutas. */
 export function checkEmbedUrl(value: string | null | undefined): URL {
   const text = (value ?? '').trim();
@@ -359,6 +415,8 @@ export function normalizeWidget(type: string, raw: RawWidget): WidgetResult {
         return normalizeQuiz(raw);
       case 'embed':
         return normalizeEmbed(raw);
+      case 'gallery':
+        return normalizeGallery(raw);
       default:
         return { ok: false, error: `Tipo de widget desconocido: "${type}".` };
     }
