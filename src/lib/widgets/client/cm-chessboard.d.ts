@@ -27,17 +27,23 @@ declare module 'cm-chessboard/src/Chessboard.js' {
     enableMoveInput(handler: (event: MoveInputEvent) => boolean | void, color?: 'w' | 'b'): void;
     disableMoveInput(): void;
     destroy(): void;
-    // Añadidos por las extensiones Markers y PromotionDialog:
+    // Añadidos por las extensiones Markers, Arrows y PromotionDialog:
     addMarker(type: unknown, square: string): void;
     removeMarkers(type?: unknown, square?: string): void;
     addLegalMovesMarkers(moves: unknown[]): void;
     removeLegalMovesMarkers(): void;
+    addArrow(type: unknown, from: string, to: string): void;
+    removeArrows(type?: unknown, from?: string, to?: string): void;
     showPromotionDialog(square: string, color: 'w' | 'b', callback: (result: PromotionResult) => void): void;
   }
 }
 declare module 'cm-chessboard/src/extensions/markers/Markers.js' {
   export const MARKER_TYPE: Record<'frame' | 'circlePrimary' | 'square' | 'dot' | 'bevel', unknown>;
   export class Markers {}
+}
+declare module 'cm-chessboard/src/extensions/arrows/Arrows.js' {
+  export const ARROW_TYPE: Record<'default' | 'success' | 'secondary' | 'warning' | 'info' | 'danger', unknown>;
+  export class Arrows {}
 }
 declare module 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js' {
   export class PromotionDialog {}

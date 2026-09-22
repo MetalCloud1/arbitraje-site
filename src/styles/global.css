@@ -32,6 +32,17 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Le dice al navegador que use su UI (rebote de scroll, scrollbar nativo)
+     en tema oscuro. Sin esto, algunos navegadores (Safari/Chrome) asumen
+     tema claro para la franja que se ve durante el rebote elástico del
+     scroll, y ahí aparece el tono pálido. */
+  color-scheme: dark;
+  /* El fondo real vive en body (con su textura), pero body solo es tan alto
+     como su contenido. En páginas cortas (artículo, admin) o durante el
+     rebote elástico del scroll, se puede ver más allá del body -- y sin
+     esto, esa franja usa el blanco por defecto del navegador en vez del
+     fondo del sitio. */
+  background: var(--bg-black);
 }
 
 body {
@@ -147,7 +158,18 @@ body {
 
 body::before {
   content: '';
-  position: absolute;
+  /* fixed (no absolute): el tamaño de esta capa queda atado al viewport,
+     no al alto del body. Con absolute, cualquier cambio de altura del
+     documento (p. ej. un widget que se monta con JS, como el tablero de
+     ajedrez, o una tabla larga del admin) invalida la capa COMPLETA -- que
+     en una página larga puede ser miles de píxeles -- y el navegador la
+     vuelve a pintar entera. Mientras lo hace, durante el scroll, se ve un
+     "checkerboard" (relleno provisional claro) en la parte aún no pintada:
+     la franja pálida. Con fixed, el tamaño de esta capa nunca cambia (es
+     siempre el viewport), así que un cambio de altura del documento no la
+     toca para nada. El patrón se repite igual en ambos casos porque es un
+     tile pequeño (220px) sin posición única que dependa del contenido. */
+  position: fixed;
   inset: 0;
   z-index: 0;
   background-image: url('/textures/pattern-dark.webp');
@@ -1711,6 +1733,24 @@ html:has(.mobile-drawer[open]) {
   color: var(--white);
 }
 
+/* Color de acento opcional para títulos/subtítulos, misma paleta que el
+   resaltado de texto (art-highlight-*). Solo cambia el color, nada más. */
+.article-body h2.art-heading-brand,
+.article-body h3.art-heading-brand,
+.article-body h4.art-heading-brand {
+  color: var(--green-bright);
+}
+.article-body h2.art-heading-alert,
+.article-body h3.art-heading-alert,
+.article-body h4.art-heading-alert {
+  color: #f0a99c;
+}
+.article-body h2.art-heading-muted,
+.article-body h3.art-heading-muted,
+.article-body h4.art-heading-muted {
+  color: var(--gray);
+}
+
 .article-body strong {
   color: var(--white);
   font-weight: 700;
@@ -1751,6 +1791,175 @@ html:has(.mobile-drawer[open]) {
   color: var(--gray);
   font-style: italic;
   margin: 36px 0;
+}
+
+/* Cita destacada: para cuando la cita ES el foco (magazine pull-quote), no
+   una acotación al margen. Se puede combinar con .art-quote-serif. */
+.article-body blockquote.art-quote-pullout {
+  border-left: none;
+  background: none;
+  border-radius: 0;
+  text-align: center;
+  font-size: 28px;
+  line-height: 1.45;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--white);
+  padding: 8px 8%;
+  margin: 48px 0;
+}
+
+/* Cambia solo la tipografía (la misma que ya usan los títulos, --font-serif)
+   sin tocar el resto: sirve sola sobre la cita normal o junto con .art-quote-pullout. */
+.article-body blockquote.art-quote-serif {
+  font-family: var(--font-serif);
+  font-style: normal;
+}
+
+/* ---------- Imágenes sueltas en el cuerpo del artículo ---------- */
+/* Sin ninguna clase: ancho completo, como hoy. */
+.article-body img,
+.article-body figure {
+  margin: 8px 0 30px;
+}
+
+.article-body figcaption {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray);
+  text-align: center;
+}
+
+/* Flotantes (izq/der): un ancho por defecto para que el texto tenga dónde
+   envolver; una clase de tamaño (más abajo, declarada después) lo pisa. */
+.article-body img.art-img-left,
+.article-body figure.art-img-left,
+.article-body img.art-img-right,
+.article-body figure.art-img-right {
+  max-width: 45%;
+}
+.article-body img.art-img-left,
+.article-body figure.art-img-left {
+  float: left;
+  margin: 6px 24px 16px 0;
+}
+.article-body img.art-img-right,
+.article-body figure.art-img-right {
+  float: right;
+  margin: 6px 0 16px 24px;
+}
+.article-body img.art-img-center,
+.article-body figure.art-img-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Tamaños. Declarados DESPUÉS de los flotantes a propósito: misma
+   especificidad (una sola clase), así que si se combinan (p. ej.
+   "art-img-left art-img-small") el tamaño gana por orden de aparición en
+   la hoja de estilos, sin importar el orden de las clases en el HTML. */
+.article-body img.art-img-small,
+.article-body figure.art-img-small {
+  max-width: 220px;
+}
+.article-body img.art-img-medium,
+.article-body figure.art-img-medium {
+  max-width: 380px;
+}
+.article-body img.art-img-large,
+.article-body figure.art-img-large {
+  max-width: 560px;
+}
+.article-body img.art-img-full,
+.article-body figure.art-img-full {
+  max-width: 100%;
+}
+
+/* Un flotante no debería colarse debajo del siguiente título. */
+.article-body h2,
+.article-body h3 {
+  clear: both;
+}
+
+/* ---------- Resaltado de texto ---------- */
+/* <mark> a secas (sin clase) usa este tono neutro: el amarillo por defecto
+   del navegador quedaba roto contra el fondo oscuro del sitio. */
+.article-body mark {
+  background: rgba(168, 179, 172, 0.22);
+  color: var(--white);
+  border-radius: 3px;
+  padding: 0.05em 0.3em;
+}
+.article-body mark.art-highlight-brand {
+  background: rgba(129, 182, 76, 0.22);
+  color: var(--green-bright);
+}
+.article-body mark.art-highlight-alert {
+  background: rgba(217, 97, 79, 0.22);
+  color: #f0a99c;
+}
+.article-body mark.art-highlight-muted {
+  background: rgba(168, 179, 172, 0.16);
+  color: var(--gray);
+}
+
+/* ---------- Listas ---------- */
+.article-body ul.art-list-compact,
+.article-body ol.art-list-compact {
+  margin-bottom: 14px;
+}
+.article-body ul.art-list-compact li,
+.article-body ol.art-list-compact li {
+  margin-bottom: 4px;
+}
+.article-body ul.art-list-unstyled,
+.article-body ol.art-list-unstyled {
+  list-style: none;
+  margin-left: 0;
+}
+
+/* ---------- Separador decorativo ---------- */
+.article-body hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+.article-body hr.art-divider {
+  height: auto;
+  background: none;
+  text-align: center;
+  margin: 48px 0;
+}
+.article-body hr.art-divider::after {
+  content: '\2022 \2022 \2022';
+  color: var(--green-bright);
+  letter-spacing: 0.6em;
+  font-size: 14px;
+}
+
+/* ---------- Recuadro destacado ---------- */
+.article-body div.art-callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gray);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 8px 8px 0;
+  padding: 18px 22px;
+  margin: 32px 0;
+  font-size: 17px;
+  color: var(--gray);
+}
+.article-body div.art-callout > :last-child {
+  margin-bottom: 0;
+}
+.article-body div.art-callout-info {
+  border-left-color: var(--green);
+  background: rgba(129, 182, 76, 0.06);
+}
+.article-body div.art-callout-warning {
+  border-left-color: #d9a441;
+  background: rgba(217, 164, 65, 0.08);
 }
 
 /* Tablas. El contenedor .table-scroll lo agrega el servidor (wrapTables) para

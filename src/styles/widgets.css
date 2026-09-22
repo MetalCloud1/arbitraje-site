@@ -6,6 +6,14 @@
    ========================================================================== */
 
 figure[data-widget] {
+  /* Aísla el widget del resto del documento: el trabajo de layout/estilo/
+     pintado que pase ACÁ DENTRO no debería forzar un recálculo del resto
+     de la página (la barra de navegación, el fondo). No cubre el caso del
+     sprite que cm-chessboard inyecta como hijo directo de <body> -- eso
+     queda fuera de este contenedor por diseño de la librería -- pero sí
+     evita que el propio montaje del tablero (mucho DOM/SVG de golpe)
+     contagie el resto del árbol. */
+  contain: layout style paint;
   --wg-surface: rgba(255, 255, 255, 0.035);
   --wg-surface-2: rgba(255, 255, 255, 0.07);
   --wg-line: rgba(255, 255, 255, 0.1);
@@ -110,6 +118,19 @@ figure[data-widget][data-ready='true'] {
   line-height: 0;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
   touch-action: manipulation;
+}
+
+.wg-player {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+}
+.wg-player-bottom {
+  margin: 6px 0 0;
+}
+.wg-player[hidden] {
+  display: none;
 }
 
 .wg-side {
@@ -627,6 +648,7 @@ figure[data-widget][data-ready='true'] {
 }
 
 .widget-block {
+  contain: layout style paint;
   margin: 18px 0;
   border: 1px dashed rgba(129, 182, 76, 0.45);
   border-radius: 12px;

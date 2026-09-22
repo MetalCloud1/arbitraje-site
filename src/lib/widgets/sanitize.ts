@@ -15,6 +15,7 @@
 
 import { Parser } from 'htmlparser2';
 import { escapeAttr, escapeHtml, isWidgetType, normalizeWidget, renderWidgetElement, type RawWidget } from './schema';
+import { CALLOUT_CLASSES, DIVIDER_CLASSES, HEADING_CLASSES, IMG_CLASSES, LIST_CLASSES, MARK_CLASSES, QUOTE_CLASSES } from './article-classes';
 
 const VOID_TAGS = new Set(['br', 'hr', 'img']);
 
@@ -25,7 +26,15 @@ const ALLOWED_TAGS = new Set([
   'a', 'img',
   'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
   'figure', 'figcaption', 'details', 'summary',
+  'div',
 ]);
+
+// Etiquetas que solo se dejan pasar si, tras limpiar sus atributos, les quedó
+// una clase reconocida (ver ATTRS más abajo); si no, se tratan como etiqueta
+// desconocida (se quita la etiqueta, se conserva el contenido). Hoy es solo
+// <div>: sirve para los recuadros destacados sin abrirle la puerta a
+// cualquier <div> suelto.
+const REQUIRES_CLASS = new Set(['div']);
 
 // El título del artículo ya es el <h1> de la página.
 const TAG_ALIASES: Record<string, string> = { h1: 'h2', h5: 'h4', h6: 'h4' };
@@ -57,6 +66,15 @@ const digits = (value: string, max: number): string | null => {
   return Number.isFinite(n) && n >= 0 && n <= max ? String(n) : null;
 };
 
+/** Limpiador de atributo "class": deja solo los tokens que estén en `allowed`, descarta el resto en silencio. */
+const classAttr = (allowed: Set<string>) => (value: string): string | null => {
+  const kept = value
+    .trim()
+    .split(/\s+/)
+    .filter((token) => allowed.has(token));
+  return kept.length ? Array.from(new Set(kept)).join(' ') : null;
+};
+
 /** Atributos permitidos por etiqueta → función que devuelve el valor limpio o null. */
 const ATTRS: Record<string, Record<string, (v: string) => string | null>> = {
   a: {
@@ -73,10 +91,20 @@ const ATTRS: Record<string, Record<string, (v: string) => string | null>> = {
     title: (v) => v.slice(0, 200),
     width: (v) => digits(v, 5000),
     height: (v) => digits(v, 5000),
+    class: classAttr(IMG_CLASSES),
   },
+  figure: { class: classAttr(IMG_CLASSES) },
+  mark: { class: classAttr(MARK_CLASSES) },
+  h2: { class: classAttr(HEADING_CLASSES) },
+  h3: { class: classAttr(HEADING_CLASSES) },
+  h4: { class: classAttr(HEADING_CLASSES) },
+  blockquote: { class: classAttr(QUOTE_CLASSES) },
+  ul: { class: classAttr(LIST_CLASSES) },
+  ol: { start: (v) => digits(v, 9999), class: classAttr(LIST_CLASSES) },
+  hr: { class: classAttr(DIVIDER_CLASSES) },
+  div: { class: classAttr(CALLOUT_CLASSES) },
   th: { colspan: (v) => digits(v, 50), rowspan: (v) => digits(v, 50) },
   td: { colspan: (v) => digits(v, 50), rowspan: (v) => digits(v, 50) },
-  ol: { start: (v) => digits(v, 9999) },
   details: { open: () => '' },
 };
 
@@ -150,10 +178,17 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
 
         const name = TAG_ALIASES[rawName] ?? rawName;
         if (ALLOWED_TAGS.has(name)) {
-          out.push(buildOpenTag(name, attribs));
-          stack.push({ close: VOID_TAGS.has(name) ? null : name, skip: false });
+          const openTag = buildOpenTag(name, attribs);
+          if (REQUIRES_CLASS.has(name) && !openTag.includes(' class="')) {
+            // Sin una clase reconocida (p. ej. <div> a secas): se trata como
+            // etiqueta desconocida, igual que antes de existir esta lista.
+            stack.push({ close: null, skip: false });
+          } else {
+            out.push(openTag);
+            stack.push({ close: VOID_TAGS.has(name) ? null : name, skip: false });
+          }
         } else {
-          // Etiqueta desconocida (div, span, font…): se quita la etiqueta y se conserva el texto.
+          // Etiqueta desconocida (span, font…): se quita la etiqueta y se conserva el texto.
           stack.push({ close: null, skip: false });
         }
       },

@@ -88,6 +88,7 @@ const { name, initialHtml = '' } = Astro.props;
   import { Editor } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+  import { ArticleBlockquote, ArticleBulletList, ArticleHeading, ArticleOrderedList } from '../lib/widgets/editor/article-nodes';
   import type { WidgetType } from '../lib/widgets/schema';
   // Los widgets (nodo del editor, formularios, vista previa) se cargan con
   // import() dinámico a propósito: comparten código (schema, dom, mount) con el
@@ -145,18 +146,29 @@ const { name, initialHtml = '' } = Astro.props;
       content: original,
       extensions: [
         StarterKit.configure({
-          heading: { levels: [2, 3] },
+          // Reemplazado por ArticleHeading (mismos niveles, pero conserva la
+          // clase art-heading-* al pasar por el editor visual).
+          heading: false,
           // Formatos que el sitio no estiliza: fuera para no generar HTML "huérfano".
           code: false,
           codeBlock: false,
           strike: false,
           horizontalRule: false,
           link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
+          // Reemplazadas por ArticleBlockquote/ArticleBulletList/ArticleOrderedList
+          // (mismo comportamiento, pero conservan las clases art-* del editor).
+          blockquote: false,
+          bulletList: false,
+          orderedList: false,
         }),
         Table,
         TableRow,
         TableHeader,
         TableCell,
+        ArticleHeading.configure({ levels: [2, 3] }),
+        ArticleBlockquote,
+        ArticleBulletList,
+        ArticleOrderedList,
         Widget,
       ],
       editorProps: {

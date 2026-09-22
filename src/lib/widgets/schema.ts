@@ -61,8 +61,30 @@ export interface GalleryImage {
   caption?: string;
 }
 
+/**
+ * Marcado de jugadas al estilo del análisis de Lichess/chess.com: colorea la
+ * casilla de la jugada nº `ply` (1 = la primera de `moves`) y, si trae
+ * `arrow`, dibuja una flecha con la alternativa sugerida.
+ */
+export const MOVE_MARKS = ['buena', 'imprecision', 'error', 'grave'] as const;
+export type MoveMark = (typeof MOVE_MARKS)[number];
+export interface MoveAnnotation {
+  ply: number;
+  mark: MoveMark;
+  arrow?: { from: string; to: string };
+}
+
 export type WidgetProps =
-  | { type: 'chess-board'; fen: string; moves: string[]; orientation: 'white' | 'black'; caption?: string }
+  | {
+      type: 'chess-board';
+      fen: string;
+      moves: string[];
+      orientation: 'white' | 'black';
+      caption?: string;
+      white?: string;
+      black?: string;
+      annotations?: MoveAnnotation[];
+    }
   | { type: 'chess-puzzle'; fen: string; solution: string[]; caption?: string; hint?: string }
   | { type: 'quiz'; quiz: Quiz }
   | { type: 'embed'; src: string; title: string; ratio: EmbedRatio }
@@ -218,6 +240,52 @@ export function parseGameText(
   }
 }
 
+// ---------- Marcado de jugadas (anotaciones) ----------
+
+const SQUARE_RE = /^[a-h][1-8]$/;
+
+/**
+ * Formato compacto para el atributo data-annotations, una entrada por jugada
+ * separadas por espacios: "jugada:tipo" o "jugada:tipo:origenDestino"
+ * (p. ej. "7:grave:e2e4"). Mismo estilo que data-moves (SAN separado por
+ * espacios): legible y fácil de diffear en el HTML guardado.
+ */
+function parseAnnotations(value: string | null | undefined, totalPlies: number): MoveAnnotation[] {
+  const text = (value ?? '').trim();
+  if (!text) return [];
+  const tokens = text.split(/\s+/);
+  if (tokens.length > 200) fail('Demasiadas anotaciones (máximo 200).');
+
+  const byPly = new Map<number, MoveAnnotation>();
+  for (const tok of tokens) {
+    const [plyStr, markStr, squares] = tok.split(':');
+    const ply = parseInt(plyStr, 10);
+    if (!Number.isInteger(ply) || String(ply) !== plyStr || ply < 1 || ply > totalPlies) {
+      fail(`La anotación "${tok}" señala una jugada que no existe.`);
+    }
+    if (!(MOVE_MARKS as readonly string[]).includes(markStr)) {
+      fail(`El tipo de anotación "${markStr ?? ''}" no es válido.`);
+    }
+    const mark = markStr as MoveMark;
+
+    let arrow: { from: string; to: string } | undefined;
+    if (squares) {
+      const from = squares.slice(0, 2);
+      const to = squares.slice(2, 4);
+      if (squares.length !== 4 || !SQUARE_RE.test(from) || !SQUARE_RE.test(to)) {
+        fail(`La flecha de la jugada nº ${ply} no es válida (usa casillas como "e2e4").`);
+      }
+      arrow = { from, to };
+    }
+    byPly.set(ply, { ply, mark, arrow });
+  }
+  return Array.from(byPly.values()).sort((a, b) => a.ply - b.ply);
+}
+
+export function formatAnnotations(list: MoveAnnotation[]): string {
+  return list.map((a) => `${a.ply}:${a.mark}${a.arrow ? `:${a.arrow.from}${a.arrow.to}` : ''}`).join(' ');
+}
+
 // ---------- Normalización por tipo ----------
 
 function normalizeBoard(raw: RawWidget): WidgetResult & { ok: true } {
@@ -225,19 +293,40 @@ function normalizeBoard(raw: RawWidget): WidgetResult & { ok: true } {
   const moves = replay(fen, parseMoveList(raw.moves ?? ''), 600);
   const orientation = raw.orientation === 'black' ? 'black' : 'white';
   const caption = line(raw.caption, 'El pie de tablero', 200);
+  const white = line(raw.white, 'El nombre de las blancas', 60);
+  const black = line(raw.black, 'El nombre de las negras', 60);
+  const annotations = parseAnnotations(raw.annotations, moves.length);
 
   const attrs: Record<string, string> = {};
   if (fen !== START_FEN) attrs.fen = fen;
   if (moves.length) attrs.moves = moves.join(' ');
   if (orientation === 'black') attrs.orientation = 'black';
   if (caption) attrs.caption = caption;
+  if (white) attrs.white = white;
+  if (black) attrs.black = black;
+  if (annotations.length) attrs.annotations = formatAnnotations(annotations);
 
   const body = moves.length
     ? `<strong>Partida:</strong> ${escapeHtml(formatMovetext(fen, moves))}`
     : `<strong>Posición (FEN):</strong> ${escapeHtml(fen)}`;
-  const fallback = `<p>${caption ? `<em>${escapeHtml(caption)}</em><br>` : ''}${body}</p>`;
+  const players = white || black ? `<p>${escapeHtml([white, black].filter(Boolean).join(' – '))}</p>` : '';
+  const fallback = `${players}<p>${caption ? `<em>${escapeHtml(caption)}</em><br>` : ''}${body}</p>`;
 
-  return { ok: true, props: { type: 'chess-board', fen, moves, orientation, caption: caption || undefined }, attrs, fallback };
+  return {
+    ok: true,
+    props: {
+      type: 'chess-board',
+      fen,
+      moves,
+      orientation,
+      caption: caption || undefined,
+      white: white || undefined,
+      black: black || undefined,
+      annotations: annotations.length ? annotations : undefined,
+    },
+    attrs,
+    fallback,
+  };
 }
 
 function normalizePuzzle(raw: RawWidget): WidgetResult & { ok: true } {

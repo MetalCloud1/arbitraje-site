@@ -1,7 +1,7 @@
 // Widget "Tablero": una posición fija o una partida que se reproduce jugada a jugada.
 
-import type { WidgetProps } from '../schema';
-import { createBoard, markLastMove } from './board';
+import type { MoveAnnotation, WidgetProps } from '../schema';
+import { clearMoveAnnotation, createBoard, markLastMove, markMoveAnnotation } from './board';
 import { buildTimeline } from './game';
 import { add, button, h } from './dom';
 
@@ -13,9 +13,29 @@ export function mount(el: HTMLElement, props: Props): () => void {
   let ply = 0;
   let timer: number | undefined;
 
+  const annotations = new Map<number, MoveAnnotation>((props.annotations ?? []).map((a) => [a.ply, a]));
+
   const host = h('div', { class: 'wg-board-host' });
   const status = h('p', { class: 'wg-sr', 'aria-live': 'polite' });
-  const root = h('div', { class: 'wg wg-game' }, h('div', { class: 'wg-stage' }, host));
+
+  const nameTop = h('p', { class: 'wg-player wg-player-top' });
+  const nameBottom = h('p', { class: 'wg-player wg-player-bottom' });
+  const hasNames = Boolean(props.white || props.black);
+  function updateNames(orientation: 'w' | 'b'): void {
+    if (!hasNames) return;
+    const top = orientation === 'w' ? props.black : props.white;
+    const bottom = orientation === 'w' ? props.white : props.black;
+    nameTop.textContent = top ?? '';
+    nameTop.hidden = !top;
+    nameBottom.textContent = bottom ?? '';
+    nameBottom.hidden = !bottom;
+  }
+
+  const root = h(
+    'div',
+    { class: 'wg wg-game' },
+    h('div', { class: 'wg-stage' }, hasNames ? nameTop : null, host, hasNames ? nameBottom : null)
+  );
 
   const first = button('Ir al inicio', { icon: 'first' });
   const prev = button('Jugada anterior', { icon: 'prev' });
@@ -52,6 +72,7 @@ export function mount(el: HTMLElement, props: Props): () => void {
 
   // El tablero se crea con el contenedor ya en el DOM (mide su ancho al nacer).
   const board = createBoard(host, props.fen, props.orientation);
+  updateNames(props.orientation === 'black' ? 'b' : 'w');
 
   function stop() {
     if (timer !== undefined) window.clearInterval(timer);
@@ -68,6 +89,9 @@ export function mount(el: HTMLElement, props: Props): () => void {
     void board.setPosition(timeline.fens[ply], animated);
     const p = timeline.plies[ply - 1];
     markLastMove(board, p?.from, p?.to);
+    clearMoveAnnotation(board);
+    const note = annotations.get(ply);
+    if (note && p?.to) markMoveAnnotation(board, p.to, note.mark, note.arrow);
 
     first.disabled = prev.disabled = ply === 0;
     next.disabled = last.disabled = ply === total;
@@ -84,7 +108,11 @@ export function mount(el: HTMLElement, props: Props): () => void {
   prev.addEventListener('click', () => { stop(); goTo(ply - 1, true); });
   next.addEventListener('click', () => { stop(); goTo(ply + 1, true); });
   last.addEventListener('click', () => { stop(); goTo(total); });
-  flip.addEventListener('click', () => void board.setOrientation(board.getOrientation() === 'w' ? 'b' : 'w', true));
+  flip.addEventListener('click', () => {
+    const orientation = board.getOrientation() === 'w' ? 'b' : 'w';
+    void board.setOrientation(orientation, true);
+    updateNames(orientation);
+  });
   play.addEventListener('click', () => {
     if (timer !== undefined) return stop();
     if (ply >= total) goTo(0);

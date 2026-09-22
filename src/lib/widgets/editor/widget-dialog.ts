@@ -45,10 +45,27 @@ function boardForm(initial: Data): Form {
   const fen = input(initial.fen ?? '', { placeholder: 'Opcional' });
   const orientation = select([['white', 'Desde las blancas'], ['black', 'Desde las negras']], initial.orientation ?? 'white');
   const caption = input(initial.caption ?? '', { maxlength: '200', placeholder: 'Ej.: Posición tras 12…Bxh2+' });
+  const white = input(initial.white ?? '', { maxlength: '60', placeholder: 'Ej.: Magnus Carlsen' });
+  const black = input(initial.black ?? '', { maxlength: '60', placeholder: 'Ej.: Hikaru Nakamura' });
+  // El textarea muestra una anotación por línea; internamente se guardan
+  // separadas por espacios (parseAnnotations acepta ambos separadores).
+  const annotations = textarea((initial.annotations ?? '').split(/\s+/).filter(Boolean).join('\n'), 3, {
+    placeholder: '7:grave:e2e4\n10:buena',
+  });
   const el = h('div', {},
     field('Partida o jugadas', game, 'Pega un PGN (de Lichess o Chess.com) o escribe las jugadas. Déjalo vacío para mostrar solo una posición.'),
     field('Posición inicial (FEN)', fen, 'Opcional. Sin FEN se usa la posición de salida o la que traiga el PGN.'),
     field('Orientación', orientation),
+    field('Blancas', white, 'Opcional. Nombre que se muestra junto al tablero.'),
+    field('Negras', black, 'Opcional.'),
+    field(
+      'Marcado de jugadas',
+      annotations,
+      'Opcional, una por línea: "jugada:tipo" o "jugada:tipo:origenDestino" para sugerir una alternativa con flecha. '
+        + 'La jugada es su número en la lista (1 = la primera de "Partida o jugadas"). '
+        + 'Tipos: buena (verde), imprecision (naranja hueco), error (naranja), grave (rojo). '
+        + 'Ejemplo: "7:grave:e2e4" marca en rojo la jugada 7 y sugiere e2-e4 con una flecha.'
+    ),
     field('Pie de tablero', caption)
   );
   return {
@@ -56,7 +73,15 @@ function boardForm(initial: Data): Form {
     read() {
       const parsed = parseGameText(game.value, fen.value);
       if (!parsed.ok) throw new Error(parsed.error);
-      return { fen: parsed.fen === START_FEN ? '' : parsed.fen, moves: parsed.moves.join(' '), orientation: orientation.value, caption: caption.value };
+      return {
+        fen: parsed.fen === START_FEN ? '' : parsed.fen,
+        moves: parsed.moves.join(' '),
+        orientation: orientation.value,
+        caption: caption.value,
+        white: white.value,
+        black: black.value,
+        annotations: annotations.value,
+      };
     },
   };
 }
