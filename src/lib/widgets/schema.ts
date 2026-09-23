@@ -516,11 +516,12 @@ export function normalizeWidget(type: string, raw: RawWidget): WidgetResult {
 }
 
 /** Serializa un widget ya validado al HTML canónico que se guarda en la base. */
-export function renderWidgetElement(type: WidgetType, attrs: Record<string, string>, fallback: string): string {
+export function renderWidgetElement(type: WidgetType, attrs: Record<string, string>, fallback: string, className?: string | null): string {
   const data = Object.entries(attrs)
     .map(([key, value]) => ` data-${key}="${escapeAttr(value)}"`)
     .join('');
-  return `<figure data-widget="${type}"${data}>${fallback}</figure>`;
+  const cls = className ? ` class="${escapeAttr(className)}"` : '';
+  return `<figure data-widget="${type}"${cls}${data}>${fallback}</figure>`;
 }
 
 export function isWidgetType(value: string): value is WidgetType {

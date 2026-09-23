@@ -160,7 +160,12 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
               if (key.startsWith('data-') && key !== 'data-widget') raw[key.slice(5)] = value;
             }
             const result = normalizeWidget(type, raw);
-            if (result.ok) out.push(renderWidgetElement(type, result.attrs, result.fallback));
+            // Los widgets tienen su propio camino de sanitización (no pasan
+            // por buildOpenTag/ATTRS), así que el "class" que el autor haya
+            // escrito a mano se limpia acá aparte, con la misma lista blanca
+            // que ya usan las imágenes sueltas.
+            const widgetClass = attribs.class ? classAttr(IMG_CLASSES)(attribs.class) : null;
+            if (result.ok) out.push(renderWidgetElement(type, result.attrs, result.fallback, widgetClass));
             else errors.push(result.error);
           } else {
             errors.push(`Tipo de widget desconocido: "${type}".`);

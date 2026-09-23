@@ -7,11 +7,19 @@
 
 import { Node } from '@tiptap/core';
 import { WIDGET_LABELS, isWidgetType, type WidgetType } from '../schema';
+import { IMG_CLASSES } from '../article-classes';
 import { mountWidget } from '../client/mount';
 import { h } from '../client/dom';
 import { openWidgetDialog } from './widget-dialog';
 
 type Data = Record<string, string>;
+
+/** Igual que la lista blanca de "class" del sanitizador (sanitize.ts) para el resto de las figuras. */
+function cleanClass(value: string | null): string | null {
+  if (!value) return null;
+  const kept = value.split(/\s+/).filter((token) => IMG_CLASSES.has(token));
+  return kept.length ? kept.join(' ') : null;
+}
 
 export const Widget = Node.create({
   name: 'widget',
@@ -24,6 +32,11 @@ export const Widget = Node.create({
     return {
       wtype: { default: 'chess-board', rendered: false },
       data: { default: {}, rendered: false },
+      class: {
+        default: null as string | null,
+        parseHTML: (el) => cleanClass(el.getAttribute('class')),
+        renderHTML: (attrs) => (attrs.class ? { class: attrs.class } : {}),
+      },
     };
   },
 
@@ -49,6 +62,7 @@ export const Widget = Node.create({
 
   renderHTML({ node }) {
     const attrs: Record<string, string> = { 'data-widget': node.attrs.wtype };
+    if (node.attrs.class) attrs.class = node.attrs.class;
     for (const [key, value] of Object.entries(node.attrs.data as Data)) attrs[`data-${key}`] = value;
     return ['figure', attrs];
   },
@@ -76,6 +90,7 @@ export const Widget = Node.create({
         for (const name of preview.getAttributeNames()) if (name.startsWith('data-')) preview.removeAttribute(name);
         preview.replaceChildren();
         preview.setAttribute('data-widget', type);
+        preview.className = 'widget-block-preview' + (current.attrs.class ? ` ${current.attrs.class}` : '');
         for (const [key, value] of Object.entries(current.attrs.data as Data)) preview.setAttribute(`data-${key}`, value);
         const d = await mountWidget(preview);
         if (id !== renderId) d?.(); // llegó tarde: ya hay un render más nuevo
