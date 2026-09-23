@@ -3603,8 +3603,101 @@ table.admin-table tr:last-child td {
   height: 16px;
 }
 
+.entrenadores-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.entrenadores-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #0d1913;
+  color: var(--gray);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-interactive), color var(--dur-fast) var(--ease-interactive), background var(--dur-fast) var(--ease-interactive);
+}
+
+.entrenadores-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.entrenadores-icon-btn:hover,
+.entrenadores-icon-btn.is-active {
+  border-color: #e3b341;
+  color: #f5d379;
+}
+
+.entrenadores-icon-btn-primary,
+.entrenadores-icon-btn-primary:hover {
+  border-color: transparent;
+  background: var(--green);
+  color: var(--bg-black);
+}
+
+.entrenadores-icon-btn-primary:hover {
+  background: var(--green-bright);
+}
+
+.entrenadores-panel {
+  max-width: 1100px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(13, 25, 19, 0.6);
+}
+
+.entrenadores-panel[hidden] {
+  display: none;
+}
+
+.entrenadores-panel .entrenadores-search-wrap {
+  max-width: none;
+}
+
+.entrenadores-panel .entrenadores-select {
+  width: 100%;
+  max-width: 320px;
+}
+
+.entrenadores-panel .entrenadores-filtros-wrap {
+  margin: 14px 0 0;
+}
+
 .entrenadores-header-copy {
+  position: relative;
   max-width: 640px;
+  padding-top: 6px;
+}
+
+.entrenadores-header-copy::before {
+  /* Detalle de tablero de ajedrez en la esquina, detrás del título --
+     un guiño temático sutil, sin competir con el texto. */
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: -18px;
+  width: 84px;
+  height: 84px;
+  z-index: -1;
+  background-image:
+    linear-gradient(45deg, rgba(129, 182, 76, 0.4) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(129, 182, 76, 0.4) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(129, 182, 76, 0.4) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(129, 182, 76, 0.4) 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0px;
+  -webkit-mask-image: radial-gradient(circle at top left, #000 35%, transparent 72%);
+  mask-image: radial-gradient(circle at top left, #000 35%, transparent 72%);
+  pointer-events: none;
 }
 
 .entrenadores-header h1 {
@@ -3617,6 +3710,22 @@ table.admin-table tr:last-child td {
   color: var(--gray);
   line-height: 1.6;
   font-size: 15px;
+}
+
+.entrenadores-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--green-bright);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.entrenadores-count svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .entrenadores-controls {
@@ -3706,11 +3815,158 @@ table.admin-table tr:last-child td {
   background: rgba(227, 179, 65, 0.08);
 }
 
-/* Lista en columna con filete superior, igual que .arbitros-list. */
+/* Lista compacta (filas) usada en la vitrina de la home -- .entrenadores-list
+   sigue siendo de EntrenadorRow. El directorio completo (esta página) usa
+   .entrenadores-grid (tarjetas con foto), ver más abajo. */
 .entrenadores-list {
   display: flex;
   flex-direction: column;
   border-top: 1px solid var(--border);
+}
+
+.entrenadores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+
+/* Tarjeta de la grilla del directorio (EntrenadorGridCard.astro). Estas
+   reglas viven acá (sin scope de componente) a propósito: el script de
+   scroll infinito de /entrenadores inyecta tarjetas idénticas como HTML
+   plano en el cliente, y un <style> scoped de Astro no las alcanzaría.
+   Mismo motivo que .arbitro-grid-card-* más arriba. */
+.entrenador-grid-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--dur-fast) var(--ease-interactive),
+    border-color var(--dur-fast) var(--ease-interactive);
+}
+
+.entrenador-grid-card:hover,
+.entrenador-grid-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--tier-color, rgba(227, 179, 65, 0.4));
+}
+
+.entrenador-grid-card-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #0d1913;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid var(--tier-color, var(--border));
+}
+
+.entrenador-grid-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform var(--dur-editorial) var(--ease-editorial);
+}
+
+.entrenador-grid-card:hover .entrenador-grid-card-photo img {
+  transform: scale(1.04);
+}
+
+.entrenador-grid-card-queen {
+  width: 30%;
+  height: 30%;
+  color: var(--gray-dim);
+}
+
+/* ELO como placa en la esquina de la foto -- en la fila es una columna
+   propia, pero acá no hay espacio horizontal para eso sin angostar el
+   nombre, así que se monta sobre la imagen. */
+.entrenador-grid-card-elo {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  padding: 4px 7px 3px;
+  border-radius: 6px;
+  background: rgba(10, 20, 16, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.entrenador-grid-card-elo-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f5d379;
+  font-variant-numeric: tabular-nums;
+}
+
+.entrenador-grid-card-elo-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-dim);
+}
+
+.entrenador-grid-card-info {
+  padding: 14px 16px 16px;
+}
+
+.entrenador-grid-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entrenador-grid-card-titulos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+  margin-bottom: 6px;
+}
+
+.entrenador-grid-card-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.entrenador-grid-card-titulo-arbitraje {
+  opacity: 0.75;
+}
+
+.entrenador-grid-card-titulo-arbitraje::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--gray-dim);
+}
+
+.entrenador-grid-card-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gray);
+  font-size: 12.5px;
+}
+
+.entrenador-grid-card-location svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 .entrenadores-sentinel {
@@ -3770,15 +4026,27 @@ table.admin-table tr:last-child td {
     margin-bottom: 18px;
   }
 
+  .entrenadores-header-copy::before {
+    width: 56px;
+    height: 56px;
+    top: -8px;
+    left: -12px;
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+  }
+
   .entrenadores-header h1 {
     font-size: 24px;
     margin-bottom: 6px;
   }
 
-  .entrenadores-cta {
+  .entrenadores-actions {
     align-self: flex-start;
-    padding: 8px 16px;
-    font-size: 13px;
+  }
+
+  .entrenadores-icon-btn {
+    width: 38px;
+    height: 38px;
   }
 
   .entrenadores-intro {
@@ -3790,13 +4058,13 @@ table.admin-table tr:last-child td {
     overflow: hidden;
   }
 
-  .entrenadores-controls {
-    flex-direction: column;
-    align-items: stretch;
+  .entrenadores-panel {
+    padding: 14px;
   }
 
   .entrenadores-select {
     width: 100%;
+    max-width: none;
   }
 
   .entrenadores-filtros-wrap {
@@ -3816,6 +4084,17 @@ table.admin-table tr:last-child td {
 
   .entrenadores-filtros::-webkit-scrollbar {
     display: none;
+  }
+
+  .entrenadores-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .entrenadores-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

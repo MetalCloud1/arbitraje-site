@@ -1,0 +1,72 @@
+---
+// Tarjeta de grilla para /entrenadores (mismo patrón que ArbitroGridCard).
+// Ojo: el CSS de .entrenador-grid-card-* vive en global.css (sin scope), NO
+// en un <style> acá -- el scroll infinito de la página inyecta esta misma
+// tarjeta como HTML plano desde el cliente y un <style> scoped de Astro no
+// la alcanzaría (ver la nota grande en global.css junto a .arbitro-grid-card).
+import { getTituloAjedrezTier, formatElo } from '../lib/titulos-ajedrez';
+import { getTituloTier } from '../lib/postulacion';
+import QueenMark from './QueenMark.astro';
+
+interface EntrenadorGridCardData {
+  slug: string;
+  nombre_completo: string;
+  estado_republica: string | null;
+  titulo_ajedrez: string | null;
+  titulo_arbitraje: string | null;
+  elo_clasico: number | null;
+  foto_key: string | null;
+}
+
+interface Props {
+  entrenador: EntrenadorGridCardData;
+}
+
+const { entrenador } = Astro.props;
+const fotoUrl = entrenador.foto_key ? `/api/img/${entrenador.foto_key}` : null;
+const tierAjedrez = getTituloAjedrezTier(entrenador.titulo_ajedrez);
+const tierArbitraje = entrenador.titulo_arbitraje ? getTituloTier(entrenador.titulo_arbitraje) : null;
+---
+<a class="entrenador-grid-card" href={`/entrenadores/${entrenador.slug}`}>
+  <div
+    class="entrenador-grid-card-photo"
+    style={`--tier-color:${tierAjedrez.color}`}
+    transition:name={`entrenador-photo-${entrenador.slug}`}
+  >
+    {fotoUrl && (
+      <img
+        src={fotoUrl}
+        alt={entrenador.nombre_completo}
+        loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='';"
+      />
+    )}
+    <QueenMark class="entrenador-grid-card-queen" style={fotoUrl ? { display: 'none' } : undefined} />
+    <div class="entrenador-grid-card-elo">
+      <span class="entrenador-grid-card-elo-value">{formatElo(entrenador.elo_clasico)}</span>
+      <span class="entrenador-grid-card-elo-label">ELO</span>
+    </div>
+  </div>
+
+  <div class="entrenador-grid-card-info">
+    <h3 class="entrenador-grid-card-name" transition:name={`entrenador-name-${entrenador.slug}`}>{entrenador.nombre_completo}</h3>
+    {(entrenador.titulo_ajedrez || tierArbitraje) && (
+      <div class="entrenador-grid-card-titulos">
+        {entrenador.titulo_ajedrez && (
+          <span class="entrenador-grid-card-titulo" style={`color:${tierAjedrez.color}`}>{entrenador.titulo_ajedrez}</span>
+        )}
+        {tierArbitraje && (
+          <span class="entrenador-grid-card-titulo entrenador-grid-card-titulo-arbitraje" style={`color:${tierArbitraje.color}`}>{entrenador.titulo_arbitraje}</span>
+        )}
+      </div>
+    )}
+    {entrenador.estado_republica && (
+      <div class="entrenador-grid-card-location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+        </svg>
+        {entrenador.estado_republica}
+      </div>
+    )}
+  </div>
+</a>
