@@ -3013,10 +3013,109 @@ table.admin-table tr:last-child td {
   background: rgba(129, 182, 76, 0.08);
 }
 
+/* Lista compacta (filas) usada en la vitrina de la home -- .arbitros-list
+   sigue siendo de ArbitroRow. El directorio completo usa .arbitros-grid
+   (tarjetas con foto), ver más abajo. */
 .arbitros-list {
   display: flex;
   flex-direction: column;
   border-top: 1px solid var(--border);
+}
+
+.arbitros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+
+/* Tarjeta de la grilla del directorio (ArbitroGridCard.astro). Estas reglas
+   viven acá (sin scope de componente) a propósito: el script de scroll
+   infinito de /arbitros/directorio inyecta tarjetas idénticas como HTML
+   plano en el cliente, y un <style> scoped de Astro no las alcanzaría (el
+   atributo data-astro-cid- solo lo llevan los nodos renderizados por Astro
+   en el server). Mismo motivo por el que .arbitro-row-* está acá y no en
+   ArbitroRow.astro. */
+.arbitro-grid-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--dur-fast) var(--ease-interactive),
+    border-color var(--dur-fast) var(--ease-interactive);
+}
+
+.arbitro-grid-card:hover,
+.arbitro-grid-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(129, 182, 76, 0.4);
+}
+
+.arbitro-grid-card-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #0d1913;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arbitro-grid-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform var(--dur-editorial) var(--ease-editorial);
+}
+
+.arbitro-grid-card:hover .arbitro-grid-card-photo img {
+  transform: scale(1.04);
+}
+
+.arbitro-grid-card-pawn {
+  width: 34%;
+  height: 34%;
+  color: var(--gray-dim);
+}
+
+.arbitro-grid-card-info {
+  padding: 14px 16px 16px;
+}
+
+.arbitro-grid-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arbitro-grid-card-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.arbitro-grid-card-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gray);
+  font-size: 12.5px;
+}
+
+.arbitro-grid-card-location svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 /* Marcador invisible al final de la lista: el IntersectionObserver del
@@ -3162,9 +3261,21 @@ table.admin-table tr:last-child td {
     font-size: 12.5px;
     padding: 6px 12px;
   }
+
+  .arbitros-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
 }
 
-/* Fila de árbitro. Sobria a propósito: nada de dorado, glow ni animación.
+@media (max-width: 420px) {
+  .arbitros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Fila de árbitro (vitrina compacta de la home, ver .arbitros-list arriba).
+   Sobria a propósito: nada de dorado, glow ni animación.
    El color de categoría (tier.color) se usa solo como color de texto del
    título, no como borde ni resplandor -- una pista sutil, no un efecto. */
 .arbitro-row {

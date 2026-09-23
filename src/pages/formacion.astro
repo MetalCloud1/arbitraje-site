@@ -31,8 +31,10 @@ const RECURSOS = [
 >
   <section class="formacion-hero">
     <div class="container">
-      <PawnMark class="formacion-hero-mark" />
-      <h1>Formación</h1>
+      <h1 class="formacion-hero-title">
+        <PawnMark class="formacion-hero-mark" />
+        Formación
+      </h1>
       <p>
         Formarse como árbitro no es memorizar un reglamento: es aprender a sostener una decisión
         bajo presión, con criterio y con las Leyes del Ajedrez como base. Acá está la ruta y los
@@ -100,10 +102,14 @@ const RECURSOS = [
   :global(.formacion-hero-mark) {
     width: 28px;
     height: 28px;
+    flex-shrink: 0;
     color: var(--green);
   }
-  .formacion-hero h1 {
-    margin: 0.5rem 0 0.6rem;
+  .formacion-hero-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 0.6rem;
     color: var(--white);
   }
   .formacion-hero p {

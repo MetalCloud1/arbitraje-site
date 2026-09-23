@@ -1,0 +1,53 @@
+---
+// Tarjeta de grilla para el directorio público (/arbitros/directorio).
+// A diferencia de ArbitroCard (foto con overlay tipo bento), acá la info va
+// debajo de la foto en su propio bloque -- mismo dato, mismo criterio de
+// tier que ArbitroRow/ArbitroCard, solo cambia la presentación.
+// Ojo: el CSS de .arbitro-grid-card-* vive en global.css (sin scope), no acá
+// -- el scroll infinito de la página inyecta esta misma tarjeta como HTML
+// plano desde el cliente y un <style> scoped de Astro no la alcanzaría.
+import { getTituloTier } from '../lib/postulacion';
+import PawnMark from './PawnMark.astro';
+
+interface ArbitroGridCardData {
+  slug: string;
+  nombre_completo: string;
+  estado_republica: string | null;
+  titulo: string | null;
+  foto_key: string | null;
+}
+
+interface Props {
+  arbitro: ArbitroGridCardData;
+}
+
+const { arbitro } = Astro.props;
+const fotoUrl = arbitro.foto_key ? `/api/img/${arbitro.foto_key}` : null;
+const tier = getTituloTier(arbitro.titulo);
+---
+<a class="arbitro-grid-card" href={`/arbitros/${arbitro.slug}`}>
+  <div class="arbitro-grid-card-photo" transition:name={`arbitro-photo-${arbitro.slug}`}>
+    {fotoUrl && (
+      <img
+        src={fotoUrl}
+        alt={arbitro.nombre_completo}
+        loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='';"
+      />
+    )}
+    <PawnMark class="arbitro-grid-card-pawn" style={fotoUrl ? { display: 'none' } : undefined} />
+  </div>
+
+  <div class="arbitro-grid-card-info">
+    <h3 class="arbitro-grid-card-name" transition:name={`arbitro-name-${arbitro.slug}`}>{arbitro.nombre_completo}</h3>
+    {arbitro.titulo && <div class="arbitro-grid-card-titulo" style={`color:${tier.color}`}>{arbitro.titulo}</div>}
+    {arbitro.estado_republica && (
+      <div class="arbitro-grid-card-location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+        </svg>
+        {arbitro.estado_republica}
+      </div>
+    )}
+  </div>
+</a>

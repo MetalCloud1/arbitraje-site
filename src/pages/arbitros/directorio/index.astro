@@ -3,12 +3,12 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { listArbitrosPage, countArbitros, listEstadosConArbitros } from '../../../lib/arbitros';
 import { TITULOS_ARBITRO } from '../../../lib/postulacion';
-import ArbitroRow from '../../../components/ArbitroRow.astro';
+import ArbitroGridCard from '../../../components/ArbitroGridCard.astro';
 import EmptyState from '../../../components/EmptyState.astro';
 
 export const prerender = false;
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 const db = env.DB;
 const estadoFiltro = Astro.url.searchParams.get('estado');
@@ -88,8 +88,8 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
           actionHref="/postular?tipo=arbitro"
         />
       ) : (
-        <div class="arbitros-list reveal-stagger" data-arbitros-list>
-          {arbitros.map((a) => <ArbitroRow arbitro={a} />)}
+        <div class="arbitros-grid reveal-stagger" data-arbitros-list>
+          {arbitros.map((a) => <ArbitroGridCard arbitro={a} />)}
         </div>
       )}
       <div class="arbitros-sentinel" data-arbitros-sentinel>
@@ -104,7 +104,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
 </BaseLayout>
 
 <script>
-  // ---------- Filas de árbitro por JS (mismos datos que ArbitroRow.astro) ----------
+  // ---------- Tarjetas de árbitro por JS (mismos datos que ArbitroGridCard.astro) ----------
   // Mantener esto en sync con getTituloTier() en src/lib/postulacion.ts.
   const TIER_BY_TITULO: Record<string, { color: string }> = {
     'Árbitro Internacional (AI)': { color: '#e3b341' },
@@ -135,7 +135,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
     foto_key: string | null;
   }
 
-  function rowHtml(a: ArbitroResumen): string {
+  function cardHtml(a: ArbitroResumen): string {
     const tier = getTier(a.titulo);
     // Ojo: NO usar encodeURIComponent sobre foto_key completo -- convierte la
     // "/" de "arbitros/archivo.webp" en "%2F" y la ruta catch-all /api/img/[...key]
@@ -143,30 +143,26 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
     // Astro y así se queda acá también.
     const fotoUrl = a.foto_key ? `/api/img/${a.foto_key}` : null;
     return `
-      <a class="arbitro-row" href="/arbitros/${encodeURIComponent(a.slug)}">
-        <div class="arbitro-row-photo">
+      <a class="arbitro-grid-card" href="/arbitros/${encodeURIComponent(a.slug)}">
+        <div class="arbitro-grid-card-photo">
           ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(a.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
-          ${PAWN_SVG.replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
+          ${PAWN_SVG.replace('pawn-mark arbitro-row-pawn', 'pawn-mark arbitro-grid-card-pawn').replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
         </div>
-        <div class="arbitro-row-main">
-          <h3 class="arbitro-row-name">${escapeHtml(a.nombre_completo)}</h3>
-          ${a.titulo ? `<div class="arbitro-row-titulo" style="color:${tier.color}">${escapeHtml(a.titulo)}</div>` : ''}
+        <div class="arbitro-grid-card-info">
+          <h3 class="arbitro-grid-card-name">${escapeHtml(a.nombre_completo)}</h3>
+          ${a.titulo ? `<div class="arbitro-grid-card-titulo" style="color:${tier.color}">${escapeHtml(a.titulo)}</div>` : ''}
+          ${a.estado_republica ? `
+            <div class="arbitro-grid-card-location">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
+              </svg>
+              ${escapeHtml(a.estado_republica)}
+            </div>` : ''}
         </div>
-        ${a.estado_republica ? `
-          <div class="arbitro-row-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
-            </svg>
-            ${escapeHtml(a.estado_republica)}
-          </div>` : ''}
-        <span class="arbitro-row-cta" aria-hidden="true">
-          <span>Ver perfil</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
       </a>`;
   }
 
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 10;
   const MIN_QUERY_LENGTH = 2;
   const DEBOUNCE_MS = 300;
 
@@ -191,7 +187,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
       const existing = root.querySelector('[data-arbitros-list]');
       if (existing instanceof HTMLElement) return existing;
       const el = document.createElement('div');
-      el.className = 'arbitros-list reveal-stagger is-visible';
+      el.className = 'arbitros-grid reveal-stagger is-visible';
       el.setAttribute('data-arbitros-list', '');
       root.insertBefore(el, sentinel);
       return el;
@@ -241,7 +237,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
           clearEmpty();
           const listEl = ensureList();
           if (reset) listEl.innerHTML = '';
-          listEl.insertAdjacentHTML('beforeend', data.items.map(rowHtml).join(''));
+          listEl.insertAdjacentHTML('beforeend', data.items.map(cardHtml).join(''));
         }
 
         // El observer solo avisa en un cambio de estado (pasa de "no
@@ -319,7 +315,7 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
   // antes: casi siempre visible al cargar, pero via IntersectionObserver
   // por si algún día hay contenido arriba. Reengancha en cada navegación.
   function initArbitrosReveal() {
-    const list = document.querySelector('.arbitros-list.reveal-stagger:not(.is-visible)');
+    const list = document.querySelector('.arbitros-grid.reveal-stagger:not(.is-visible)');
     if (!list || list.getAttribute('data-reveal-bound') === 'true') return;
     list.setAttribute('data-reveal-bound', 'true');
 
