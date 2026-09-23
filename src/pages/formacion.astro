@@ -1,0 +1,204 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PawnMark from '../components/PawnMark.astro';
+
+const RUTA = [
+  { titulo: 'En formación / Sin título', desc: 'El punto de partida: aprender las Leyes del Ajedrez y arbitrar en torneos locales o de club.' },
+  { titulo: 'Árbitro de Club', desc: 'Primer título formal. Habilita a dirigir torneos de club y competencias menores.' },
+  { titulo: 'Árbitro Nacional (AN)', desc: 'Otorgado por la federación nacional. Habilita a dirigir competencias oficiales del país.' },
+  { titulo: 'Árbitro FIDE (FA)', desc: 'Primer título internacional. Requiere seminario FIDE y examen aprobado.' },
+  { titulo: 'Árbitro Internacional (AI)', desc: 'El título más alto. Habilita a dirigir Olimpiadas, Campeonatos del Mundo y eventos FIDE de máximo nivel.' },
+];
+
+const RECURSOS = [
+  {
+    nombre: 'Laws of Chess (FIDE)',
+    desc: 'El reglamento oficial vigente, la base de cualquier decisión arbitral.',
+    href: 'https://handbook.fide.com/chapter/E012023',
+  },
+  {
+    nombre: 'FIDE Arbiters\u2019 Commission (ARB)',
+    desc: 'Comisión oficial de árbitros de la FIDE: seminarios, normas de titulación y el ARB Manual.',
+    href: 'https://arbiters.fide.com/',
+  },
+];
+---
+<BaseLayout
+  title="Formación de Árbitros - La Hora del Arbitraje"
+  description="La ruta para formarse como árbitro de ajedrez en América y los recursos oficiales para empezar."
+>
+  <section class="formacion-hero">
+    <div class="container">
+      <PawnMark class="formacion-hero-mark" />
+      <h1>Formación</h1>
+      <p>
+        Formarse como árbitro no es memorizar un reglamento: es aprender a sostener una decisión
+        bajo presión, con criterio y con las Leyes del Ajedrez como base. Acá está la ruta y los
+        recursos oficiales para empezar bien, hoy mismo.
+      </p>
+    </div>
+  </section>
+
+  <section class="formacion-section" id="ruta">
+    <div class="container">
+      <h2>La ruta de titulación</h2>
+      <ol class="formacion-ruta">
+        {RUTA.map((paso, i) => (
+          <li class="formacion-paso">
+            <span class="formacion-paso-num">{i + 1}</span>
+            <div>
+              <h3>{paso.titulo}</h3>
+              <p>{paso.desc}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="formacion-section" id="recursos">
+    <div class="container">
+      <h2>Recursos oficiales</h2>
+      <div class="formacion-recursos">
+        {RECURSOS.map((r) => (
+          <a class="formacion-recurso" href={r.href} target="_blank" rel="noopener noreferrer">
+            <h3>{r.nombre}</h3>
+            <p>{r.desc}</p>
+            <span class="formacion-recurso-link">
+              Visitar
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="formacion-section formacion-cta">
+    <div class="container">
+      <h2>Un programa propio está en camino</h2>
+      <p>
+        Estamos preparando contenido formativo propio para árbitros de América: casos comentados,
+        seminarios y una ruta guiada. Si ya eres árbitro y quieres que tu actividad tenga
+        visibilidad mientras tanto, regístrate en el directorio.
+      </p>
+      <a class="btn btn-primary" href="/postular?tipo=arbitro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Registrarme como árbitro
+      </a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .formacion-hero {
+    padding: 2.5rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  :global(.formacion-hero-mark) {
+    width: 28px;
+    height: 28px;
+    color: var(--green);
+  }
+  .formacion-hero h1 {
+    margin: 0.5rem 0 0.6rem;
+    color: var(--white);
+  }
+  .formacion-hero p {
+    max-width: 68ch;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  .formacion-section {
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .formacion-section h2 {
+    color: var(--white);
+    margin-bottom: 1.25rem;
+  }
+
+  .formacion-ruta {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .formacion-paso {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .formacion-paso-num {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--green-bright);
+  }
+  .formacion-paso h3 {
+    color: var(--white);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  .formacion-paso p {
+    color: var(--gray);
+    line-height: 1.5;
+  }
+
+  .formacion-recursos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .formacion-recurso {
+    display: block;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--dur-fast) var(--ease-interactive);
+  }
+  .formacion-recurso:hover {
+    border-color: var(--green);
+  }
+  .formacion-recurso h3 {
+    color: var(--white);
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  .formacion-recurso p {
+    color: var(--gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+  .formacion-recurso-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--green-bright);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .formacion-cta {
+    border-bottom: none;
+    text-align: center;
+  }
+  .formacion-cta p {
+    max-width: 60ch;
+    margin: 0 auto 1.25rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+</style>

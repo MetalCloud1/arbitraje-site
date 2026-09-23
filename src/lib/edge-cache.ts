@@ -27,6 +27,7 @@ const CACHEABLE_STATIC_PAGES = new Set([
   '/politica-de-privacidad',
   '/terminos-y-condiciones',
   '/cursos',
+  '/formacion',
 ]);
 
 const CACHEABLE_SECTION_PREFIXES = ['/articulos', '/arbitros', '/entrenadores', '/clubes'];

@@ -18,6 +18,8 @@ const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string 
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/articulos', changefreq: 'daily', priority: '0.9' },
   { path: '/arbitros', changefreq: 'weekly', priority: '0.7' },
+  { path: '/arbitros/directorio', changefreq: 'weekly', priority: '0.6' },
+  { path: '/formacion', changefreq: 'monthly', priority: '0.5' },
   { path: '/entrenadores', changefreq: 'weekly', priority: '0.7' },
   { path: '/clubes', changefreq: 'weekly', priority: '0.7' },
   { path: '/sobre-nosotros', changefreq: 'yearly', priority: '0.4' },

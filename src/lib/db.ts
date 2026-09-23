@@ -43,6 +43,17 @@ export async function listRecentArticles(db: D1Database, limit = 4): Promise<Art
   return results ?? [];
 }
 
+// Para bloques de previsualización por categoría (p. ej. los paneles de
+// "Actividad Arbitral" y "Avisos" dentro del hub de /arbitros). Mismo
+// desempate id DESC que listRecentArticles, mismo motivo.
+export async function listArticlesByCategory(db: D1Database, category: string, limit = 3): Promise<Article[]> {
+  const { results } = await db
+    .prepare('SELECT * FROM articles WHERE category = ? ORDER BY published_at DESC, id DESC LIMIT ?')
+    .bind(category, limit)
+    .all<Article>();
+  return results ?? [];
+}
+
 export async function listAllArticles(db: D1Database): Promise<Article[]> {
   const { results } = await db
     .prepare('SELECT * FROM articles ORDER BY published_at DESC, id DESC')

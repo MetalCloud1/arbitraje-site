@@ -1,337 +1,436 @@
 ---
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { listArbitrosPage, countArbitros, listEstadosConArbitros } from '../../lib/arbitros';
-import { TITULOS_ARBITRO } from '../../lib/postulacion';
-import ArbitroRow from '../../components/ArbitroRow.astro';
+import ArbitroCard from '../../components/ArbitroCard.astro';
 import EmptyState from '../../components/EmptyState.astro';
+import { formatDateEs } from '../../lib/text';
+import { listArticlesByCategory } from '../../lib/db';
+import { listArbitrosPage, countArbitros } from '../../lib/arbitros';
 
 export const prerender = false;
 
-const PAGE_SIZE = 5;
+// Vista previa liviana de cada bloque: el contenido completo vive en sus
+// propias rutas (/articulos?categoria=..., /arbitros/directorio, /formacion).
+// Este hub es la portada de la sección, no un listado más.
+const COMUNIDAD_PREVIEW = 5;
+const ACTIVIDAD_PREVIEW = 3;
+const AVISOS_PREVIEW = 3;
 
 const db = env.DB;
-const estadoFiltro = Astro.url.searchParams.get('estado');
-const tituloFiltro = Astro.url.searchParams.get('titulo');
-
-const [{ items: arbitros, nextCursor }, total, estados] = await Promise.all([
-  listArbitrosPage(db, { estado: estadoFiltro, titulo: tituloFiltro, limit: PAGE_SIZE }),
+const [{ items: comunidad }, totalArbitros, actividad, avisos] = await Promise.all([
+  listArbitrosPage(db, { limit: COMUNIDAD_PREVIEW }),
   countArbitros(db),
-  listEstadosConArbitros(db),
+  listArticlesByCategory(db, 'Actividad Arbitral', ACTIVIDAD_PREVIEW),
+  listArticlesByCategory(db, 'Avisos', AVISOS_PREVIEW),
 ]);
 
-const descripcion = `El directorio nacional de árbitros de ajedrez en América. ${total} árbitros registrados.`;
+const destacado = comunidad[0] ?? null;
+const resto = comunidad.slice(1, 5);
 ---
 <BaseLayout
   title="Árbitros - La Hora del Arbitraje"
-  description="Directorio de árbitros de ajedrez en América: perfiles verificados y visibilidad para quienes arbitran."
+  description="Comunidad, actividad profesional y formación de árbitros de ajedrez en América."
 >
-  <div class="container arbitros-page">
-    <div class="arbitros-header">
-      <div class="arbitros-header-copy">
-        <h1>Árbitros</h1>
-        <p class="arbitros-intro">{descripcion}</p>
-      </div>
-      <a class="btn btn-primary arbitros-cta" href="/postular?tipo=arbitro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        Registrarme como árbitro
-      </a>
+  <section class="arbitros-hero">
+    <img class="arbitros-hero-img" src="/arbitros-hero.webp" alt="Árbitros de ajedrez de América reunidos en una convención internacional" />
+    <div class="arbitros-hero-scrim" aria-hidden="true"></div>
+    <div class="container arbitros-hero-content">
+      <p class="arbitros-hero-eyebrow">La Hora del Arbitraje · América</p>
+      <h1>El arbitraje <em>nos une.</em></h1>
+      <p class="arbitros-hero-sub">
+        Un espacio para la comunidad, la actividad profesional y la formación de los árbitros
+        de ajedrez en América, hecho desde la colaboración entre quienes arbitran cada día.
+      </p>
     </div>
+  </section>
 
-    <div class="arbitros-controls">
-      <div class="arbitros-search-wrap">
-        <svg class="arbitros-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
-        </svg>
-        <input
-          type="search"
-          class="arbitros-search-input"
-          data-arbitros-search-input
-          placeholder="Buscar árbitro por nombre, título o estado…"
-          aria-label="Buscar árbitro"
-          autocomplete="off"
-        />
+  <section class="hub-section" id="comunidad">
+    <div class="container hub-section-grid">
+      <div class="hub-section-copy">
+        <span class="hub-section-num">01</span>
+        <h2>Comunidad</h2>
+        <p class="hub-section-tagline">Los rostros del arbitraje</p>
+        <p class="hub-section-desc">
+          Conoce a los árbitros que hacen posible el ajedrez en América. Sus perfiles,
+          trayectorias y títulos, en un directorio abierto a toda la comunidad.
+        </p>
+        <a class="hub-link-btn" href="/arbitros/directorio">
+          Explorar perfiles
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="hub-section-subtle-link" href="/postular?tipo=arbitro">¿Eres árbitro? Regístrate en el directorio</a>
       </div>
-      <select class="arbitros-select" data-arbitros-titulo-select aria-label="Filtrar por categoría">
-        <option value="">Todas las categorías</option>
-        {TITULOS_ARBITRO.map((t) => <option value={t} selected={tituloFiltro === t}>{t}</option>)}
-      </select>
-    </div>
 
-    {estados.length > 0 && (
-      <div class="arbitros-filtros-wrap">
-        <div class="arbitros-filtros">
-          <a class={`filtro-chip ${!estadoFiltro ? 'active' : ''}`} href="/arbitros">Todos</a>
-          {estados.map((e) => (
-            <a class={`filtro-chip ${estadoFiltro === e ? 'active' : ''}`} href={`/arbitros?estado=${encodeURIComponent(e)}`}>{e}</a>
-          ))}
+      {comunidad.length > 0 ? (
+        <div class="arbitros-bento">
+          {destacado && <ArbitroCard arbitro={destacado} featured />}
+          {resto.length > 0 && (
+            <div class="arbitros-bento-rest">
+              {resto.map((a) => <ArbitroCard arbitro={a} />)}
+            </div>
+          )}
         </div>
-      </div>
-    )}
-
-    <div
-      class="arbitros-root"
-      data-arbitros-root
-      data-estado={estadoFiltro ?? ''}
-      data-titulo={tituloFiltro ?? ''}
-      data-cursor={nextCursor ?? ''}
-    >
-      {arbitros.length === 0 ? (
+      ) : (
         <EmptyState
-          title={estadoFiltro || tituloFiltro ? 'Ningún árbitro registrado con ese filtro todavía' : 'Todavía no hay árbitros registrados'}
+          title="Todavía no hay árbitros registrados"
           description="¿Eres árbitro y quieres aparecer acá?"
           actionLabel="Registrarme como árbitro"
           actionHref="/postular?tipo=arbitro"
         />
-      ) : (
-        <div class="arbitros-list reveal-stagger" data-arbitros-list>
-          {arbitros.map((a) => <ArbitroRow arbitro={a} />)}
-        </div>
       )}
-      <div class="arbitros-sentinel" data-arbitros-sentinel>
-        <div class="arbitros-loading" data-arbitros-loading hidden>
-          <span class="arbitros-loading-dot"></span>
-          <span class="arbitros-loading-dot"></span>
-          <span class="arbitros-loading-dot"></span>
+    </div>
+  </section>
+
+  <section class="hub-section hub-section-alt" id="actividad">
+    <div class="container hub-section-grid">
+      <div class="hub-section-copy">
+        <span class="hub-section-num">02</span>
+        <h2>Actividad profesional</h2>
+        <p class="hub-section-tagline">El arbitraje en acción</p>
+        <p class="hub-section-desc">
+          Designaciones, resultados y trayectoria de nuestros árbitros, además de
+          convocatorias y seminarios para quienes buscan la próxima oportunidad.
+        </p>
+        <a class="hub-link-btn" href="/articulos?categoria=Actividad%20Arbitral">
+          Ver toda la actividad
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+
+      <div class="hub-mini-lists">
+        <div class="hub-mini-list">
+          <h3>Actividad</h3>
+          {actividad.length > 0 ? (
+            <ul>
+              {actividad.map((a) => (
+                <li>
+                  <a href={`/articulos/${a.slug}`}>
+                    <span class="hub-mini-item-title">{a.title}</span>
+                    <span class="hub-mini-item-date">{formatDateEs(a.published_at)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="hub-mini-empty">Todavía no hay actividad publicada.</p>
+          )}
+        </div>
+
+        <div class="hub-mini-list">
+          <h3>Avisos</h3>
+          {avisos.length > 0 ? (
+            <ul>
+              {avisos.map((a) => (
+                <li>
+                  <a href={`/articulos/${a.slug}`}>
+                    <span class="hub-mini-item-title">{a.title}</span>
+                    <span class="hub-mini-item-date">{formatDateEs(a.published_at)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="hub-mini-empty">Todavía no hay avisos publicados.</p>
+          )}
+          <a class="hub-mini-list-link" href="/articulos?categoria=Avisos">Ver todos los avisos</a>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <section class="hub-section" id="formacion">
+    <div class="container hub-section-grid">
+      <div class="hub-section-copy">
+        <span class="hub-section-num">03</span>
+        <h2>Formación</h2>
+        <p class="hub-section-tagline">El conocimiento que nos prepara</p>
+        <p class="hub-section-desc">
+          La ruta para formarse como árbitro y los recursos oficiales para empezar
+          a construir criterio arbitral desde hoy.
+        </p>
+        <a class="hub-link-btn" href="/formacion">
+          Explorar formación
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+
+      <ul class="hub-icon-list">
+        <li>
+          <a href="/formacion#recursos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+            Reglamentos y leyes del ajedrez
+          </a>
+        </li>
+        <li>
+          <a href="/articulos?categoria=Casos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg>
+            Casos prácticos de arbitraje
+          </a>
+        </li>
+        <li>
+          <a href="/formacion#ruta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>
+            La ruta de titulación, paso a paso
+          </a>
+        </li>
+        <li>
+          <a href="/formacion#recursos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            Recursos oficiales de la FIDE
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
 </BaseLayout>
 
-<script>
-  // ---------- Filas de árbitro por JS (mismos datos que ArbitroRow.astro) ----------
-  // Mantener esto en sync con getTituloTier() en src/lib/postulacion.ts.
-  const TIER_BY_TITULO: Record<string, { color: string }> = {
-    'Árbitro Internacional (AI)': { color: '#e3b341' },
-    'Árbitro FIDE (FA)': { color: '#c7d0d6' },
-    'Árbitro Nacional (AN)': { color: '#c17f4a' },
-    'Árbitro de Club': { color: '#81b64c' },
-    'En formación / Sin título': { color: '#7c8a80' },
-  };
-  const DEFAULT_TIER = TIER_BY_TITULO['En formación / Sin título'];
-  const getTier = (titulo: string | null) => (titulo && TIER_BY_TITULO[titulo]) || DEFAULT_TIER;
-
-  const PAWN_SVG = `<svg class="pawn-mark arbitro-row-pawn" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-    <path d="M27.78,16.0353a6.3866,6.3866,0,1,0-7.559,0" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M27.7791,16.0348,32.31,19.0181a8.4613,8.4613,0,0,1-.7678,2.6175H16.4579a8.4613,8.4613,0,0,1-.7678-2.6175l4.5308-2.9833" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M27.5287,21.6356c0,9.0738,9.3879,10.4,9.3879,19.1946-1.745,2.19-7.93,2.67-12.9166,2.67s-11.1716-.4794-12.9166-2.67c0-8.7946,9.3879-10.1208,9.3879-19.1946" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-  </svg>`;
-
-  function escapeHtml(value: string): string {
-    return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+<style>
+  /* ---------- Hero ---------- */
+  .arbitros-hero {
+    position: relative;
+    min-height: 480px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .arbitros-hero-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+  }
+  .arbitros-hero-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, var(--bg-black) 0%, rgba(10, 20, 16, 0.55) 55%, rgba(10, 20, 16, 0.25) 100%);
+  }
+  .arbitros-hero-content {
+    position: relative;
+    padding-top: 2.5rem;
+    padding-bottom: 2.75rem;
+    max-width: 720px;
+  }
+  .arbitros-hero-eyebrow {
+    color: var(--green-bright);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .arbitros-hero-content h1 {
+    color: var(--white);
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+    line-height: 1.08;
+    margin-bottom: 0.9rem;
+  }
+  .arbitros-hero-content h1 em {
+    color: var(--green-bright);
+    font-style: normal;
+  }
+  .arbitros-hero-sub {
+    color: var(--gray);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    max-width: 58ch;
+    margin-bottom: 0;
   }
 
-  interface ArbitroResumen {
-    id: number;
-    slug: string;
-    nombre_completo: string;
-    estado_republica: string | null;
-    titulo: string | null;
-    foto_key: string | null;
+  /* ---------- Secciones numeradas ---------- */
+  .hub-section {
+    padding: 3.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hub-section-alt {
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .hub-section:last-of-type {
+    border-bottom: none;
   }
 
-  function rowHtml(a: ArbitroResumen): string {
-    const tier = getTier(a.titulo);
-    // Ojo: NO usar encodeURIComponent sobre foto_key completo -- convierte la
-    // "/" de "arbitros/archivo.webp" en "%2F" y la ruta catch-all /api/img/[...key]
-    // ya no matchea la key real en R2 (404). Iba sin codificar en el componente
-    // Astro y así se queda acá también.
-    const fotoUrl = a.foto_key ? `/api/img/${a.foto_key}` : null;
-    return `
-      <a class="arbitro-row" href="/arbitros/${encodeURIComponent(a.slug)}">
-        <div class="arbitro-row-photo">
-          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(a.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
-          ${PAWN_SVG.replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
-        </div>
-        <div class="arbitro-row-main">
-          <h3 class="arbitro-row-name">${escapeHtml(a.nombre_completo)}</h3>
-          ${a.titulo ? `<div class="arbitro-row-titulo" style="color:${tier.color}">${escapeHtml(a.titulo)}</div>` : ''}
-        </div>
-        ${a.estado_republica ? `
-          <div class="arbitro-row-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>
-            </svg>
-            ${escapeHtml(a.estado_republica)}
-          </div>` : ''}
-        <span class="arbitro-row-cta" aria-hidden="true">
-          <span>Ver perfil</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
-      </a>`;
+  .hub-section-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 2.5rem;
+    align-items: start;
   }
 
-  const PAGE_SIZE = 5;
-  const MIN_QUERY_LENGTH = 2;
-  const DEBOUNCE_MS = 300;
+  .hub-section-num {
+    display: block;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+  }
+  .hub-section-copy h2 {
+    color: var(--white);
+    font-size: 1.9rem;
+    margin-bottom: 0.35rem;
+  }
+  .hub-section-tagline {
+    color: var(--green-bright);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 0.9rem;
+  }
+  .hub-section-desc {
+    color: var(--gray);
+    line-height: 1.6;
+    margin-bottom: 1.4rem;
+  }
 
-  function initArbitrosPage(root: Element) {
-    if (root.getAttribute('data-arbitros-bound') === 'true') return;
-    root.setAttribute('data-arbitros-bound', 'true');
+  .hub-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--green);
+    color: var(--green-bright);
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background-color var(--dur-fast) var(--ease-interactive), color var(--dur-fast) var(--ease-interactive);
+  }
+  .hub-link-btn:hover {
+    background: var(--green);
+    color: #0a1410;
+  }
 
-    const searchInput = document.querySelector('[data-arbitros-search-input]');
-    const tituloSelect = document.querySelector('[data-arbitros-titulo-select]');
-    const sentinel = root.querySelector('[data-arbitros-sentinel]');
-    const loadingEl = root.querySelector('[data-arbitros-loading]');
-    if (!(sentinel instanceof HTMLElement) || !(loadingEl instanceof HTMLElement)) return;
+  .hub-section-subtle-link {
+    display: block;
+    margin-top: 1rem;
+    color: var(--gray-dim);
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .hub-section-subtle-link:hover {
+    color: var(--gray);
+  }
 
-    const estado = root.getAttribute('data-estado') || '';
-    let titulo = root.getAttribute('data-titulo') || '';
-    let cursor = root.getAttribute('data-cursor') || '';
-    let query = '';
-    let loading = false;
-    let requestId = 0;
+  /* ---------- Bento de Comunidad ---------- */
+  .arbitros-bento {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 12px;
+  }
+  .arbitros-bento-rest {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
 
-    const ensureList = (): HTMLElement => {
-      const existing = root.querySelector('[data-arbitros-list]');
-      if (existing instanceof HTMLElement) return existing;
-      const el = document.createElement('div');
-      el.className = 'arbitros-list reveal-stagger is-visible';
-      el.setAttribute('data-arbitros-list', '');
-      root.insertBefore(el, sentinel);
-      return el;
-    };
+  /* ---------- Mini listas de Actividad/Avisos ---------- */
+  .hub-mini-lists {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .hub-mini-list {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .hub-mini-list h3 {
+    color: var(--white);
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+  .hub-mini-list ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .hub-mini-list li a {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-decoration: none;
+  }
+  .hub-mini-item-title {
+    color: var(--white);
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+  .hub-mini-list li a:hover .hub-mini-item-title {
+    color: var(--green-bright);
+  }
+  .hub-mini-item-date {
+    color: var(--gray-dim);
+    font-size: 0.78rem;
+  }
+  .hub-mini-empty {
+    color: var(--gray-dim);
+    font-size: 0.85rem;
+  }
+  .hub-mini-list-link {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--gray);
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 
-    const showEmpty = () => {
-      const existing = root.querySelector('[data-arbitros-list]');
-      existing?.remove();
-      let empty = root.querySelector('[data-arbitros-empty]');
-      if (!empty) {
-        empty = document.createElement('div');
-        empty.setAttribute('data-arbitros-empty', '');
-        empty.className = 'empty-state';
-        root.insertBefore(empty, sentinel);
-      }
-      empty.innerHTML = `
-        <p class="empty-state-title">Sin resultados${query ? ` para “${escapeHtml(query)}”` : ''}</p>
-        <p class="empty-state-description">Probá con otro nombre, título, categoría o estado.</p>`;
-    };
+  /* ---------- Lista de íconos de Formación ---------- */
+  .hub-icon-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .hub-icon-list a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color var(--dur-fast) var(--ease-interactive);
+  }
+  .hub-icon-list a:hover {
+    border-color: var(--green);
+  }
+  .hub-icon-list svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--green-bright);
+  }
 
-    const clearEmpty = () => root.querySelector('[data-arbitros-empty]')?.remove();
-
-    const fetchPage = async (reset: boolean) => {
-      if (loading) return;
-      if (!reset && !cursor) return;
-      loading = true;
-      loadingEl.hidden = false;
-      const myRequestId = ++requestId;
-
-      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
-      if (estado) params.set('estado', estado);
-      if (titulo) params.set('titulo', titulo);
-      if (query.length >= MIN_QUERY_LENGTH) params.set('q', query);
-      if (!reset && cursor) params.set('cursor', cursor);
-
-      try {
-        const res = await fetch(`/api/arbitros/directorio?${params.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: { items: ArbitroResumen[]; nextCursor: string | null } = await res.json();
-        if (myRequestId !== requestId) return; // respuesta obsoleta (llegó otra búsqueda/filtro después)
-
-        cursor = data.nextCursor || '';
-
-        if (reset && data.items.length === 0) {
-          showEmpty();
-        } else {
-          clearEmpty();
-          const listEl = ensureList();
-          if (reset) listEl.innerHTML = '';
-          listEl.insertAdjacentHTML('beforeend', data.items.map(rowHtml).join(''));
-        }
-
-        // El observer solo avisa en un cambio de estado (pasa de "no
-        // visible" a "visible"), no mientras el target se queda quieto en
-        // estado visible. En pantallas anchas las filas son más bajas (todo
-        // entra en una sola línea), así que una página de 5 puede no
-        // alcanzar a empujar el sentinel fuera de la zona observada
-        // (viewport + rootMargin) -- nunca vuelve a "entrar" porque nunca
-        // llegó a "salir", y el observer se queda callado para siempre
-        // aunque queden más árbitros. En pantallas angostas las filas
-        // ocupan más alto (el título, ELO y ubicación se apilan) y esto no
-        // pasa, por eso el bug solo se veía en escritorio. Acá forzamos una
-        // re-evaluación: si el sentinel sigue a tiro después de insertar,
-        // seguimos pidiendo páginas hasta que ya no lo esté o se acabe el cursor.
-        if (cursor) {
-          requestAnimationFrame(() => {
-            if (loading || !cursor) return;
-            const rect = sentinel.getBoundingClientRect();
-            if (rect.top <= window.innerHeight + 400) fetchPage(false);
-          });
-        }
-      } catch {
-        if (myRequestId !== requestId) return;
-        loadingEl.hidden = true;
-        // Silencioso: si falla la carga de "más", el usuario simplemente
-        // no ve nuevas filas; el listado ya cargado sigue intacto.
-      } finally {
-        if (myRequestId === requestId) {
-          loading = false;
-          loadingEl.hidden = true;
-        }
-      }
-    };
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting && !loading && cursor) fetchPage(false);
-        }
-      },
-      { rootMargin: '400px 0px' }
-    );
-    io.observe(sentinel);
-
-    if (searchInput instanceof HTMLInputElement) {
-      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-      searchInput.addEventListener('input', () => {
-        const value = searchInput.value.trim();
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          if (value.length > 0 && value.length < MIN_QUERY_LENGTH) return;
-          query = value;
-          fetchPage(true);
-        }, DEBOUNCE_MS);
-      });
+  @media (max-width: 600px) {
+    /* Más aire que el .container estándar (24px): acá el texto es lo único
+       en pantalla, así que pegarlo a los 24px de siempre se siente más
+       apretado que en una grilla con más elementos alrededor. */
+    .arbitros-hero-content {
+      padding-left: 32px;
+      padding-right: 32px;
     }
+  }
 
-    if (tituloSelect instanceof HTMLSelectElement) {
-      tituloSelect.addEventListener('change', () => {
-        titulo = tituloSelect.value;
-        fetchPage(true);
-      });
+  @media (max-width: 860px) {
+    .arbitros-hero {
+      min-height: 420px;
+    }
+    .hub-section-grid {
+      grid-template-columns: 1fr;
+    }
+    .hub-mini-lists,
+    .hub-icon-list {
+      grid-template-columns: 1fr;
+    }
+    .arbitros-bento {
+      grid-template-columns: 1fr;
     }
   }
-
-  function initAllArbitrosPages() {
-    document.querySelectorAll('[data-arbitros-root]').forEach(initArbitrosPage);
-  }
-
-  document.addEventListener('astro:page-load', initAllArbitrosPages);
-</script>
-
-<script>
-  // Reveal de la lista inicial (renderizada por el servidor). Igual que
-  // antes: casi siempre visible al cargar, pero via IntersectionObserver
-  // por si algún día hay contenido arriba. Reengancha en cada navegación.
-  function initArbitrosReveal() {
-    const list = document.querySelector('.arbitros-list.reveal-stagger:not(.is-visible)');
-    if (!list || list.getAttribute('data-reveal-bound') === 'true') return;
-    list.setAttribute('data-reveal-bound', 'true');
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            io.unobserve(entry.target);
-          }
-        }
-      },
-      { threshold: 0.08 }
-    );
-    io.observe(list);
-  }
-
-  document.addEventListener('astro:page-load', initArbitrosReveal);
-</script>
+</style>

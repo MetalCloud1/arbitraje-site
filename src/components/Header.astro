@@ -8,7 +8,7 @@ const path = Astro.url.pathname;
 const navLinks = [
   { href: '/', label: 'Inicio', active: path === '/' },
   { href: '/articulos', label: 'Artículos', active: path.startsWith('/articulos') },
-  { href: '/arbitros', label: 'Árbitros', active: path === '/arbitros' },
+  { href: '/arbitros', label: 'Árbitros', active: path.startsWith('/arbitros') },
   { href: '/entrenadores', label: 'Entrenadores', active: path === '/entrenadores' },
   { href: '/clubes', label: 'Clubes', active: path.startsWith('/clubes') },
   { href: '/sobre-nosotros', label: 'Sobre Nosotros', active: path === '/sobre-nosotros' },

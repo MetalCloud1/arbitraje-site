@@ -1,0 +1,115 @@
+---
+// Tarjeta de foto (no fila) para vitrinas tipo bento, como el bloque
+// "Comunidad" del hub de /arbitros. Mismos datos y mismo criterio de tier
+// que ArbitroRow -- son dos presentaciones del mismo tipo de dato, no dos
+// fuentes de verdad distintas.
+import { getTituloTier } from '../lib/postulacion';
+import PawnMark from './PawnMark.astro';
+
+interface ArbitroCardData {
+  slug: string;
+  nombre_completo: string;
+  estado_republica: string | null;
+  titulo: string | null;
+  foto_key: string | null;
+}
+
+interface Props {
+  arbitro: ArbitroCardData;
+  /** Tarjeta grande (foto más alta, nombre más grande). Para el primer puesto del bento. */
+  featured?: boolean;
+}
+
+const { arbitro, featured = false } = Astro.props;
+const fotoUrl = arbitro.foto_key ? `/api/img/${arbitro.foto_key}` : null;
+const tier = getTituloTier(arbitro.titulo);
+---
+<a class={`arbitro-card ${featured ? 'arbitro-card-featured' : ''}`} href={`/arbitros/${arbitro.slug}`}>
+  <div class="arbitro-card-photo">
+    {fotoUrl && (
+      <img
+        src={fotoUrl}
+        alt={arbitro.nombre_completo}
+        loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='';"
+      />
+    )}
+    <PawnMark class="arbitro-card-pawn" style={fotoUrl ? { display: 'none' } : undefined} />
+  </div>
+  <div class="arbitro-card-info">
+    <h3 class="arbitro-card-name">{arbitro.nombre_completo}</h3>
+    <div class="arbitro-card-meta">
+      {arbitro.estado_republica && <span class="arbitro-card-estado">{arbitro.estado_republica}</span>}
+      {arbitro.titulo && <span class="arbitro-card-titulo" style={`color:${tier.color}`}>{arbitro.titulo}</span>}
+    </div>
+  </div>
+</a>
+
+<style>
+  .arbitro-card {
+    position: relative;
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    color: inherit;
+  }
+  .arbitro-card-featured {
+    aspect-ratio: 3 / 4;
+  }
+
+  .arbitro-card-photo {
+    position: absolute;
+    inset: 0;
+  }
+  .arbitro-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform var(--dur-editorial) var(--ease-editorial);
+  }
+  .arbitro-card:hover .arbitro-card-photo img {
+    transform: scale(1.04);
+  }
+  :global(.arbitro-card-pawn) {
+    width: 40%;
+    height: 40%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    color: var(--gray-dim);
+  }
+
+  .arbitro-card-info {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 14px 12px 12px;
+    background: linear-gradient(to top, rgba(10, 20, 16, 0.92) 10%, rgba(10, 20, 16, 0) 100%);
+  }
+  .arbitro-card-name {
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+  .arbitro-card-featured .arbitro-card-name {
+    font-size: 17px;
+  }
+  .arbitro-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 11.5px;
+  }
+  .arbitro-card-estado {
+    color: var(--gray);
+  }
+  .arbitro-card-titulo {
+    font-weight: 600;
+  }
+</style>

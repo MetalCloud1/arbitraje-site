@@ -16,7 +16,7 @@ const isActive = (href: string) => (path === href ? 'active' : '');
     <nav class="main-nav" aria-label="Categorías principales">
       <a href="/" class={isActive('/')}>Inicio</a>
       <a href="/articulos" class={path.startsWith('/articulos') ? 'active' : ''}>Artículos</a>
-      <a href="/arbitros" class={isActive('/arbitros')}>Árbitros</a>
+      <a href="/arbitros" class={path.startsWith('/arbitros') ? 'active' : ''}>Árbitros</a>
       <a href="/entrenadores" class={isActive('/entrenadores')}>Entrenadores</a>
       <a href="/clubes" class={path.startsWith('/clubes') ? 'active' : ''}>Clubes</a>
       <a href="/sobre-nosotros" class={isActive('/sobre-nosotros')}>Sobre Nosotros</a>

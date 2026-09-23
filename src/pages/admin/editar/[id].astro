@@ -21,7 +21,7 @@ if (!article) {
 }
 
 const error = Astro.url.searchParams.get('error');
-const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast'];
+const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast', 'Actividad Arbitral', 'Avisos'];
 const currentExpiry = daysUntil(article.expires_at);
 const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
 ---
