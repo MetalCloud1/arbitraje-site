@@ -32,7 +32,12 @@ export interface ArticleInput {
 
 export async function listRecentArticles(db: D1Database, limit = 4): Promise<Article[]> {
   const { results } = await db
-    .prepare('SELECT * FROM articles ORDER BY published_at DESC LIMIT ?')
+    // id DESC como desempate: published_at solo guarda el día (sin hora), así
+    // que dos artículos publicados el mismo día quedan empatados y, sin esto,
+    // el orden entre ellos queda librado al azar (el motor de la base puede
+    // dejar arriba al más viejo de los dos). Con id DESC gana el que se creó
+    // después, que es justo lo que se espera de "lo más nuevo primero".
+    .prepare('SELECT * FROM articles ORDER BY published_at DESC, id DESC LIMIT ?')
     .bind(limit)
     .all<Article>();
   return results ?? [];
@@ -40,7 +45,7 @@ export async function listRecentArticles(db: D1Database, limit = 4): Promise<Art
 
 export async function listAllArticles(db: D1Database): Promise<Article[]> {
   const { results } = await db
-    .prepare('SELECT * FROM articles ORDER BY published_at DESC')
+    .prepare('SELECT * FROM articles ORDER BY published_at DESC, id DESC')
     .all<Article>();
   return results ?? [];
 }
@@ -76,7 +81,7 @@ export async function searchArticles(db: D1Database, query: string, limit?: numb
   const sql =
     `SELECT * FROM articles
      WHERE title LIKE ? ESCAPE '\\' OR excerpt LIKE ? ESCAPE '\\' OR category LIKE ? ESCAPE '\\'
-     ORDER BY published_at DESC` + (limit ? ' LIMIT ?' : '');
+     ORDER BY published_at DESC, id DESC` + (limit ? ' LIMIT ?' : '');
   const stmt = db.prepare(sql);
   const bound = limit ? stmt.bind(term, term, term, limit) : stmt.bind(term, term, term);
   const { results } = await bound.all<Article>();
