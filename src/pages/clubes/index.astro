@@ -19,7 +19,7 @@ const [{ items: clubes, nextCursor }, total, paises] = await Promise.all([
   listPaisesConClubes(db),
 ]);
 
-const descripcion = `Clubes de ajedrez con dirección, contacto y horarios de clase. ${total} clubes registrados.`;
+const descripcion = 'Encuentra tu próximo club de ajedrez y súmate a la comunidad que lo hace posible.';
 ---
 <BaseLayout title="Clubes - La Hora del Arbitraje" description="Directorio de clubes de ajedrez: dirección, contacto, días de clase y modalidad de cada uno.">
   <div class="container clubes-page">
@@ -27,14 +27,57 @@ const descripcion = `Clubes de ajedrez con dirección, contacto y horarios de cl
       <div class="clubes-header-copy">
         <h1>Clubes</h1>
         <p class="clubes-intro">{descripcion}</p>
+        <p class="clubes-count">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          {total} {total === 1 ? 'club registrado' : 'clubes registrados'}
+        </p>
       </div>
-      <a class="btn btn-primary clubes-cta" href="/clubes/postular">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        Registrar mi club
-      </a>
+      <div class="clubes-actions" data-clubes-actions>
+        <button
+          type="button"
+          class="clubes-icon-btn"
+          data-clubes-search-toggle
+          aria-expanded="false"
+          aria-controls="clubes-search-panel"
+          aria-label="Buscar club"
+          title="Buscar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="clubes-icon-btn"
+          data-clubes-filter-toggle
+          aria-expanded="false"
+          aria-controls="clubes-filter-panel"
+          aria-label="Filtrar clubes"
+          title="Filtrar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="12" x2="20" y2="12" /><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="18" x2="20" y2="18" /><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+        <a
+          class="clubes-icon-btn clubes-icon-btn-primary"
+          href="/clubes/postular"
+          aria-label="Registrar mi club"
+          title="Registrar mi club"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" />
+          </svg>
+        </a>
+      </div>
     </div>
 
-    <div class="clubes-controls">
+    <div class="clubes-panel" data-clubes-search-panel id="clubes-search-panel" hidden>
       <div class="clubes-search-wrap">
         <svg class="clubes-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
@@ -50,16 +93,18 @@ const descripcion = `Clubes de ajedrez con dirección, contacto y horarios de cl
       </div>
     </div>
 
-    {paises.length > 0 && (
-      <div class="clubes-filtros-wrap">
-        <div class="clubes-filtros">
-          <a class={`filtro-chip ${!paisFiltro ? 'active' : ''}`} href="/clubes">Todos</a>
-          {paises.map((p) => (
-            <a class={`filtro-chip ${paisFiltro === p ? 'active' : ''}`} href={`/clubes?pais=${encodeURIComponent(p)}`}>{p}</a>
-          ))}
+    <div class="clubes-panel" data-clubes-filter-panel id="clubes-filter-panel" hidden>
+      {paises.length > 0 && (
+        <div class="clubes-filtros-wrap">
+          <div class="clubes-filtros">
+            <a class={`filtro-chip ${!paisFiltro ? 'active' : ''}`} href="/clubes">Todos</a>
+            {paises.map((p) => (
+              <a class={`filtro-chip ${paisFiltro === p ? 'active' : ''}`} href={`/clubes?pais=${encodeURIComponent(p)}`}>{p}</a>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
+      )}
+    </div>
 
     <div
       class="clubes-root"
@@ -255,6 +300,77 @@ const descripcion = `Clubes de ajedrez con dirección, contacto y horarios de cl
   }
 
   document.addEventListener('astro:page-load', initAllClubesPages);
+</script>
+
+<script>
+  // ---------- Botones de búsqueda / filtro (paneles desplegables) ----------
+  function initClubesActions(actions: Element) {
+    if (actions.getAttribute('data-clubes-actions-bound') === 'true') return;
+    actions.setAttribute('data-clubes-actions-bound', 'true');
+
+    const searchToggle = actions.querySelector('[data-clubes-search-toggle]');
+    const filterToggle = actions.querySelector('[data-clubes-filter-toggle]');
+    const searchPanel = document.querySelector('[data-clubes-search-panel]');
+    const filterPanel = document.querySelector('[data-clubes-filter-panel]');
+    if (
+      !(searchToggle instanceof HTMLButtonElement) ||
+      !(filterToggle instanceof HTMLButtonElement) ||
+      !(searchPanel instanceof HTMLElement) ||
+      !(filterPanel instanceof HTMLElement)
+    ) return;
+
+    const panels: [HTMLButtonElement, HTMLElement][] = [
+      [searchToggle, searchPanel],
+      [filterToggle, filterPanel],
+    ];
+
+    const closePanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.classList.remove('is-active');
+    };
+
+    const openPanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      for (const [otherBtn, otherPanel] of panels) {
+        if (otherPanel !== panel) closePanel(otherBtn, otherPanel);
+      }
+      panel.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      btn.classList.add('is-active');
+    };
+
+    const togglePanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      if (panel.hidden) {
+        openPanel(btn, panel);
+        const input = panel.querySelector('input');
+        if (input instanceof HTMLInputElement) input.focus();
+      } else {
+        closePanel(btn, panel);
+      }
+    };
+
+    searchToggle.addEventListener('click', () => togglePanel(searchToggle, searchPanel));
+    filterToggle.addEventListener('click', () => togglePanel(filterToggle, filterPanel));
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      const clickedInsideActions = actions.contains(target);
+      const clickedInsidePanel = searchPanel.contains(target) || filterPanel.contains(target);
+      if (!clickedInsideActions && !clickedInsidePanel) {
+        for (const [btn, panel] of panels) closePanel(btn, panel);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') for (const [btn, panel] of panels) closePanel(btn, panel);
+    });
+  }
+
+  function initAllClubesActions() {
+    document.querySelectorAll('[data-clubes-actions]').forEach(initClubesActions);
+  }
+
+  document.addEventListener('astro:page-load', initAllClubesActions);
 </script>
 
 <script>

@@ -2921,14 +2921,89 @@ table.admin-table tr:last-child td {
   font-size: 15px;
 }
 
-.arbitros-cta {
-  flex-shrink: 0;
-  white-space: nowrap;
+.arbitros-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--green-bright);
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.arbitros-cta svg {
-  width: 16px;
-  height: 16px;
+.arbitros-count svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.arbitros-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.arbitros-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #0d1913;
+  color: var(--gray);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-interactive), color var(--dur-fast) var(--ease-interactive), background var(--dur-fast) var(--ease-interactive);
+}
+
+.arbitros-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.arbitros-icon-btn:hover,
+.arbitros-icon-btn.is-active {
+  border-color: #e3b341;
+  color: #f5d379;
+}
+
+.arbitros-icon-btn-primary,
+.arbitros-icon-btn-primary:hover {
+  border-color: transparent;
+  background: var(--green);
+  color: var(--bg-black);
+}
+
+.arbitros-icon-btn-primary:hover {
+  background: var(--green-bright);
+}
+
+.arbitros-panel {
+  max-width: 1100px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(13, 25, 19, 0.6);
+}
+
+.arbitros-panel[hidden] {
+  display: none;
+}
+
+.arbitros-panel .arbitros-search-wrap {
+  max-width: none;
+}
+
+.arbitros-panel .arbitros-select {
+  width: 100%;
+  max-width: 320px;
+}
+
+.arbitros-panel .arbitros-filtros-wrap {
+  margin: 14px 0 0;
 }
 
 /* Buscador propio de la sección (no el del header: ese sigue siendo solo
@@ -3220,19 +3295,22 @@ table.admin-table tr:last-child td {
     overflow: hidden;
   }
 
-  .arbitros-cta {
+  .arbitros-actions {
     align-self: flex-start;
-    padding: 8px 16px;
-    font-size: 13px;
   }
 
-  .arbitros-controls {
-    flex-direction: column;
-    align-items: stretch;
+  .arbitros-icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .arbitros-panel {
+    padding: 14px;
   }
 
   .arbitros-select {
     width: 100%;
+    max-width: none;
   }
 
   /* Los 12+ chips de estado ya no envuelven en varias filas: se vuelven
@@ -3243,6 +3321,13 @@ table.admin-table tr:last-child td {
     padding: 0 16px;
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
+  }
+
+  .arbitros-panel .arbitros-filtros-wrap {
+    margin: 0;
+    padding: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .arbitros-filtros {
@@ -4074,6 +4159,16 @@ table.admin-table tr:last-child td {
     mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
   }
 
+  /* Dentro del panel desplegable ya hay padding propio -- el "sangrado" de
+     arriba (pensado para cuando los chips vivían pegados al borde de la
+     página) se vería raro contra el borde del panel, así que se anula acá. */
+  .entrenadores-panel .entrenadores-filtros-wrap {
+    margin: 0;
+    padding: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   .entrenadores-filtros {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -4682,14 +4777,68 @@ table.admin-table tr:last-child td {
   margin-bottom: 28px;
 }
 
-.clubes-cta {
+.clubes-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
-  white-space: nowrap;
 }
 
-.clubes-cta svg {
-  width: 16px;
-  height: 16px;
+.clubes-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #0d1913;
+  color: var(--gray);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-interactive), color var(--dur-fast) var(--ease-interactive), background var(--dur-fast) var(--ease-interactive);
+}
+
+.clubes-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.clubes-icon-btn:hover,
+.clubes-icon-btn.is-active {
+  border-color: #e3b341;
+  color: #f5d379;
+}
+
+.clubes-icon-btn-primary,
+.clubes-icon-btn-primary:hover {
+  border-color: transparent;
+  background: var(--green);
+  color: var(--bg-black);
+}
+
+.clubes-icon-btn-primary:hover {
+  background: var(--green-bright);
+}
+
+.clubes-panel {
+  max-width: 1100px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(13, 25, 19, 0.6);
+}
+
+.clubes-panel[hidden] {
+  display: none;
+}
+
+.clubes-panel .clubes-search-wrap {
+  max-width: none;
+}
+
+.clubes-panel .clubes-filtros-wrap {
+  margin: 0;
 }
 
 .clubes-header-copy {
@@ -4708,10 +4857,20 @@ table.admin-table tr:last-child td {
   font-size: 15px;
 }
 
-.clubes-controls {
+.clubes-count {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--green-bright);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.clubes-count svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .clubes-search-wrap {
@@ -4892,10 +5051,13 @@ table.admin-table tr:last-child td {
     margin-bottom: 6px;
   }
 
-  .clubes-cta {
+  .clubes-actions {
     align-self: flex-start;
-    padding: 8px 16px;
-    font-size: 13px;
+  }
+
+  .clubes-icon-btn {
+    width: 38px;
+    height: 38px;
   }
 
   .clubes-intro {
@@ -4907,9 +5069,8 @@ table.admin-table tr:last-child td {
     overflow: hidden;
   }
 
-  .clubes-controls {
-    flex-direction: column;
-    align-items: stretch;
+  .clubes-panel {
+    padding: 14px;
   }
 
   .clubes-filtros-wrap {
@@ -4917,6 +5078,13 @@ table.admin-table tr:last-child td {
     padding: 0 16px;
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%);
+  }
+
+  .clubes-panel .clubes-filtros-wrap {
+    margin: 0;
+    padding: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .clubes-filtros {

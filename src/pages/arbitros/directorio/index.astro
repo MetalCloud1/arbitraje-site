@@ -20,7 +20,7 @@ const [{ items: arbitros, nextCursor }, total, estados] = await Promise.all([
   listEstadosConArbitros(db),
 ]);
 
-const descripcion = `El directorio nacional de árbitros de ajedrez en América. ${total} árbitros registrados.`;
+const descripcion = 'Conoce a los árbitros que hacen posible el ajedrez en América, con perfiles verificados y visibilidad para quienes arbitran.';
 ---
 <BaseLayout
   title="Comunidad de Árbitros - La Hora del Arbitraje"
@@ -35,14 +35,57 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
       <div class="arbitros-header-copy">
         <h1>Comunidad de árbitros</h1>
         <p class="arbitros-intro">{descripcion}</p>
+        <p class="arbitros-count">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          {total} {total === 1 ? 'árbitro registrado' : 'árbitros registrados'}
+        </p>
       </div>
-      <a class="btn btn-primary arbitros-cta" href="/postular?tipo=arbitro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        Registrarme como árbitro
-      </a>
+      <div class="arbitros-actions" data-arbitros-actions>
+        <button
+          type="button"
+          class="arbitros-icon-btn"
+          data-arbitros-search-toggle
+          aria-expanded="false"
+          aria-controls="arbitros-search-panel"
+          aria-label="Buscar árbitro"
+          title="Buscar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="arbitros-icon-btn"
+          data-arbitros-filter-toggle
+          aria-expanded="false"
+          aria-controls="arbitros-filter-panel"
+          aria-label="Filtrar árbitros"
+          title="Filtrar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="12" x2="20" y2="12" /><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+            <line x1="4" y1="18" x2="20" y2="18" /><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+        <a
+          class="arbitros-icon-btn arbitros-icon-btn-primary"
+          href="/postular?tipo=arbitro"
+          aria-label="Registrarme como árbitro"
+          title="Registrarme como árbitro"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" />
+          </svg>
+        </a>
+      </div>
     </div>
 
-    <div class="arbitros-controls">
+    <div class="arbitros-panel" data-arbitros-search-panel id="arbitros-search-panel" hidden>
       <div class="arbitros-search-wrap">
         <svg class="arbitros-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
@@ -56,22 +99,24 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
           autocomplete="off"
         />
       </div>
+    </div>
+
+    <div class="arbitros-panel" data-arbitros-filter-panel id="arbitros-filter-panel" hidden>
       <select class="arbitros-select" data-arbitros-titulo-select aria-label="Filtrar por categoría">
         <option value="">Todas las categorías</option>
         {TITULOS_ARBITRO.map((t) => <option value={t} selected={tituloFiltro === t}>{t}</option>)}
       </select>
-    </div>
-
-    {estados.length > 0 && (
-      <div class="arbitros-filtros-wrap">
-        <div class="arbitros-filtros">
-          <a class={`filtro-chip ${!estadoFiltro ? 'active' : ''}`} href="/arbitros/directorio">Todos</a>
-          {estados.map((e) => (
-            <a class={`filtro-chip ${estadoFiltro === e ? 'active' : ''}`} href={`/arbitros/directorio?estado=${encodeURIComponent(e)}`}>{e}</a>
-          ))}
+      {estados.length > 0 && (
+        <div class="arbitros-filtros-wrap">
+          <div class="arbitros-filtros">
+            <a class={`filtro-chip ${!estadoFiltro ? 'active' : ''}`} href="/arbitros/directorio">Todos</a>
+            {estados.map((e) => (
+              <a class={`filtro-chip ${estadoFiltro === e ? 'active' : ''}`} href={`/arbitros/directorio?estado=${encodeURIComponent(e)}`}>{e}</a>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
+      )}
+    </div>
 
     <div
       class="arbitros-root"
@@ -308,6 +353,77 @@ const descripcion = `El directorio nacional de árbitros de ajedrez en América.
   }
 
   document.addEventListener('astro:page-load', initAllArbitrosPages);
+</script>
+
+<script>
+  // ---------- Botones de búsqueda / filtro (paneles desplegables) ----------
+  function initArbitrosActions(actions: Element) {
+    if (actions.getAttribute('data-arbitros-actions-bound') === 'true') return;
+    actions.setAttribute('data-arbitros-actions-bound', 'true');
+
+    const searchToggle = actions.querySelector('[data-arbitros-search-toggle]');
+    const filterToggle = actions.querySelector('[data-arbitros-filter-toggle]');
+    const searchPanel = document.querySelector('[data-arbitros-search-panel]');
+    const filterPanel = document.querySelector('[data-arbitros-filter-panel]');
+    if (
+      !(searchToggle instanceof HTMLButtonElement) ||
+      !(filterToggle instanceof HTMLButtonElement) ||
+      !(searchPanel instanceof HTMLElement) ||
+      !(filterPanel instanceof HTMLElement)
+    ) return;
+
+    const panels: [HTMLButtonElement, HTMLElement][] = [
+      [searchToggle, searchPanel],
+      [filterToggle, filterPanel],
+    ];
+
+    const closePanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.classList.remove('is-active');
+    };
+
+    const openPanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      for (const [otherBtn, otherPanel] of panels) {
+        if (otherPanel !== panel) closePanel(otherBtn, otherPanel);
+      }
+      panel.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      btn.classList.add('is-active');
+    };
+
+    const togglePanel = (btn: HTMLButtonElement, panel: HTMLElement) => {
+      if (panel.hidden) {
+        openPanel(btn, panel);
+        const input = panel.querySelector('input');
+        if (input instanceof HTMLInputElement) input.focus();
+      } else {
+        closePanel(btn, panel);
+      }
+    };
+
+    searchToggle.addEventListener('click', () => togglePanel(searchToggle, searchPanel));
+    filterToggle.addEventListener('click', () => togglePanel(filterToggle, filterPanel));
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      const clickedInsideActions = actions.contains(target);
+      const clickedInsidePanel = searchPanel.contains(target) || filterPanel.contains(target);
+      if (!clickedInsideActions && !clickedInsidePanel) {
+        for (const [btn, panel] of panels) closePanel(btn, panel);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') for (const [btn, panel] of panels) closePanel(btn, panel);
+    });
+  }
+
+  function initAllArbitrosActions() {
+    document.querySelectorAll('[data-arbitros-actions]').forEach(initArbitrosActions);
+  }
+
+  document.addEventListener('astro:page-load', initAllArbitrosActions);
 </script>
 
 <script>
