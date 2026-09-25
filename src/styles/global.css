@@ -239,6 +239,13 @@ header.site-header {
   z-index: 100;
   animation: fadeSlideDown var(--dur-editorial) var(--ease-editorial) both;
   transition: box-shadow 0.35s ease, background 0.35s ease;
+  /* Evita el bucle de "scroll anchoring": el header sticky cambia de alto
+     al agregar/quitar .is-scrolled (ver .header-inner, .brand-title, etc.),
+     y ese cambio de layout hacía que el navegador reajustara scrollY solo,
+     retriggereando el listener de scroll justo en el umbral y quedando en
+     bucle (vibración/parpadeo del logo). Con overflow-anchor: none el
+     navegador ya no "corrige" el scroll cuando este bloque cambia de alto. */
+  overflow-anchor: none;
 }
 
 header.site-header.is-scrolled {

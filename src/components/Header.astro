@@ -117,8 +117,20 @@ const navLinks = [
   function initHeader() {
     const header = document.querySelector('header.site-header');
 
+    // Dos umbrales distintos (entra en 40, sale en 20) en vez de uno solo
+    // en 12: con un único umbral, el propio cambio de alto del header al
+    // togglear .is-scrolled podía dejar el scroll oscilando justo ahí
+    // (bucle de scroll anchoring, ver overflow-anchor en global.css). Con
+    // histéresis, cruzar la línea en un sentido no alcanza para volver a
+    // cruzarla en el otro, así que no puede quedar atrapado en bucle.
     const onScroll = () => {
-      header?.classList.toggle('is-scrolled', window.scrollY > 12);
+      if (!header) return;
+      const scrolled = header.classList.contains('is-scrolled');
+      if (!scrolled && window.scrollY > 40) {
+        header.classList.add('is-scrolled');
+      } else if (scrolled && window.scrollY < 20) {
+        header.classList.remove('is-scrolled');
+      }
     };
 
     onScroll();
