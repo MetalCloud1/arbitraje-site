@@ -1,0 +1,228 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDailyChallenge } from '../../../lib/daily';
+import { formatMovetext } from '../../../lib/widgets/schema';
+
+export const prerender = false;
+
+const db = env.DB;
+const daily = await getDailyChallenge(db);
+
+const error = Astro.url.searchParams.get('error');
+const updated = Astro.url.searchParams.get('updated');
+
+// La solución se guarda como SAN ya reproducido ("Ra8#"); acá se muestra
+// como movetext ("1. Ra8#") para que se vea igual que en el formulario del
+// editor de artículos, más fácil de leer con varias jugadas.
+const solutionText = daily ? formatMovetext(daily.raw.fen, daily.raw.solution.split(' ').filter(Boolean)) : '';
+
+// Precarga cruda para el armador de trivia en el cliente.
+const quizInitial = daily ? daily.raw.quiz : '{}';
+---
+<AdminLayout title="Desafío diario">
+  <div class="admin-header">
+    <h1>Desafío diario</h1>
+    <a class="btn btn-secondary" href="/" target="_blank">Ver en el inicio ↗</a>
+  </div>
+
+  <p class="field-hint" style="margin: -8px 0 20px;">
+    Esto NO rota solo ni guarda quién respondió qué: es un único desafío que reemplazás manualmente cuando
+    quieras (por ejemplo, la jugada brillante de un GM ese mismo día). Se actualiza al instante en el inicio.
+  </p>
+
+  {error && <div class="alert alert-error">{error}</div>}
+  {updated && <div class="alert alert-success">Desafío diario actualizado. Ya se ve así en el inicio.</div>}
+  {daily && <p class="field-hint">Última actualización: {new Date(daily.updatedAt + 'Z').toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' })}</p>}
+
+  <form class="form-card" method="POST" action="/api/daily" id="daily-form">
+    <h2 style="margin-top:0;">Problema Diario (tablero)</h2>
+
+    <div class="field">
+      <label for="fen">Posición (FEN)</label>
+      <input type="text" id="fen" name="fen" required maxlength="100" value={daily?.raw.fen ?? ''} placeholder="6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1" />
+      <p class="field-hint">Copia el FEN desde el análisis de Lichess o Chess.com. Mueve primero el bando que indique.</p>
+    </div>
+
+    <div class="field">
+      <label for="solution">Solución</label>
+      <textarea id="solution" name="solution" rows="2" required maxlength="600">{solutionText}</textarea>
+      <p class="field-hint">Todas las jugadas, tuyas y del rival, alternadas: 1. Qh7+ Kxh7 2. Rh3#.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="caption">Pie del problema</label>
+        <input type="text" id="caption" name="caption" maxlength="200" value={daily?.raw.caption ?? ''} placeholder="Ej.: Mate en 2" />
+      </div>
+      <div class="field">
+        <label for="hint">Pista (opcional)</label>
+        <input type="text" id="hint" name="hint" maxlength="200" value={daily?.raw.hint ?? ''} />
+      </div>
+    </div>
+
+    <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);" />
+
+    <h2>Problema Arbitral (trivia)</h2>
+    <p class="field-hint">Podés poner una sola pregunta o una trivia completa de varias, igual que en el editor de artículos.</p>
+
+    <div class="field">
+      <label for="quiz-title">Título de la trivia (opcional)</label>
+      <input type="text" id="quiz-title" maxlength="120" placeholder='Ej.: "Reglamento básico"' />
+    </div>
+
+    <div id="quiz-list"></div>
+    <button type="button" class="btn btn-secondary" id="quiz-add">+ Agregar pregunta</button>
+
+    <input type="hidden" name="quiz" id="quiz-json" />
+
+    <div class="admin-header" style="margin-top: 32px;">
+      <button type="submit" class="btn btn-primary">Guardar desafío diario</button>
+    </div>
+  </form>
+</AdminLayout>
+
+<script define:vars={{ quizInitial }}>
+  // Armador de la trivia: mismo formato que el widget "quiz" de artículos
+  // ({ title, questions: [{ q, options, answer, explain }] }), pero como un
+  // formulario simple en vez del diálogo del editor de artículos (que vive
+  // acoplado a ese editor). Al enviar, junta todo en el input oculto #quiz-json.
+  let saved = {};
+  try {
+    saved = JSON.parse(quizInitial || '{}');
+  } catch {
+    saved = {};
+  }
+
+  const list = document.getElementById('quiz-list');
+  const addBtn = document.getElementById('quiz-add');
+  const titleInput = document.getElementById('quiz-title');
+  const form = document.getElementById('daily-form');
+  const quizJsonInput = document.getElementById('quiz-json');
+
+  if (saved.title) titleInput.value = saved.title;
+
+  const cards = [];
+
+  // Los .wg-* (wg-qcard, wg-optrow, wg-hint) vienen de widgets.css y ya se ven
+  // bien acá sin cambios: son solo layout, no dependen del diálogo del editor.
+  // Los <input>/<textarea> sí necesitan esto: sin un ancestro .field no
+  // heredan el estilo oscuro del panel y quedarían con el fondo blanco por
+  // defecto del navegador, que desentona con .form-card.
+  const FIELD_INPUT_STYLE =
+    'width:100%;background:#0a1410;border:1px solid var(--border);border-radius:6px;' +
+    'padding:10px 12px;color:var(--white);font-family:inherit;font-size:14.5px;';
+
+  function renumber() {
+    list.querySelectorAll('legend').forEach((lg, i) => {
+      lg.textContent = 'Pregunta ' + (i + 1);
+    });
+  }
+
+  function addQuestion(q) {
+    const groupName = 'quiz-answer-' + cards.length + '-' + Date.now();
+
+    const fieldset = document.createElement('fieldset');
+    fieldset.className = 'wg-qcard';
+
+    const legend = document.createElement('legend');
+    fieldset.appendChild(legend);
+
+    const text = document.createElement('textarea');
+    text.rows = 2;
+    text.style.cssText = FIELD_INPUT_STYLE;
+    text.placeholder = 'Enunciado de la pregunta';
+    text.setAttribute('aria-label', 'Enunciado');
+    text.value = (q && q.q) || '';
+    fieldset.appendChild(text);
+
+    const hint = document.createElement('p');
+    hint.className = 'wg-hint';
+    hint.textContent = 'Marca la opción correcta. Las opciones vacías se ignoran.';
+    fieldset.appendChild(hint);
+
+    const rows = [0, 1, 2, 3].map((i) => {
+      const row = document.createElement('div');
+      row.className = 'wg-optrow';
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = groupName;
+      radio.setAttribute('aria-label', 'Marcar la opción ' + String.fromCharCode(65 + i) + ' como correcta');
+      radio.checked = q ? q.answer === i : i === 0;
+
+      const opt = document.createElement('input');
+      opt.type = 'text';
+      opt.style.cssText = FIELD_INPUT_STYLE;
+      opt.maxLength = 150;
+      opt.placeholder = 'Opción ' + String.fromCharCode(65 + i);
+      opt.setAttribute('aria-label', 'Opción ' + String.fromCharCode(65 + i));
+      opt.value = (q && q.options && q.options[i]) || '';
+
+      row.appendChild(radio);
+      row.appendChild(opt);
+      fieldset.appendChild(row);
+      return { radio, opt };
+    });
+
+    const explain = document.createElement('input');
+    explain.type = 'text';
+    explain.style.cssText = FIELD_INPUT_STYLE;
+    explain.maxLength = 400;
+    explain.placeholder = 'Explicación (opcional, se muestra al responder)';
+    explain.setAttribute('aria-label', 'Explicación');
+    explain.value = (q && q.explain) || '';
+    fieldset.appendChild(explain);
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-danger';
+    remove.style.marginTop = '10px';
+    remove.textContent = 'Quitar pregunta';
+    fieldset.appendChild(remove);
+
+    const card = {
+      el: fieldset,
+      read(n) {
+        const filled = rows.map((r, i) => ({ text: r.opt.value.trim(), correct: r.radio.checked, i })).filter((r) => r.text);
+        const answer = filled.findIndex((r) => r.correct);
+        if (answer < 0) throw new Error('En la pregunta ' + n + ', marca como correcta una opción que tenga texto.');
+        const q2 = { q: text.value.trim(), options: filled.map((r) => r.text), answer };
+        if (explain.value.trim()) q2.explain = explain.value.trim();
+        return q2;
+      },
+    };
+
+    remove.addEventListener('click', () => {
+      cards.splice(cards.indexOf(card), 1);
+      fieldset.remove();
+      renumber();
+    });
+
+    cards.push(card);
+    list.appendChild(fieldset);
+    renumber();
+  }
+
+  const initialQuestions = Array.isArray(saved.questions) && saved.questions.length ? saved.questions : [undefined];
+  initialQuestions.forEach((q) => addQuestion(q));
+
+  addBtn.addEventListener('click', () => addQuestion());
+
+  form.addEventListener('submit', (event) => {
+    if (cards.length === 0) {
+      event.preventDefault();
+      alert('Agrega al menos una pregunta a la trivia.');
+      return;
+    }
+    try {
+      const questions = cards.map((c, i) => c.read(i + 1));
+      const q = { questions };
+      if (titleInput.value.trim()) q.title = titleInput.value.trim();
+      quizJsonInput.value = JSON.stringify(q);
+    } catch (err) {
+      event.preventDefault();
+      alert(err instanceof Error ? err.message : String(err));
+    }
+  });
+</script>

@@ -13,6 +13,7 @@ import { listRecentArticles } from '../lib/db';
 import { listArbitrosPage } from '../lib/arbitros';
 import { listEntrenadoresPage } from '../lib/entrenadores';
 import { listClubesPage } from '../lib/clubes';
+import { getDailyChallenge } from '../lib/daily';
 
 export const prerender = false;
 
@@ -22,11 +23,12 @@ export const prerender = false;
 const PREVIEW_SIZE = 5;
 
 const db = env.DB;
-const [articles, { items: arbitros }, { items: entrenadores }, { items: clubes }] = await Promise.all([
+const [articles, { items: arbitros }, { items: entrenadores }, { items: clubes }, daily] = await Promise.all([
   listRecentArticles(db, 8),
   listArbitrosPage(db, { limit: PREVIEW_SIZE }),
   listEntrenadoresPage(db, { limit: PREVIEW_SIZE }),
   listClubesPage(db, { limit: PREVIEW_SIZE }),
+  getDailyChallenge(db),
 ]);
 
 const featured = articles[0] ?? null;
@@ -41,6 +43,23 @@ const recentGrid = articles.slice(4, 8);
     <section class="featured-section">
       <div class="container">
         <FeaturedArticles featured={featured} secondary={secondary} />
+      </div>
+    </section>
+  )}
+
+  {daily && (
+    <section class="home-section daily-section">
+      <div class="container">
+        <div class="daily-grid">
+          <div class="daily-col">
+            <h2 class="daily-col-title">Táctica del día</h2>
+            <Fragment set:html={daily.puzzleHtml} />
+          </div>
+          <div class="daily-col">
+            <h2 class="daily-col-title">Dilema del árbitro</h2>
+            <Fragment set:html={daily.quizHtml} />
+          </div>
+        </div>
       </div>
     </section>
   )}
@@ -146,3 +165,17 @@ const recentGrid = articles.slice(4, 8);
     </section>
   )}
 </BaseLayout>
+
+<script>
+  // Hidrata el tablero y la trivia del desafío diario. Mismo patrón que
+  // articulos/[slug].astro: el módulo de widgets solo se descarga si la
+  // sección existe en esta página, y astro:page-load lo repite si se vuelve
+  // a esta página por navegación de cliente (ClientRouter).
+  const boot = () => {
+    if (document.querySelector('.daily-section [data-widget]')) {
+      import('../lib/widgets/client/mount').then((m) => m.hydrateWidgets());
+    }
+  };
+  boot();
+  document.addEventListener('astro:page-load', boot);
+</script>

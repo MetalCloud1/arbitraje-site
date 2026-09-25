@@ -24,6 +24,7 @@ const path = Astro.url.pathname;
       <a href="/admin/arbitros" class={path.startsWith('/admin/arbitros') ? 'active' : ''}>Árbitros</a>
       <a href="/admin/entrenadores" class={path.startsWith('/admin/entrenadores') ? 'active' : ''}>Entrenadores</a>
       <a href="/admin/clubes" class={path.startsWith('/admin/clubes') ? 'active' : ''}>Clubes</a>
+      <a href="/admin/diario" class={path.startsWith('/admin/diario') ? 'active' : ''}>Desafío diario</a>
       <a href="/" target="_blank">Ver sitio ↗</a>
       <form method="POST" action="/api/auth/logout">
         <button class="btn btn-secondary" type="submit" style="width:100%; justify-content:center;">

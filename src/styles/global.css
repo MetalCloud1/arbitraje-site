@@ -1217,6 +1217,45 @@ html:has(.mobile-drawer[open]) {
   gap: 24px;
 }
 
+/* "Problema Diario" (tablero) + "Problema Arbitral" (trivia), lado a lado.
+   Contenido estático guardado a mano desde /admin/diario (ver src/lib/daily.ts):
+   no rota solo ni cuenta respuestas, así que acá no hay nada async ni
+   client-side aparte de hidratar los dos widgets (ver script en index.astro). */
+.daily-section {
+  padding-top: 48px;
+}
+
+.daily-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.daily-col-title {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+/* Los widgets (figure[data-widget]) traen su propio margen vertical de
+   artículo (40px arriba y abajo, ver widgets.css); acá van solos en la
+   columna, así que ese margen sobra y descuadra la altura contra la otra
+   columna. */
+.daily-col figure[data-widget] {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .daily-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
 @media (max-width: 1100px) {
   .articles-grid {
     grid-template-columns: repeat(2, 1fr);

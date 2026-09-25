@@ -52,7 +52,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       pathname.startsWith('/api/entrenadores') ||
       pathname.startsWith('/api/clubes') ||
       pathname.startsWith('/api/upload') ||
-      pathname.startsWith('/api/cleanup'));
+      pathname.startsWith('/api/cleanup') ||
+      pathname.startsWith('/api/daily'));
 
   if ((isAdminPage || isProtectedApi) && !session) {
     if (pathname.startsWith('/api/')) {
