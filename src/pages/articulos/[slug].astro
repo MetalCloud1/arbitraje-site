@@ -14,7 +14,7 @@ const { slug } = Astro.params;
 const article = slug ? await getArticleBySlug(db, slug) : null;
 
 if (!article) {
-  return Astro.redirect('/articulos');
+  return Astro.rewrite('/404');
 }
 
 const video = parseVideoUrlSafe(article.video_url);

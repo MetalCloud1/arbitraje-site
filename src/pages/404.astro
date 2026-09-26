@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EmptyState from '../components/EmptyState.astro';
+
+Astro.response.status = 404;
+---
+<BaseLayout title="Página no encontrada - La Hora del Arbitraje" noindex>
+  <div class="container">
+    <EmptyState
+      title="Esta página no existe o ya no está disponible"
+      description="El enlace puede estar roto, el contenido puede haber expirado, o el perfil puede haberse dado de baja."
+      actionLabel="Volver al inicio"
+      actionHref="/"
+    />
+  </div>
+</BaseLayout>

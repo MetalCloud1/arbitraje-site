@@ -14,7 +14,7 @@ const { slug } = Astro.params;
 const entrenador = slug ? await getEntrenadorBySlug(db, slug) : null;
 
 if (!entrenador) {
-  return Astro.redirect('/entrenadores');
+  return Astro.rewrite('/404');
 }
 
 // Mismo criterio que árbitros: sin bio suficiente, no se indexa.

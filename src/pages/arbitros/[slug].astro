@@ -13,7 +13,7 @@ const { slug } = Astro.params;
 const arbitro = slug ? await getArbitroBySlug(db, slug) : null;
 
 if (!arbitro) {
-  return Astro.redirect('/arbitros');
+  return Astro.rewrite('/404');
 }
 
 // Perfiles sin bio o con bio muy corta no se indexan: son la parte del
