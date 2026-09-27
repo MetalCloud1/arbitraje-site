@@ -46,7 +46,7 @@ const featuredThumb = resolveThumbnail(featured);
   </div>
 
   {secondary.length > 0 && (
-    <div class="featured-list">
+    <div class="featured-list reveal-stagger" data-reveal-target>
       {secondary.map((article) => {
         const thumb = resolveThumbnail(article);
         return (

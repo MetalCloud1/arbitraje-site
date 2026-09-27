@@ -6,9 +6,20 @@ import MediaFrame from './MediaFrame.astro';
 
 interface Props {
   article: Article;
+  /**
+   * Las view-transitions nombradas (portada + título) hacen que la tarjeta
+   * "viaje" en una sola pieza hacia el detalle del artículo. Vale la pena en
+   * grids chicos (home, destacados: 3-8 tarjetas), pero en /articulos, que
+   * lista TODOS los artículos sin paginar, cada tarjeta suma 2 grupos de
+   * view-transition más -- con muchos artículos, el navegador termina
+   * rastreando decenas de grupos en cada entrada/salida de esa página, lo
+   * que se siente como una transición lenta y, atrás, un reveal-stagger que
+   * no llega a animarse con fluidez. Por eso /articulos pasa `false` acá.
+   */
+  enableTransitions?: boolean;
 }
 
-const { article } = Astro.props;
+const { article, enableTransitions = true } = Astro.props;
 const thumb = resolveThumbnail(article);
 ---
 <article class="article-card">
@@ -18,13 +29,13 @@ const thumb = resolveThumbnail(article);
         imageUrl={thumb.imageUrl}
         alt={article.title}
         isVideo={thumb.isVideo}
-        transitionName={`article-cover-${article.slug}`}
+        transitionName={enableTransitions ? `article-cover-${article.slug}` : undefined}
       />
     </div>
   </a>
   <div class="article-category">{article.category}</div>
   <a class="article-title-link" href={`/articulos/${article.slug}`}>
-    <h3 class="article-title" transition:name={`article-title-${article.slug}`}>{article.title}</h3>
+    <h3 class="article-title" {...(enableTransitions ? { 'transition:name': `article-title-${article.slug}` } : {})}>{article.title}</h3>
   </a>
   <div class="article-meta">
     <span>

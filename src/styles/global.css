@@ -912,7 +912,8 @@ nav.main-nav a.active::after {
    Segunda fila, fija debajo del header, con la navegación principal y el
    buscador. Reemplaza tanto al masthead (foto+texto) como a la fila de
    nav que antes vivía apretada dentro del header. Las subcategorías de
-   Artículos se eligen con los chips de /articulos (.category-chips). */
+   Artículos se eligen con el panel de filtro de /articulos
+   (.articulos-filter-panel, botón .arbitros-icon-btn). */
 .category-bar {
   /* position/z-index explícitos: sin esto, la regla genérica
      "body > * { z-index: 1 }" convierte a .category-bar en su propio
@@ -4742,64 +4743,42 @@ table.admin-table tr:last-child td {
 }
 
 
-/* ---------- CHIPS DE CATEGORÍA (/articulos) ----------
-   Son la única forma de filtrar por categoría, en todas las pantallas.
-   Reemplazan al acordeón del hamburguesa y al desplegable de "Artículos"
-   en la barra (que además quedaba recortado en móvil). */
-.category-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: -8px 0 36px;
-  font-family: var(--font-sans);
+/* ---------- FILTRO DE CATEGORÍA (/articulos) ----------
+   Botón + panel desplegable, mismo lenguaje visual que el ícono de embudo
+   de árbitros/entrenadores/clubes: reusa .arbitros-icon-btn para el botón y
+   .filtro-chip/.arbitros-filtros para las cápsulas de adentro del panel, así
+   no hay una segunda familia de "chip" con otro look conviviendo en el sitio.
+   El panel es un dropdown anclado al botón (position: absolute, right: 0,
+   se abre hacia abajo) -- igual que .search-panel y .share-panel, que
+   están en el mismo caso (botón pegado al borde derecho de su contenedor).
+   No es un bloque fijo en el flujo, así que las cápsulas no dependen del
+   ancho de pantalla ni necesitan scroll horizontal. */
+.articulos-filter-wrap {
+  position: relative;
 }
 
-.category-chips .chip {
-  padding: 8px 18px;
+.articulos-filter-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: max-content;
+  max-width: min(360px, 90vw);
+  background: #0e1b14;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--gray);
-  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+  border-radius: 12px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+  padding: 14px;
+  z-index: 40;
+  transform-origin: top right;
+  animation: searchPanelIn var(--dur-editorial) var(--ease-editorial) both;
 }
 
-.category-chips .chip:hover {
-  color: var(--white);
-  border-color: rgba(255, 255, 255, 0.22);
+.articulos-filter-panel[hidden] {
+  display: none;
 }
 
-.category-chips .chip.active {
-  color: var(--green-bright);
-  border-color: rgba(151, 204, 95, 0.45);
-  background: rgba(151, 204, 95, 0.08);
-}
-
-@media (max-width: 600px) {
-  /* Una sola fila con scroll horizontal (como la barra de navegación),
-     para que un chip no quede huérfano en una segunda línea. */
-  .category-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    gap: 8px;
-    margin: -8px -24px 28px;
-    padding: 0 24px;
-  }
-
-  .category-chips::-webkit-scrollbar {
-    display: none;
-  }
-
-  .category-chips .chip {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  .category-chips .chip {
-    padding: 7px 15px;
-    font-size: 13.5px;
-  }
+.articulos-filter-panel .arbitros-filtros {
+  flex-wrap: wrap;
 }
 
 /* ---------- CLUBES: listado público ----------

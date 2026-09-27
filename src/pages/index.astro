@@ -86,7 +86,7 @@ const recentGrid = articles.slice(4, 8);
         )}
 
         {recentGrid.length > 0 && (
-          <div class="articles-grid">
+          <div class="articles-grid reveal-stagger" data-reveal-target>
             {recentGrid.map((article) => <ArticleCard article={article} />)}
           </div>
         )}
@@ -178,4 +178,35 @@ const recentGrid = articles.slice(4, 8);
   };
   boot();
   document.addEventListener('astro:page-load', boot);
+</script>
+
+<script>
+  // Reveal de los grids de artículos del home (destacados secundarios +
+  // recientes). Mismo patrón que /arbitros/directorio, /entrenadores y
+  // /clubes: IntersectionObserver, se dispara una sola vez por grid y se
+  // reengancha en cada navegación de ClientRouter. El destacado principal
+  // (featured-main, arriba del todo) queda deliberadamente afuera: es lo
+  // primero que se ve y probable candidato a LCP, no conviene demorarle la opacidad.
+  function initHomeReveal() {
+    const targets = document.querySelectorAll('.reveal-stagger[data-reveal-target]:not(.is-visible)');
+    targets.forEach((el) => {
+      if (el.getAttribute('data-reveal-bound') === 'true') return;
+      el.setAttribute('data-reveal-bound', 'true');
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0 }
+      );
+      io.observe(el);
+    });
+  }
+
+  document.addEventListener('astro:page-load', initHomeReveal);
 </script>

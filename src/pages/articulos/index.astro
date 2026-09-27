@@ -42,22 +42,48 @@ const CATEGORIAS = ['Casos', 'Entrevistas', 'Análisis', 'Podcast'];
           <KnightMark class="section-mark" />
           <span>{heading}</span>
         </div>
-      </div>
 
-      <nav class="category-chips" aria-label="Filtrar por categoría">
-        <a
-          href="/articulos"
-          class={!categoria && !buscar ? 'chip active' : 'chip'}
-          aria-current={!categoria && !buscar ? 'page' : undefined}
-        >Todos</a>
-        {CATEGORIAS.map((c) => (
-          <a
-            href={`/articulos?categoria=${encodeURIComponent(c)}`}
-            class={categoria === c && !buscar ? 'chip active' : 'chip'}
-            aria-current={categoria === c && !buscar ? 'page' : undefined}
-          >{c}</a>
-        ))}
-      </nav>
+        <div class="articulos-filter-wrap" data-articulos-filter-root>
+          <button
+            type="button"
+            class="arbitros-icon-btn"
+            data-articulos-filter-toggle
+            aria-expanded="false"
+            aria-controls="articulos-filter-panel"
+            aria-label="Filtrar por categoría"
+            title="Filtrar por categoría"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none" />
+              <line x1="4" y1="12" x2="20" y2="12" /><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+              <line x1="4" y1="18" x2="20" y2="18" /><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+
+          <nav
+            class="articulos-filter-panel"
+            data-articulos-filter-panel
+            id="articulos-filter-panel"
+            aria-label="Filtrar por categoría"
+            hidden
+          >
+            <div class="arbitros-filtros">
+              <a
+                href="/articulos"
+                class={!categoria && !buscar ? 'filtro-chip active' : 'filtro-chip'}
+                aria-current={!categoria && !buscar ? 'page' : undefined}
+              >Todos</a>
+              {CATEGORIAS.map((c) => (
+                <a
+                  href={`/articulos?categoria=${encodeURIComponent(c)}`}
+                  class={categoria === c && !buscar ? 'filtro-chip active' : 'filtro-chip'}
+                  aria-current={categoria === c && !buscar ? 'page' : undefined}
+                >{c}</a>
+              ))}
+            </div>
+          </nav>
+        </div>
+      </div>
 
       {articles.length === 0 && (
         buscar ? (
@@ -83,10 +109,110 @@ const CATEGORIAS = ['Casos', 'Entrevistas', 'Análisis', 'Podcast'];
       )}
 
       {articles.length > 0 && (
-        <div class="articles-grid">
-          {articles.map((article) => <ArticleCard article={article} />)}
+        <div class="articles-grid reveal" data-reveal-target>
+          {articles.map((article) => <ArticleCard article={article} enableTransitions={false} />)}
         </div>
       )}
     </div>
   </section>
+
+  <script>
+    // Reveal del grid: acá usamos .reveal (fade simple de todo el bloque),
+    // no .reveal-stagger como en el home/arbitros/entrenadores/clubes. El
+    // escalonado por tarjeta de .reveal-stagger tiene un tope de 8 items
+    // (nth-child(n+8) comparten el mismo delay) -- funciona en listas
+    // paginadas de a 10, pero acá se listan TODOS los artículos sin límite
+    // (ver listAllArticles arriba), así que con más de 8 el resto aparecía
+    // todo junto de golpe. Un fade único evita ese "estallido".
+    //
+    // threshold: 0 (no 0.08 como en las otras páginas) por el mismo motivo
+    // de fondo: el grid puede ser mucho más alto que la pantalla, y un
+    // umbral en porcentaje del alto total casi nunca se cumple sin
+    // scrollear bastante -- quedaba todo invisible hasta moverse.
+    function initArticulosReveal() {
+      const grid = document.querySelector('.articles-grid.reveal[data-reveal-target]:not(.is-visible)');
+      if (!grid || grid.getAttribute('data-reveal-bound') === 'true') return;
+      grid.setAttribute('data-reveal-bound', 'true');
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0 }
+      );
+      io.observe(grid);
+    }
+
+    document.addEventListener('astro:page-load', initArticulosReveal);
+  </script>
+
+  <script>
+    // Botón de filtro por categoría: mismo patrón que el ícono de embudo de
+    // /arbitros/directorio, /entrenadores y /clubes (panel desplegable que se
+    // abre y cierra, se cierra con click afuera o Escape). Acá el panel es un
+    // dropdown anclado al botón (no un bloque fijo en el flujo) para que las
+    // cápsulas no dependan del ancho de pantalla ni exijan scroll horizontal:
+    // adentro del panel simplemente envuelven en varias líneas si hace falta.
+    function initArticulosFilter(root: Element) {
+      if (root.getAttribute('data-articulos-filter-bound') === 'true') return;
+      root.setAttribute('data-articulos-filter-bound', 'true');
+
+      const toggle = root.querySelector('[data-articulos-filter-toggle]');
+      const panel = root.querySelector('[data-articulos-filter-panel]');
+      if (!(toggle instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) return;
+
+      const close = () => {
+        panel.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.classList.remove('is-active');
+      };
+
+      const open = () => {
+        panel.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.classList.add('is-active');
+      };
+
+      toggle.addEventListener('click', () => (panel.hidden ? open() : close()));
+
+      const onDocumentClick = (event: MouseEvent) => {
+        if (!root.contains(event.target as Node)) close();
+      };
+      const onDocumentKeydown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !panel.hidden) {
+          close();
+          toggle.focus();
+        }
+      };
+
+      document.addEventListener('click', onDocumentClick);
+      document.addEventListener('keydown', onDocumentKeydown);
+
+      // Sin esto, cada ida y vuelta a /articulos en la misma sesión (sin
+      // recarga completa, vía ClientRouter) deja un par de listeners más
+      // colgados de document -- nunca se quitan solos porque el elemento
+      // "root" al que apuntan ya no existe, pero el listener sigue vivo y
+      // sigue corriendo en cada click/tecla de TODO el sitio. Con suficiente
+      // navegación, eso sí se nota como lentitud real, no del dispositivo.
+      document.addEventListener(
+        'astro:before-swap',
+        () => {
+          document.removeEventListener('click', onDocumentClick);
+          document.removeEventListener('keydown', onDocumentKeydown);
+        },
+        { once: true }
+      );
+    }
+
+    function initAllArticulosFilters() {
+      document.querySelectorAll('[data-articulos-filter-root]').forEach(initArticulosFilter);
+    }
+
+    document.addEventListener('astro:page-load', initAllArticulosFilters);
+  </script>
 </BaseLayout>
