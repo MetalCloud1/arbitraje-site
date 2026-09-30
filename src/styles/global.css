@@ -2910,6 +2910,147 @@ table.admin-table tr:last-child td {
   }
 }
 
+/* Admin en móvil: evita que el contenido se salga de la pantalla.
+   - .admin-main necesita min-width:0 (es hijo flex) o se ensancha con
+     el contenido en lugar de encogerse.
+   - Las tablas del listado se convierten en tarjetas apiladas: cada
+     celda muestra su encabezado (data-label) a la izquierda. */
+.admin-main {
+  min-width: 0;
+}
+
+/* Menú superior horizontal (≤860px): los ítems no se comprimen ni se parten,
+   el menú se desliza con el dedo. */
+@media (max-width: 860px) {
+  .admin-sidebar .brand {
+    margin-bottom: 0;
+    align-self: center;
+  }
+  .admin-sidebar a,
+  .admin-sidebar form,
+  .admin-sidebar .brand {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .admin-sidebar form .btn {
+    width: auto !important;
+  }
+}
+
+/* 900px y no 700: la tabla de entrenadores tiene 9 columnas y ya no cabe
+   en tablets chicas. */
+@media (max-width: 900px) {
+  .admin-main {
+    padding: 22px 16px 40px;
+  }
+
+  .admin-header {
+    flex-wrap: wrap;
+  }
+
+  .admin-header h1 {
+    font-size: 22px;
+  }
+
+  .cleanup-box {
+    padding: 18px;
+  }
+
+  .form-card {
+    padding: 20px 16px;
+  }
+
+  table.admin-table,
+  table.admin-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table.admin-table thead {
+    /* Oculto visualmente pero accesible para lectores de pantalla */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  table.admin-table tr {
+    display: block;
+    background: #0d1913;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin-bottom: 14px;
+  }
+
+  table.admin-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  table.admin-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    color: var(--gray-dim);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Título / nombre: arriba, a todo el ancho, sin etiqueta */
+  table.admin-table td.cell-main {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    padding: 12px 0;
+  }
+
+  table.admin-table td.cell-main::before {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Acciones: abajo, botones repartidos en todo el ancho */
+  table.admin-table td.cell-actions {
+    display: block;
+    border-bottom: none;
+    padding: 12px 0 8px;
+  }
+
+  table.admin-table tr:last-child td {
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.admin-table tr:last-child td.cell-actions {
+    border-bottom: none;
+  }
+
+  table.admin-table .row-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  table.admin-table .row-actions > a,
+  table.admin-table .row-actions > form {
+    flex: 1;
+  }
+
+  table.admin-table .row-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ---------- ÁRBITROS: admin ---------- */
 
 .field-checkbox label {

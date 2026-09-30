@@ -55,21 +55,21 @@ const error = Astro.url.searchParams.get('error');
       <tbody>
         {entrenadores.map((e) => (
           <tr>
-            <td>
+            <td class="cell-main" data-label="Nombre">
               <a href={`/entrenadores/${e.slug}`} target="_blank">{e.nombre_completo}</a>
             </td>
-            <td>{e.titulo_ajedrez ?? '—'}</td>
-            <td>{e.titulo_arbitraje ?? '—'}</td>
-            <td>{e.elo_clasico ?? '—'}</td>
-            <td>{e.estado_republica ?? '—'}</td>
-            <td>{e.orden_destacado != null ? <span class="badge">#{e.orden_destacado}</span> : '—'}</td>
-            <td>
+            <td data-label="Título de ajedrez">{e.titulo_ajedrez ?? '—'}</td>
+            <td data-label="Título de arbitraje">{e.titulo_arbitraje ?? '—'}</td>
+            <td data-label="ELO clásico">{e.elo_clasico ?? '—'}</td>
+            <td data-label="Estado">{e.estado_republica ?? '—'}</td>
+            <td data-label="Destacado">{e.orden_destacado != null ? <span class="badge">#{e.orden_destacado}</span> : '—'}</td>
+            <td data-label="Actividad">
               <span class={`badge ${e.actividad === 'inactivo' ? 'expiring' : ''}`}>{e.actividad}</span>
             </td>
-            <td>
+            <td data-label="Reclamado">
               {e.reclamado_en ? <span class="badge">sí</span> : <span class="badge expiring">no</span>}
             </td>
-            <td>
+            <td class="cell-actions">
               <div class="row-actions">
                 <a class="btn btn-secondary" href={`/admin/entrenadores/editar/${e.id}`}>Editar</a>
                 <form method="POST" action={`/api/entrenadores/${e.id}/delete`} onsubmit="return confirm('¿Borrar este entrenador? Esta acción no se puede deshacer.')">

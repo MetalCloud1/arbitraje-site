@@ -69,19 +69,19 @@ function daysLeft(expiresAt: string): number {
       <tbody>
         {articles.map((a) => (
           <tr>
-            <td>
+            <td class="cell-main" data-label="Título">
               <a href={`/articulos/${a.slug}`} target="_blank">{a.title}</a>
             </td>
-            <td>{a.category}</td>
-            <td>{formatDateEs(a.published_at)}</td>
-            <td>
+            <td data-label="Categoría">{a.category}</td>
+            <td data-label="Publicado">{formatDateEs(a.published_at)}</td>
+            <td data-label="Eliminación">
               {a.expires_at ? (
                 <span class="badge expiring">en {daysLeft(a.expires_at)} día(s)</span>
               ) : (
                 <span class="badge">indefinido</span>
               )}
             </td>
-            <td>
+            <td class="cell-actions">
               <div class="row-actions">
                 <a class="btn btn-secondary" href={`/admin/editar/${a.id}`}>Editar</a>
                 <form method="POST" action={`/api/articles/${a.id}/delete`} onsubmit="return confirm('¿Borrar este artículo? Esta acción no se puede deshacer.')">

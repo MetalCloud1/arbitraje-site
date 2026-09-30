@@ -58,16 +58,16 @@ const MODALIDAD_LABEL: Record<string, string> = {
       <tbody>
         {clubes.map((c) => (
           <tr>
-            <td>
+            <td class="cell-main" data-label="Nombre">
               <a href={`/clubes/${c.slug}`} target="_blank">{c.nombre}</a>
             </td>
-            <td>{c.pais}</td>
-            <td>{MODALIDAD_LABEL[c.modalidad] ?? c.modalidad}</td>
-            <td>{c.orden_destacado != null ? <span class="badge">#{c.orden_destacado}</span> : '—'}</td>
-            <td>
+            <td data-label="País">{c.pais}</td>
+            <td data-label="Modalidad">{MODALIDAD_LABEL[c.modalidad] ?? c.modalidad}</td>
+            <td data-label="Destacado">{c.orden_destacado != null ? <span class="badge">#{c.orden_destacado}</span> : '—'}</td>
+            <td data-label="Actividad">
               <span class={`badge ${c.actividad === 'inactivo' ? 'expiring' : ''}`}>{c.actividad}</span>
             </td>
-            <td>
+            <td class="cell-actions">
               <div class="row-actions">
                 <a class="btn btn-secondary" href={`/admin/clubes/editar/${c.id}`}>Editar</a>
                 <form method="POST" action={`/api/clubes/${c.id}/delete`} onsubmit="return confirm('¿Borrar este club? Esta acción no se puede deshacer.')">

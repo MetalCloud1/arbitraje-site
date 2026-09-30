@@ -68,19 +68,19 @@ const quotaPct = Math.min(100, Math.round((quota.used / quota.limit) * 100));
       <tbody>
         {arbitros.map((a) => (
           <tr>
-            <td>
+            <td class="cell-main" data-label="Nombre">
               <a href={`/arbitros/${a.slug}`} target="_blank">{a.nombre_completo}</a>
             </td>
-            <td>{a.estado_republica ?? '—'}</td>
-            <td>{a.titulo ?? '—'}</td>
-            <td>{a.orden_destacado != null ? <span class="badge">#{a.orden_destacado}</span> : '—'}</td>
-            <td>
+            <td data-label="Estado">{a.estado_republica ?? '—'}</td>
+            <td data-label="Título">{a.titulo ?? '—'}</td>
+            <td data-label="Destacado">{a.orden_destacado != null ? <span class="badge">#{a.orden_destacado}</span> : '—'}</td>
+            <td data-label="Actividad">
               <span class={`badge ${a.actividad === 'inactivo' ? 'expiring' : ''}`}>{a.actividad}</span>
             </td>
-            <td>
+            <td data-label="Reclamado">
               {a.reclamado_en ? <span class="badge">sí</span> : <span class="badge expiring">no</span>}
             </td>
-            <td>
+            <td class="cell-actions">
               <div class="row-actions">
                 <a class="btn btn-secondary" href={`/admin/arbitros/editar/${a.id}`}>Editar</a>
                 <form method="POST" action={`/api/arbitros/${a.id}/delete`} onsubmit="return confirm('¿Borrar este árbitro? Esta acción no se puede deshacer.')">
