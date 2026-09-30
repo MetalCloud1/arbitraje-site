@@ -45,8 +45,12 @@ html {
   background: var(--bg-black);
 }
 
+/* "clip" y no "hidden": con hidden en html Y en body, body pasa a ser un
+   contenedor de scroll propio (que nunca scrollea) y el header con
+   position: sticky deja de quedarse pegado al bajar. clip recorta igual el
+   desbordamiento horizontal pero no crea contenedor de scroll. */
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1170,7 +1174,8 @@ html:has(.mobile-drawer[open]) {
   height: 22px;
 }
 
-.section-title span {
+.section-title span,
+.section-title h1 {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -5425,4 +5430,17 @@ table.admin-table tr:last-child td {
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
+}
+
+/* Evita el zoom automático de iOS Safari: hace zoom al enfocar cualquier
+   campo cuyo texto mida menos de 16px. Solo en pantallas táctiles, para no
+   agrandar los campos en escritorio. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='submit']):not([type='button']),
+  select,
+  textarea {
+    /* !important: los campos de cada sección (.field input, .wg-input,
+       .search-input…) fijan su propio tamaño con más especificidad. */
+    font-size: 16px !important;
+  }
 }
