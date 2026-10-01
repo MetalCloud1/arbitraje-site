@@ -6,7 +6,7 @@
 // siendo visualmente idéntica. No toca ninguna página ni componente: actúa en
 // la fase de captura del evento "change" y reemite el evento con los archivos
 // ya convertidos. Ante cualquier fallo se deja el archivo original intacto.
-import { isAnimatedImage, lumaFromRGBA, searchQuality, ssimLuma, type Trial } from './image-core';
+import { halve, isAnimatedImage, lumaFromRGBA, searchQuality, ssimLuma, type Trial } from './image-core';
 
 /** Lado mayor máximo. Solo recorta fotos gigantes; ninguna vista del sitio se acerca a esto. */
 const MAX_DIM = 4096;
@@ -87,9 +87,9 @@ async function bestWebp(bitmap: ImageBitmap, scale: number, target: number): Pro
     });
   }
 
-  const reference = lumaFromRGBA(probe.ctx.getImageData(0, 0, pw, ph).data, new Uint8Array(pw * ph));
+  const luma = new Uint8Array(pw * ph);
+  const reference = halve(lumaFromRGBA(probe.ctx.getImageData(0, 0, pw, ph).data, luma), pw, ph);
   const scratch = makeCanvas(pw, ph);
-  const candidate = new Uint8Array(pw * ph);
 
   const trial = async (quality: number): Promise<Trial> => {
     const blob = await encodeWebp(probe.canvas, quality);
@@ -98,19 +98,23 @@ async function bestWebp(bitmap: ImageBitmap, scale: number, target: number): Pro
     scratch.ctx.clearRect(0, 0, pw, ph);
     scratch.ctx.drawImage(back, 0, 0);
     back.close();
-    lumaFromRGBA(scratch.ctx.getImageData(0, 0, pw, ph).data, candidate);
-    return { ssim: ssimLuma(reference, candidate, pw, ph), size: blob.size, blob };
+    const cand = halve(lumaFromRGBA(scratch.ctx.getImageData(0, 0, pw, ph).data, luma), pw, ph);
+    return { ssim: ssimLuma(reference.data, cand.data, reference.w, reference.h), size: blob.size, blob };
   };
 
   const found = await searchQuality(trial, { target, max: 0.97 });
-  if (!found) return null;
+
+  if (!found.met) {
+    // Ni la calidad máxima alcanza la fidelidad pedida (gráficos con bordes muy
+    // finos, por ejemplo). En imágenes chicas el WebP sin pérdida es exacto y
+    // suele ser liviano; en grandes tardaría segundos y casi nunca conviene.
+    if (probe !== full) return null;
+    return (await encodeWebp(full.canvas, 1)).type === 'image/webp' ? encodeWebp(full.canvas, 1) : null;
+  }
   if (probe === full) return found.trial.blob;
-  // Codificar sin pérdida una imagen enorme tarda varios segundos y casi nunca
-  // pesa menos que el original: en ese caso se deja el archivo como está.
-  if (found.quality >= 1) return null;
 
   // Imagen completa con la calidad hallada (+0.01 de margen por haber medido en recortes).
-  const blob = await encodeWebp(full.canvas, found.quality >= 1 ? 1 : Math.min(1, found.quality + 0.01));
+  const blob = await encodeWebp(full.canvas, Math.min(0.99, found.quality + 0.01));
   return blob.type === 'image/webp' ? blob : null;
 }
 
@@ -202,8 +206,12 @@ async function onChange(event: Event): Promise<void> {
     const dt = new DataTransfer();
     out.forEach((f) => dt.items.add(f));
     input.files = dt.files;
-    setStatus(after < before ? `Imagen optimizada: ${kb(before)} → ${kb(after)}` : null);
-    if (after < before) setTimeout(() => setStatus(null), 2500);
+    setStatus(
+      after < before
+        ? `Imagen optimizada: ${kb(before)} → ${kb(after)}`
+        : 'Imagen revisada: no se puede reducir sin perder calidad, se sube sin cambios.'
+    );
+    setTimeout(() => setStatus(null), 3000);
   } catch {
     setStatus(null);
   } finally {

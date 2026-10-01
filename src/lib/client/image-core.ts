@@ -73,6 +73,24 @@ export function lumaFromRGBA(rgba: Uint8ClampedArray | Uint8Array, out: Uint8Arr
   return out;
 }
 
+/**
+ * Reduce la luminancia a la mitad (promedio 2×2). Medir la similitud a esta
+ * escala ignora el ruido de sensor píxel a píxel (que WebP suaviza y el ojo no
+ * percibe) y conserva lo que sí se ve: bordes, texturas y degradados.
+ */
+export function halve(src: Uint8Array, w: number, h: number): { data: Uint8Array; w: number; h: number } {
+  const nw = w >> 1;
+  const nh = h >> 1;
+  const out = new Uint8Array(nw * nh);
+  for (let y = 0; y < nh; y++) {
+    for (let x = 0; x < nw; x++) {
+      const i = 2 * y * w + 2 * x;
+      out[y * nw + x] = (src[i] + src[i + 1] + src[i + w] + src[i + w + 1] + 2) >> 2;
+    }
+  }
+  return { data: out, w: nw, h: nh };
+}
+
 /** SSIM medio sobre bloques de 8×8 de luminancia (1 = idénticas). */
 export function ssimLuma(a: Uint8Array, b: Uint8Array, w: number, h: number): number {
   const C1 = (0.01 * 255) ** 2;
@@ -110,25 +128,20 @@ export interface Trial {
 }
 
 /**
- * Busca la calidad más baja cuyo resultado sigue cumpliendo `target` de SSIM.
- * Primero comprueba el techo (`max`), luego 1.0 (lossless en Chromium) y, si
- * alguno cumple, afina por bisección. Devuelve null si nada cumple.
+ * Busca la calidad más baja cuyo resultado sigue cumpliendo `target` de SSIM
+ * (bisección entre `min` y `max`). Si ni `max` lo cumple, devuelve igualmente
+ * el intento de `max` con `met: false`, y quien llama decide si vale la pena.
  */
 export async function searchQuality(
   trial: (quality: number) => Promise<Trial>,
   opts: { target: number; min?: number; max?: number; steps?: number }
-): Promise<{ quality: number; trial: Trial } | null> {
-  const { target, min = 0.55, max = 0.95, steps = 5 } = opts;
+): Promise<{ quality: number; trial: Trial; met: boolean }> {
+  const { target, min = 0.5, max = 0.95, steps = 5 } = opts;
 
-  let best: { quality: number; trial: Trial } | null = null;
   const top = await trial(max);
-  if (top.ssim >= target) {
-    best = { quality: max, trial: top };
-  } else {
-    const lossless = await trial(1);
-    return lossless.ssim >= target ? { quality: 1, trial: lossless } : null;
-  }
+  if (top.ssim < target) return { quality: max, trial: top, met: false };
 
+  let best = { quality: max, trial: top, met: true };
   let lo = min;
   let hi = max;
   for (let i = 0; i < steps; i++) {
@@ -136,7 +149,7 @@ export async function searchQuality(
     const t = await trial(mid);
     if (t.ssim >= target) {
       hi = mid;
-      if (t.size <= best.trial.size) best = { quality: mid, trial: t };
+      if (t.size <= best.trial.size) best = { quality: mid, trial: t, met: true };
     } else {
       lo = mid;
     }
