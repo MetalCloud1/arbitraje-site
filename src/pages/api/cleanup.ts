@@ -1,14 +1,10 @@
-import { env } from 'cloudflare:workers';
 import type { APIRoute } from 'astro';
-import { deleteExpiredArticles } from '../../lib/db';
-import { deleteImage } from '../../lib/images';
 
 export const prerender = false;
 
+// BYPASS TEMPORAL: la eliminación está desactivada. Este endpoint no toca la
+// base de datos ni R2; solo devuelve al panel con un aviso. Se puede borrar el
+// archivo cuando el sistema de papelera esté desplegado.
 export const POST: APIRoute = async ({ redirect }) => {
-  const coverKeys = await deleteExpiredArticles(env.DB);
-  for (const key of coverKeys) {
-    await deleteImage(env.R2_IMAGES, key);
-  }
-  return redirect(`/admin?cleaned=${coverKeys.length}`);
+  return redirect('/admin?error=' + encodeURIComponent('La eliminación está desactivada temporalmente. No se borró nada.'), 303);
 };

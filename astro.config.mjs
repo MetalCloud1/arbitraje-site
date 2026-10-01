@@ -1,7 +1,22 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 
+// Inyecta el optimizador de imágenes (WebP + compresión) solo en el panel.
+// Vive aquí para no tocar los layouts ni las páginas del admin.
+const imageOptimizer = {
+  name: 'image-optimizer',
+  hooks: {
+    'astro:config:setup': ({ injectScript }) => {
+      injectScript(
+        'page',
+        "if (location.pathname.startsWith('/admin')) import('/src/lib/client/image-optimizer.ts');"
+      );
+    },
+  },
+};
+
 export default defineConfig({
+  integrations: [imageOptimizer],
   site: 'https://lahoradelarbitraje.pro',
   output: 'server',
   adapter: cloudflare({
