@@ -26,13 +26,7 @@ export async function uploadCoverImage(bucket: R2Bucket, file: File, prefix = 'c
   return key;
 }
 
-// BYPASS TEMPORAL: mientras esté en true, ningún flujo puede borrar objetos de
-// R2 (ni al reemplazar o quitar una imagen al editar). Poner en false (o no
-// copiar este archivo) cuando el sistema de papelera esté desplegado.
-const DELETIONS_LOCKED = true;
-
 export async function deleteImage(bucket: R2Bucket, key: string | null | undefined): Promise<void> {
   if (!key) return;
-  if (DELETIONS_LOCKED) return;
   await bucket.delete(key);
 }

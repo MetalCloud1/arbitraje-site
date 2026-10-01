@@ -65,7 +65,8 @@ export async function listFeedArticles(
   const { results } = await db
     .prepare(
       `SELECT * FROM articles
-       WHERE published_at >= ?
+       WHERE deleted_at IS NULL
+         AND published_at >= ?
          AND published_at <= ?
          AND (expires_at IS NULL OR expires_at > ?)
        ORDER BY published_at DESC, id DESC

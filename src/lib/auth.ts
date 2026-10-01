@@ -91,4 +91,61 @@ export async function readSession(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Segundo candado: zona restringida (papelera y borrado definitivo)
+// ---------------------------------------------------------------------------
+// Aparte del login normal. Se entra con una contraseña distinta
+// (ADMIN_DANGER_PASS_HASH, mismo formato que ADMIN_PASS_HASH) y da una sesión
+// corta en su propia cookie. Si el secreto no está configurado, la zona queda
+// cerrada para todos (falla cerrado), no abierta.
+//
+// La cookie se firma con una clave derivada distinta a la de la sesión normal
+// (secret + ':zona'), así que una cookie de sesión no sirve como cookie de zona
+// ni al revés, y además va atada al usuario de la sesión admin activa.
+
+const DANGER_COOKIE = 'arbitraje_zona';
+const DANGER_MINUTES = 15;
+
+export async function verifyDangerPassword(
+  env: { ADMIN_DANGER_PASS_HASH?: string },
+  pass: string
+): Promise<boolean> {
+  if (!env.ADMIN_DANGER_PASS_HASH) return false;
+  return timingSafeEqual(await sha256Hex(pass), env.ADMIN_DANGER_PASS_HASH.trim().toLowerCase());
+}
+
+export async function createDangerCookie(secret: string, user: string, secure = true): Promise<string> {
+  const exp = Date.now() + DANGER_MINUTES * 60 * 1000;
+  const payloadB64 = btoa(JSON.stringify({ u: user, exp, z: 1 }));
+  const sig = await hmac(secret + ':zona', payloadB64);
+  const secureAttr = secure ? ' Secure;' : '';
+  return `${DANGER_COOKIE}=${payloadB64}.${sig}; Path=/; HttpOnly;${secureAttr} SameSite=Strict; Max-Age=${DANGER_MINUTES * 60}`;
+}
+
+export function clearDangerCookie(secure = true): string {
+  const secureAttr = secure ? ' Secure;' : '';
+  return `${DANGER_COOKIE}=; Path=/; HttpOnly;${secureAttr} SameSite=Strict; Max-Age=0`;
+}
+
+/** true solo si hay una cookie de zona válida, vigente y de ESTE usuario. Nunca lanza. */
+export async function readDangerSession(
+  secret: string | undefined,
+  cookieHeader: string | null,
+  user: string
+): Promise<boolean> {
+  if (!cookieHeader || !secret) return false;
+  try {
+    const match = cookieHeader.match(new RegExp(`${DANGER_COOKIE}=([^;]+)`));
+    if (!match) return false;
+    const [payloadB64, sig] = match[1].split('.');
+    if (!payloadB64 || !sig) return false;
+    const expectedSig = await hmac(secret + ':zona', payloadB64);
+    if (!timingSafeEqual(sig, expectedSig)) return false;
+    const payload = JSON.parse(atob(payloadB64)) as { u: string; exp: number; z?: number };
+    return payload.z === 1 && payload.u === user && Date.now() <= payload.exp;
+  } catch {
+    return false;
+  }
+}
+
 export { SESSION_COOKIE };

@@ -13,6 +13,8 @@ declare namespace Cloudflare {
     RATE_LIMIT_KV: KVNamespace;
     ADMIN_USER: string;
     ADMIN_PASS_HASH: string;
+    /** Hash SHA-256 de la contraseña de la zona restringida (papelera / borrado). Opcional: sin él la zona queda cerrada. */
+    ADMIN_DANGER_PASS_HASH?: string;
     SESSION_SECRET: string;
     TURNSTILE_SECRET_KEY: string;
     PUBLIC_TURNSTILE_SITE_KEY: string;
@@ -32,5 +34,7 @@ interface Env extends Cloudflare.Env {}
 declare namespace App {
   interface Locals {
     session?: { user: string } | null;
+    /** true si la sesión admin actual desbloqueó la zona restringida (ver middleware.ts). */
+    dangerUnlocked?: boolean;
   }
 }

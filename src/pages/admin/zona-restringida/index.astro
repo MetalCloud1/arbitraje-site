@@ -1,0 +1,277 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { EXPIRY_OPTIONS } from '../../../lib/expiry';
+import {
+  esTipo,
+  TIPOS,
+  TIPOS_LISTA,
+  listarActivos,
+  listarPapelera,
+  obtenerEnPapelera,
+  contarPorTipo,
+  contarVencidos,
+  type TipoContenido,
+} from '../../../lib/papelera';
+
+export const prerender = false;
+
+// Zona restringida: único lugar desde donde se retira contenido del sitio.
+// No tiene enlace en el menú: se llega escribiendo la URL. La URL oculta sola
+// no protege nada, así que el middleware exige además un segundo candado
+// (contraseña propia + sesión de 15 min); mientras no esté desbloqueada esta
+// página solo muestra el formulario de la contraseña y no consulta la base.
+const desbloqueada = Astro.locals.dangerUnlocked === true;
+const params = Astro.url.searchParams;
+const ok = params.get('ok');
+const error = params.get('error');
+const tipoParam = params.get('tipo');
+const tipo: TipoContenido = esTipo(tipoParam) ? tipoParam : 'articulos';
+const cfg = TIPOS[tipo];
+
+const ETIQUETA_EXTRA: Record<TipoContenido, string> = {
+  articulos: 'Categoría',
+  arbitros: 'Estado',
+  entrenadores: 'Estado',
+  clubes: 'País',
+};
+
+const MENSAJES_BLOQUEO: Record<string, string> = {
+  '1': 'Contraseña incorrecta.',
+  ratelimit: 'Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.',
+  bloqueada: 'La zona se bloqueó (pasaron 15 minutos o no se había desbloqueado). Vuelve a ingresar la contraseña.',
+  noconfig:
+    'La zona restringida todavía no está configurada: falta el secreto ADMIN_DANGER_PASS_HASH en Cloudflare. Mientras no exista, nadie puede entrar.',
+};
+
+function fechaCorta(valor: string | null): string {
+  return valor ? valor.slice(0, 16).replace('T', ' ') : '—';
+}
+
+function diasRestantes(expiresAt: string): number {
+  return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
+const db = env.DB;
+const [conteos, activos, papelera, vencidos, purgarItem] = desbloqueada
+  ? await Promise.all([
+      contarPorTipo(db),
+      listarActivos(db, tipo),
+      listarPapelera(db, tipo),
+      tipo === 'articulos' ? contarVencidos(db) : Promise.resolve(0),
+      (async () => {
+        const id = Number(params.get('purgar'));
+        return Number.isInteger(id) && id > 0 ? obtenerEnPapelera(db, tipo, id) : null;
+      })(),
+    ])
+  : [null, [], [], 0, null];
+
+const base = '/admin/zona-restringida';
+---
+<AdminLayout title="Zona restringida">
+  {!desbloqueada ? (
+    <>
+      <div class="admin-header">
+        <h1>Zona restringida</h1>
+      </div>
+      <div class="form-card zone-lock">
+        <p class="zone-lead">
+          Desde aquí se retira contenido del sitio. Requiere una contraseña distinta a la del panel.
+        </p>
+        {error && (
+          <div class="alert alert-error">{MENSAJES_BLOQUEO[error] ?? 'No se pudo desbloquear la zona.'}</div>
+        )}
+        {error !== 'noconfig' && (
+          <form method="POST" action="/api/zona/acceso">
+            <div class="field">
+              <label for="pass">Contraseña de la zona restringida</label>
+              <input type="password" id="pass" name="pass" autocomplete="off" required />
+            </div>
+            <div class="row-actions">
+              <button class="btn btn-primary" type="submit">Desbloquear</button>
+              <a class="btn btn-secondary" href="/admin">Volver</a>
+            </div>
+          </form>
+        )}
+      </div>
+    </>
+  ) : (
+    <>
+      <div class="admin-header">
+        <h1>Zona restringida</h1>
+        <form method="POST" action="/api/zona/salir">
+          <button class="btn btn-secondary" type="submit">Bloquear zona</button>
+        </form>
+      </div>
+
+      {ok && <div class="alert alert-success">{ok}</div>}
+      {error && <div class="alert alert-error">{error}</div>}
+
+      <div class="zone-note">
+        Enviar algo a la <strong>papelera</strong> lo oculta del sitio y de Google al instante, pero no borra nada:
+        puedes restaurarlo cuando quieras. El <strong>borrado definitivo</strong> solo está disponible para lo que ya
+        está en la papelera. Esta zona se vuelve a bloquear sola a los 15 minutos.
+      </div>
+
+      <nav class="zone-tabs" aria-label="Tipo de contenido">
+        {TIPOS_LISTA.map((t) => (
+          <a
+            href={`${base}?tipo=${t}`}
+            class={t === tipo ? 'active' : ''}
+            aria-current={t === tipo ? 'page' : undefined}
+          >
+            {TIPOS[t].plural}
+            <span class="zone-count">{conteos![t].activos}</span>
+            {conteos![t].papelera > 0 && <span class="zone-count zone-count-trash">{conteos![t].papelera} en papelera</span>}
+          </a>
+        ))}
+      </nav>
+
+      {purgarItem && (
+        <div class="zone-confirm" id="confirmar-eliminacion" role="group" aria-labelledby="zone-confirm-title">
+          <h2 id="zone-confirm-title">Eliminar definitivamente</h2>
+          <p>
+            Vas a eliminar para siempre «<strong>{purgarItem.titulo}</strong>» y su imagen. <strong>Esta acción no se
+            puede deshacer.</strong>
+          </p>
+          <form method="POST" action="/api/zona/accion">
+            <input type="hidden" name="accion" value="eliminar" />
+            <input type="hidden" name="tipo" value={tipo} />
+            <input type="hidden" name="id" value={purgarItem.id} />
+            <div class="field">
+              <label for="confirmar">Escribe ELIMINAR para confirmar</label>
+              <input type="text" id="confirmar" name="confirmar" autocomplete="off" autocapitalize="characters" required />
+            </div>
+            <div class="row-actions">
+              <button class="btn btn-danger" type="submit">Eliminar definitivamente</button>
+              <a class="btn btn-secondary" href={`${base}?tipo=${tipo}`}>Cancelar</a>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {tipo === 'articulos' && vencidos > 0 && (
+        <div class="zone-note">
+          Hay <strong>{vencidos}</strong> artículo(s) con la fecha de eliminación programada ya cumplida y todavía visibles.
+          <form method="POST" action="/api/zona/accion" onsubmit="return confirm('¿Enviar a la papelera los artículos vencidos? Se pueden restaurar.')">
+            <input type="hidden" name="accion" value="vencidos" />
+            <input type="hidden" name="tipo" value="articulos" />
+            <button class="btn btn-secondary" type="submit">Enviar vencidos a la papelera</button>
+          </form>
+        </div>
+      )}
+
+      <h2 class="zone-h2">Papelera de {cfg.plural.toLowerCase()} ({papelera.length})</h2>
+      {papelera.length === 0 ? (
+        <p class="zone-empty">No hay {cfg.plural.toLowerCase()} en la papelera.</p>
+      ) : (
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>{ETIQUETA_EXTRA[tipo]}</th>
+              <th>Enviado a la papelera</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {papelera.map((item) => (
+              <tr>
+                <td class="cell-main" data-label="Nombre">{item.titulo}</td>
+                <td data-label={ETIQUETA_EXTRA[tipo]}>{item.extra ?? '—'}</td>
+                <td data-label="Enviado">{fechaCorta(item.deleted_at)} UTC</td>
+                <td class="cell-actions">
+                  <div class="row-actions">
+                    <form method="POST" action="/api/zona/accion">
+                      <input type="hidden" name="accion" value="restaurar" />
+                      <input type="hidden" name="tipo" value={tipo} />
+                      <input type="hidden" name="id" value={item.id} />
+                      <button class="btn btn-secondary" type="submit">Restaurar</button>
+                    </form>
+                    <a class="btn btn-danger" href={`${base}?tipo=${tipo}&purgar=${item.id}#confirmar-eliminacion`}>Eliminar definitivamente</a>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h2 class="zone-h2">{cfg.plural} visibles en el sitio ({activos.length})</h2>
+      {activos.length === 0 ? (
+        <p class="zone-empty">No hay {cfg.plural.toLowerCase()} visibles.</p>
+      ) : (
+        <>
+          <div class="field zone-filter">
+            <label class="sr-only" for="zone-filter">Filtrar por nombre</label>
+            <input type="text" id="zone-filter" placeholder="Filtrar por nombre…" autocomplete="off" />
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>{ETIQUETA_EXTRA[tipo]}</th>
+                {tipo === 'articulos' && <th>Eliminación programada</th>}
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {activos.map((item) => (
+                <tr data-zone-row={item.titulo.toLowerCase()}>
+                  <td class="cell-main" data-label="Nombre">
+                    <a href={`${cfg.rutaPublica}/${item.slug}`} target="_blank" rel="noopener">{item.titulo}</a>
+                  </td>
+                  <td data-label={ETIQUETA_EXTRA[tipo]}>{item.extra ?? '—'}</td>
+                  {tipo === 'articulos' && (
+                    <td class="cell-schedule" data-label="Programada">
+                      <form method="POST" action="/api/zona/accion" class="schedule-form">
+                        <input type="hidden" name="accion" value="programar" />
+                        <input type="hidden" name="tipo" value="articulos" />
+                        <input type="hidden" name="id" value={item.id} />
+                        {item.expires_at ? (
+                          <span class="badge expiring">
+                            {diasRestantes(item.expires_at) > 0 ? `en ${diasRestantes(item.expires_at)} día(s)` : 'vencida'}
+                          </span>
+                        ) : (
+                          <span class="badge">sin programar</span>
+                        )}
+                        <select name="expires_option" aria-label={`Programación para ${item.titulo}`}>
+                          <option value="" selected>Cambiar…</option>
+                          {EXPIRY_OPTIONS.map((opt) => <option value={opt.value}>{opt.label}</option>)}
+                        </select>
+                        <button class="btn btn-secondary" type="submit">Guardar</button>
+                      </form>
+                    </td>
+                  )}
+                  <td class="cell-actions">
+                    <div class="row-actions">
+                      <form method="POST" action="/api/zona/accion" onsubmit="return confirm('¿Enviar a la papelera? Dejará de verse en el sitio, pero se puede restaurar.')">
+                        <input type="hidden" name="accion" value="papelera" />
+                        <input type="hidden" name="tipo" value={tipo} />
+                        <input type="hidden" name="id" value={item.id} />
+                        <button class="btn btn-danger" type="submit">Enviar a la papelera</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </>
+  )}
+
+  <script>
+    // Filtro simple por nombre sobre la lista de contenido visible.
+    const filtro = document.getElementById('zone-filter');
+    if (filtro instanceof HTMLInputElement) {
+      filtro.addEventListener('input', () => {
+        const q = filtro.value.trim().toLowerCase();
+        document.querySelectorAll<HTMLElement>('[data-zone-row]').forEach((fila) => {
+          fila.hidden = q !== '' && !(fila.dataset.zoneRow ?? '').includes(q);
+        });
+      });
+    }
+  </script>
+</AdminLayout>

@@ -38,6 +38,8 @@ export interface Club {
   bio: string | null;
   actividad: Actividad;
   orden_destacado: number | null;
+  /** Marca de papelera (soft delete). null = visible. Ver lib/papelera.ts. */
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,7 +62,7 @@ export interface ClubInput {
 }
 
 export async function listAllClubes(db: D1Database): Promise<Club[]> {
-  const { results } = await db.prepare('SELECT * FROM clubes ORDER BY nombre ASC').all<Club>();
+  const { results } = await db.prepare('SELECT * FROM clubes WHERE deleted_at IS NULL ORDER BY nombre ASC').all<Club>();
   return results ?? [];
 }
 
@@ -140,7 +142,7 @@ export async function listClubesPage(
   db: D1Database,
   { pais, q, cursor, limit }: ListaClubesParams
 ): Promise<ListaClubesResult> {
-  const conditions: string[] = [`actividad = 'activo'`];
+  const conditions: string[] = [`actividad = 'activo'`, 'deleted_at IS NULL'];
   const binds: unknown[] = [];
 
   if (pais) {
@@ -190,7 +192,7 @@ export async function listClubesPage(
 
 /** Cuenta total de clubes activos, opcionalmente filtrando por país. */
 export async function countClubes(db: D1Database, { pais, q }: { pais?: string | null; q?: string | null } = {}): Promise<number> {
-  const conditions: string[] = [`actividad = 'activo'`];
+  const conditions: string[] = [`actividad = 'activo'`, 'deleted_at IS NULL'];
   const binds: unknown[] = [];
 
   if (pais) {
@@ -215,19 +217,21 @@ export async function countClubes(db: D1Database, { pais, q }: { pais?: string |
 /** Países con al menos un club activo, para los chips de filtro. */
 export async function listPaisesConClubes(db: D1Database): Promise<string[]> {
   const { results } = await db
-    .prepare(`SELECT DISTINCT pais FROM clubes WHERE actividad = 'activo' ORDER BY pais ASC`)
+    .prepare(`SELECT DISTINCT pais FROM clubes WHERE actividad = 'activo' AND deleted_at IS NULL ORDER BY pais ASC`)
     .all<{ pais: string }>();
   return (results ?? []).map((r) => r.pais);
 }
 
 export async function getClubBySlug(db: D1Database, slug: string): Promise<Club | null> {
-  return db.prepare('SELECT * FROM clubes WHERE slug = ?').bind(slug).first<Club>();
+  return db.prepare('SELECT * FROM clubes WHERE slug = ? AND deleted_at IS NULL').bind(slug).first<Club>();
 }
 
 export async function getClubById(db: D1Database, id: number): Promise<Club | null> {
-  return db.prepare('SELECT * FROM clubes WHERE id = ?').bind(id).first<Club>();
+  return db.prepare('SELECT * FROM clubes WHERE id = ? AND deleted_at IS NULL').bind(id).first<Club>();
 }
 
+// Sin filtro de deleted_at a propósito: un perfil en la papelera sigue
+// ocupando su slug (UNIQUE) y debe poder restaurarse con la misma URL.
 export async function clubSlugExists(db: D1Database, slug: string, excludeId?: number): Promise<boolean> {
   const row = excludeId
     ? await db.prepare('SELECT id FROM clubes WHERE slug = ? AND id != ?').bind(slug, excludeId).first()
@@ -290,12 +294,6 @@ export async function updateClub(db: D1Database, id: number, input: ClubInput): 
       id
     )
     .run();
-}
-
-export async function deleteClub(db: D1Database, id: number): Promise<Club | null> {
-  const club = await getClubById(db, id);
-  await db.prepare('DELETE FROM clubes WHERE id = ?').bind(id).run();
-  return club;
 }
 
 /** Parsea "Destacar en el directorio": vacío/inválido -> null. */

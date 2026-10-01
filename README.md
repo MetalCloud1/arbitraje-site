@@ -10,7 +10,8 @@ dispara un rebuild: se escribe directo en la base de datos desde `/admin`.
 ├── src/                    → sitio Astro (páginas públicas + /admin + API)
 ├── migrations/0001_init.sql → esquema de la tabla `articles` en D1
 ├── worker-cleanup/         → Worker aparte con Cron Trigger diario que borra
-│                             artículos vencidos (Worker independiente del sitio)
+│                             manda a la papelera los artículos vencidos
+│                             (Worker independiente; no borra nada)
 ├── scripts/hash-password.mjs → genera el hash de la contraseña de admin
 └── wrangler.jsonc          → bindings de D1, R2 y KV para el sitio principal
 ```
@@ -99,7 +100,7 @@ npx wrangler secret put RESEND_API_KEY
 
 Cloudflare Pages Functions no soportan Cron Triggers directamente, así que la
 limpieza periódica corre en un Worker aparte y muy pequeño que comparte la
-misma base D1 y el mismo bucket R2:
+misma base D1 (no tiene acceso al bucket R2):
 
 ```bash
 cd worker-cleanup
@@ -107,12 +108,14 @@ npm install
 npx wrangler deploy
 ```
 
-Por defecto corre todos los días a las 09:00 UTC y borra los artículos cuya
-fecha de eliminación programada ya pasó (junto con su imagen en R2). Para
-cambiar el horario, edita `crons` en `worker-cleanup/wrangler.toml`.
+Por defecto corre todos los días a las 09:00 UTC y **manda a la papelera** los
+artículos cuya fecha de eliminación programada ya pasó. No borra nada: ni filas
+ni imágenes. Para cambiar el horario, edita `crons` en
+`worker-cleanup/wrangler.toml`.
 
-> Esto es un respaldo automático. Desde el panel `/admin` también hay un botón
-> **"Ejecutar limpieza ahora"** por si quieres forzarla sin esperar al cron.
+> Esto es un respaldo automático. Desde `/admin/zona-restringida` también hay un
+> botón **"Enviar vencidos a la papelera"** para forzarlo sin esperar al cron. El
+> borrado definitivo solo se hace ahí, desde la papelera, escribiendo ELIMINAR.
 
 ## 7. Desarrollo local
 
@@ -131,12 +134,16 @@ npm run preview   # astro build + astro preview: corre el sitio en workerd con l
 
 ## Cómo funciona la limpieza para no pasar los límites gratuitos
 
-Cada artículo tiene un campo opcional **"Eliminación automática"** (7 / 14 /
-30 / 90 días, o nunca). Si se elige un plazo:
+Cada artículo puede tener una **eliminación programada** (7 / 14 / 30 / 90
+días, o ninguna), que se fija desde `/admin/zona-restringida`. Si se elige un
+plazo:
 
 1. El artículo se marca con una fecha de vencimiento (`expires_at`).
-2. El Worker de cron lo borra automáticamente ese día, junto con su imagen en R2.
-3. También puedes forzar la limpieza manualmente desde `/admin`.
+2. Ese día el Worker de cron lo **manda a la papelera** (se oculta del sitio,
+   pero no se borra nada y se puede restaurar).
+3. También puedes forzarlo manualmente desde `/admin/zona-restringida`.
+4. El borrado definitivo (fila e imagen en R2) solo se hace desde la papelera,
+   escribiendo ELIMINAR.
 
 Los límites gratuitos relevantes (a la fecha de este README) son generosos
 para un blog de este tamaño: D1 permite 5 GB de almacenamiento y 5 millones

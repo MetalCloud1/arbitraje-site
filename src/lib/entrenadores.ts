@@ -24,6 +24,8 @@ export interface Entrenador {
   actividad: Actividad;
   reclamado_en: string | null;
   orden_destacado: number | null;
+  /** Marca de papelera (soft delete). null = visible. Ver lib/papelera.ts. */
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,7 +48,7 @@ export interface EntrenadorInput {
 
 export async function listAllEntrenadores(db: D1Database): Promise<Entrenador[]> {
   const { results } = await db
-    .prepare('SELECT * FROM entrenadores ORDER BY nombre_completo ASC')
+    .prepare('SELECT * FROM entrenadores WHERE deleted_at IS NULL ORDER BY nombre_completo ASC')
     .all<Entrenador>();
   return results ?? [];
 }
@@ -131,7 +133,7 @@ export async function listEntrenadoresPage(
   db: D1Database,
   { estado, tituloAjedrez, q, cursor, limit }: ListaEntrenadoresParams
 ): Promise<ListaEntrenadoresResult> {
-  const conditions: string[] = [`actividad = 'activo'`];
+  const conditions: string[] = [`actividad = 'activo'`, 'deleted_at IS NULL'];
   const binds: unknown[] = [];
 
   if (estado) {
@@ -191,7 +193,7 @@ export async function countEntrenadores(
   db: D1Database,
   { estado, q }: { estado?: string | null; q?: string | null } = {}
 ): Promise<number> {
-  const conditions: string[] = [`actividad = 'activo'`];
+  const conditions: string[] = [`actividad = 'activo'`, 'deleted_at IS NULL'];
   const binds: unknown[] = [];
 
   if (estado) {
@@ -220,7 +222,7 @@ export async function listEstadosConEntrenadores(db: D1Database): Promise<string
   const { results } = await db
     .prepare(
       `SELECT DISTINCT estado_republica FROM entrenadores
-       WHERE actividad = 'activo' AND estado_republica IS NOT NULL
+       WHERE actividad = 'activo' AND deleted_at IS NULL AND estado_republica IS NOT NULL
        ORDER BY estado_republica ASC`
     )
     .all<{ estado_republica: string }>();
@@ -228,13 +230,15 @@ export async function listEstadosConEntrenadores(db: D1Database): Promise<string
 }
 
 export async function getEntrenadorBySlug(db: D1Database, slug: string): Promise<Entrenador | null> {
-  return db.prepare('SELECT * FROM entrenadores WHERE slug = ?').bind(slug).first<Entrenador>();
+  return db.prepare('SELECT * FROM entrenadores WHERE slug = ? AND deleted_at IS NULL').bind(slug).first<Entrenador>();
 }
 
 export async function getEntrenadorById(db: D1Database, id: number): Promise<Entrenador | null> {
-  return db.prepare('SELECT * FROM entrenadores WHERE id = ?').bind(id).first<Entrenador>();
+  return db.prepare('SELECT * FROM entrenadores WHERE id = ? AND deleted_at IS NULL').bind(id).first<Entrenador>();
 }
 
+// Sin filtro de deleted_at a propósito: un perfil en la papelera sigue
+// ocupando su slug (UNIQUE) y debe poder restaurarse con la misma URL.
 export async function entrenadorSlugExists(db: D1Database, slug: string, excludeId?: number): Promise<boolean> {
   const row = excludeId
     ? await db.prepare('SELECT id FROM entrenadores WHERE slug = ? AND id != ?').bind(slug, excludeId).first()
@@ -295,12 +299,6 @@ export async function updateEntrenador(db: D1Database, id: number, input: Entren
       id
     )
     .run();
-}
-
-export async function deleteEntrenador(db: D1Database, id: number): Promise<Entrenador | null> {
-  const entrenador = await getEntrenadorById(db, id);
-  await db.prepare('DELETE FROM entrenadores WHERE id = ?').bind(id).run();
-  return entrenador;
 }
 
 /** Parsea "Destacar en el directorio": vacío/inválido -> null. */

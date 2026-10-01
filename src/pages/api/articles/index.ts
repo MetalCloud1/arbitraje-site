@@ -4,7 +4,6 @@ import { createArticle, slugExists } from '../../../lib/db';
 import { slugify, sanitizeArticleHtml, estimateReadMinutes, excerptFromHtml } from '../../../lib/text';
 import { uploadCoverImage } from '../../../lib/images';
 import { parseVideoUrl } from '../../../lib/video';
-import { computeExpiresAt } from '../../../lib/expiry';
 
 export const prerender = false;
 
@@ -14,7 +13,6 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   const title = String(form.get('title') ?? '').trim();
   const category = String(form.get('category') ?? '').trim();
   const publishedAt = String(form.get('published_at') ?? '').trim() || new Date().toISOString().slice(0, 10);
-  const expiresOption = String(form.get('expires_option') ?? 'none');
   const contentHtmlRaw = String(form.get('content_html') ?? '');
   let excerpt = String(form.get('excerpt') ?? '').trim();
   const coverFile = form.get('cover') as File | null;
@@ -66,7 +64,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     video_url: videoUrl,
     read_minutes: estimateReadMinutes(contentHtml),
     published_at: publishedAt,
-    expires_at: computeExpiresAt(expiresOption),
+    // La eliminación programada se gestiona solo desde la zona restringida.
+    expires_at: null,
   });
 
   return redirect(`/admin?created=${id}`);

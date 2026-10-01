@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArbitroBySlug } from '../../lib/arbitros';
+import { fueEliminado } from '../../lib/papelera';
 import { getTituloTier } from '../../lib/postulacion';
 import { perfilTieneValorParaIndexar } from '../../lib/seo';
 import PawnMark from '../../components/PawnMark.astro';
@@ -13,7 +14,9 @@ const { slug } = Astro.params;
 const arbitro = slug ? await getArbitroBySlug(db, slug) : null;
 
 if (!arbitro) {
-  return Astro.rewrite('/404');
+  // En la papelera: 410 (retirado a propósito) en vez de 404.
+  const retirado = slug ? await fueEliminado(db, 'arbitros', slug) : false;
+  return Astro.rewrite(retirado ? '/410' : '/404');
 }
 
 // Perfiles sin bio o con bio muy corta no se indexan: son la parte del

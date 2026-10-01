@@ -3,7 +3,6 @@ import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import RichEditor from '../../../components/RichEditor.astro';
 import { getArticleById } from '../../../lib/db';
-import { EXPIRY_OPTIONS, daysUntil } from '../../../lib/expiry';
 
 export const prerender = false;
 
@@ -22,7 +21,6 @@ if (!article) {
 
 const error = Astro.url.searchParams.get('error');
 const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast', 'Actividad Arbitral', 'Avisos'];
-const currentExpiry = daysUntil(article.expires_at);
 const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
 ---
 <AdminLayout title={`Editar: ${article.title}`}>
@@ -86,12 +84,6 @@ const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
       <RichEditor name="content_html" initialHtml={article.content_html} />
     </div>
 
-    <div class="field">
-      <label for="expires_option">Eliminación automática</label>
-      <select id="expires_option" name="expires_option">
-        {EXPIRY_OPTIONS.map((opt) => <option value={opt.value} selected={opt.value === currentExpiry}>{opt.label}</option>)}
-      </select>
-    </div>
 
     <div class="row-actions">
       <button class="btn btn-primary" type="submit">Guardar cambios</button>

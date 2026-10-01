@@ -5444,3 +5444,161 @@ table.admin-table tr:last-child td {
     font-size: 16px !important;
   }
 }
+
+
+/* ---------- ZONA RESTRINGIDA (admin) ----------
+   Papelera y borrado definitivo. Reutiliza el lenguaje visual del admin
+   (.cleanup-box, .admin-table, .badge, .btn-danger); solo agrega lo propio. */
+.zone-lead {
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.zone-lock {
+  max-width: 460px;
+}
+
+.zone-note {
+  background: #0d1913;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.zone-note form {
+  margin-top: 12px;
+}
+
+.zone-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.zone-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 14px;
+  color: var(--gray);
+}
+
+.zone-tabs a:hover,
+.zone-tabs a.active {
+  border-color: var(--green);
+  color: var(--white);
+  background: rgba(129, 182, 76, 0.1);
+}
+
+.zone-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-bright);
+}
+
+.zone-count-trash {
+  font-weight: 600;
+  color: #f0a89c;
+}
+
+.zone-h2 {
+  font-size: 17px;
+  margin: 32px 0 14px;
+}
+
+.zone-empty {
+  color: var(--gray-dim);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.zone-confirm {
+  background: rgba(217, 97, 79, 0.08);
+  border: 1px solid rgba(217, 97, 79, 0.4);
+  border-radius: 10px;
+  padding: 22px;
+  margin-bottom: 28px;
+  scroll-margin-top: 90px;
+}
+
+.zone-confirm h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #f0a89c;
+}
+
+.zone-confirm p {
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.zone-filter {
+  max-width: 360px;
+  margin-bottom: 16px;
+}
+
+.schedule-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-form select {
+  max-width: 100%;
+  background: #0a1410;
+  color: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+.schedule-form select:focus {
+  outline: 2px solid var(--green-bright);
+  outline-offset: 1px;
+}
+
+/* El atributo hidden (filtro por nombre) debe ganarle al display:block de
+   las tarjetas móviles de .admin-table. */
+table.admin-table tr[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .zone-tabs a {
+    padding: 8px 12px;
+  }
+
+  /* En tarjeta móvil la celda de programación se apila (etiqueta arriba,
+     controles abajo): el selector, con sus etiquetas largas, no cabe al lado
+     de la etiqueta y ensanchaba toda la página. */
+  table.admin-table td.cell-schedule {
+    display: block;
+    text-align: left;
+  }
+
+  table.admin-table td.cell-schedule::before {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .schedule-form select {
+    flex: 1 1 150px;
+    min-width: 0;
+  }
+}

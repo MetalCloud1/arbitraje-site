@@ -4,7 +4,6 @@ import { getArticleById, updateArticle, slugExists } from '../../../lib/db';
 import { slugify, sanitizeArticleHtml, estimateReadMinutes, excerptFromHtml } from '../../../lib/text';
 import { uploadCoverImage, deleteImage } from '../../../lib/images';
 import { parseVideoUrl } from '../../../lib/video';
-import { computeExpiresAt } from '../../../lib/expiry';
 
 export const prerender = false;
 
@@ -23,7 +22,6 @@ export const POST: APIRoute = async ({ request, params, redirect }) => {
   const title = String(form.get('title') ?? '').trim();
   const category = String(form.get('category') ?? '').trim();
   const publishedAt = String(form.get('published_at') ?? '').trim() || existing.published_at;
-  const expiresOption = String(form.get('expires_option') ?? 'none');
   const contentHtmlRaw = String(form.get('content_html') ?? '');
   let excerpt = String(form.get('excerpt') ?? '').trim();
   const coverFile = form.get('cover') as File | null;
@@ -85,7 +83,9 @@ export const POST: APIRoute = async ({ request, params, redirect }) => {
     video_url: videoUrl,
     read_minutes: estimateReadMinutes(contentHtml),
     published_at: publishedAt,
-    expires_at: computeExpiresAt(expiresOption),
+    // Se conserva tal cual: editar un artículo NO debe quitar ni cambiar su
+    // eliminación programada (eso se gestiona solo en la zona restringida).
+    expires_at: existing.expires_at,
   });
 
   return redirect(`/admin?updated=${id}`);

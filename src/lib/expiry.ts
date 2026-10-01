@@ -1,9 +1,9 @@
 export const EXPIRY_OPTIONS = [
-  { value: 'none', label: 'Nunca (mantener indefinidamente)' },
-  { value: '7', label: 'Borrar automáticamente en 7 días' },
-  { value: '14', label: 'Borrar automáticamente en 14 días' },
-  { value: '30', label: 'Borrar automáticamente en 30 días' },
-  { value: '90', label: 'Borrar automáticamente en 90 días' },
+  { value: 'none', label: 'Quitar programación' },
+  { value: '7', label: 'Enviar a la papelera en 7 días' },
+  { value: '14', label: 'Enviar a la papelera en 14 días' },
+  { value: '30', label: 'Enviar a la papelera en 30 días' },
+  { value: '90', label: 'Enviar a la papelera en 90 días' },
 ] as const;
 
 export function computeExpiresAt(option: string): string | null {

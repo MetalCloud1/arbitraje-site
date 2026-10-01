@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EmptyState from '../components/EmptyState.astro';
+
+// 410 Gone: el contenido existió y se retiró a propósito. Google lo procesa
+// como retirada intencional (más limpio para el índice que un 404 genérico).
+// Las páginas de detalle llegan acá con Astro.rewrite('/410') cuando el slug
+// está en la papelera; ver fueEliminado() en lib/papelera.ts.
+Astro.response.status = 410;
+---
+<BaseLayout title="Contenido retirado - La Hora del Arbitraje" noindex>
+  <div class="container">
+    <h1 class="sr-only">Contenido retirado</h1>
+    <EmptyState
+      title="Este contenido ya no está disponible"
+      description="Fue retirado del sitio. Puedes seguir explorando el resto de los artículos y directorios."
+      actionLabel="Volver al inicio"
+      actionHref="/"
+    />
+  </div>
+</BaseLayout>

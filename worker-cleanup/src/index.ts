@@ -1,6 +1,5 @@
 export interface Env {
   DB: D1Database;
-  R2_IMAGES: R2Bucket;
 }
 
 export default {
@@ -14,26 +13,23 @@ export default {
   },
 };
 
+// Ya NO borra nada. Los articulos cuya fecha programada (expires_at) ya paso se
+// mandan a la papelera (deleted_at), igual que el boton "Enviar vencidos a la
+// papelera" de la zona restringida (ver src/lib/papelera.ts). El borrado
+// definitivo solo existe en esa zona y exige escribir ELIMINAR. Por eso este
+// Worker tampoco recibe el binding de R2: no puede tocar las imagenes.
 async function runCleanup(env: Env): Promise<void> {
-  const { results } = await env.DB.prepare(
-    "SELECT id, cover_key FROM articles WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')"
-  ).all<{ id: number; cover_key: string | null }>();
+  const res = await env.DB.prepare(
+    `UPDATE articles SET deleted_at = datetime('now')
+     WHERE deleted_at IS NULL AND expires_at IS NOT NULL AND expires_at <= ?`
+  )
+    .bind(new Date().toISOString())
+    .run();
 
-  const expired = results ?? [];
-  if (expired.length === 0) {
-    console.log('Limpieza programada: no hay articulos vencidos.');
-    return;
-  }
-
-  await env.DB.prepare(
-    "DELETE FROM articles WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')"
-  ).run();
-
-  for (const row of expired) {
-    if (row.cover_key) {
-      await env.R2_IMAGES.delete(row.cover_key);
-    }
-  }
-
-  console.log(`Limpieza programada: ${expired.length} articulo(s) eliminado(s).`);
+  const n = res.meta.changes ?? 0;
+  console.log(
+    n === 0
+      ? 'Limpieza programada: no hay articulos vencidos.'
+      : `Limpieza programada: ${n} articulo(s) enviado(s) a la papelera.`
+  );
 }

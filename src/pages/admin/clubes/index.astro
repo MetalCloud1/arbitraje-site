@@ -16,7 +16,6 @@ const clubes = (await listAllClubes(db)).sort((a, b) => {
 
 const created = Astro.url.searchParams.get('created');
 const updated = Astro.url.searchParams.get('updated');
-const deleted = Astro.url.searchParams.get('deleted');
 const error = Astro.url.searchParams.get('error');
 
 const MODALIDAD_LABEL: Record<string, string> = {
@@ -34,7 +33,6 @@ const MODALIDAD_LABEL: Record<string, string> = {
   {error && <div class="alert alert-error">{error}</div>}
   {created && <div class="alert alert-success">Club creado correctamente.</div>}
   {updated && <div class="alert alert-success">Club actualizado correctamente.</div>}
-  {deleted && <div class="alert alert-success">Club eliminado.</div>}
 
   {clubes.length === 0 ? (
     <EmptyState
@@ -70,9 +68,6 @@ const MODALIDAD_LABEL: Record<string, string> = {
             <td class="cell-actions">
               <div class="row-actions">
                 <a class="btn btn-secondary" href={`/admin/clubes/editar/${c.id}`}>Editar</a>
-                <form method="POST" action={`/api/clubes/${c.id}/delete`} onsubmit="return confirm('¿Borrar este club? Esta acción no se puede deshacer.')">
-                  <button class="btn btn-danger" type="submit">Borrar</button>
-                </form>
               </div>
             </td>
           </tr>

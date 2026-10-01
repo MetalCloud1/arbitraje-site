@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { env } from 'cloudflare:workers';
-import { readSession } from './lib/auth';
+import { readSession, readDangerSession } from './lib/auth';
 import { isCrossOriginWrite, withSecurityHeaders } from './lib/security';
 import { getEdgeCache, isCacheablePagePath, ttlForPagePath } from './lib/edge-cache';
 
@@ -53,6 +53,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       pathname.startsWith('/api/clubes') ||
       pathname.startsWith('/api/upload') ||
       pathname.startsWith('/api/cleanup') ||
+      pathname.startsWith('/api/zona') ||
       pathname.startsWith('/api/daily'));
 
   if ((isAdminPage || isProtectedApi) && !session) {
@@ -63,6 +64,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
       });
     }
     return context.redirect('/admin/login');
+  }
+
+  // Zona restringida (papelera y borrado definitivo): además de la sesión
+  // admin pide el segundo candado. Se resuelve acá, en un solo lugar, para que
+  // ninguna acción de /api/zona/* pueda quedar abierta por olvido. Solo
+  // /acceso (donde se ingresa la contraseña) y /salir quedan fuera del candado;
+  // ambas siguen exigiendo sesión admin. La propia página de la zona decide
+  // si muestra el formulario de contraseña o el contenido (locals.dangerUnlocked).
+  context.locals.dangerUnlocked = session
+    ? await readDangerSession(env.SESSION_SECRET, cookieHeader, session.user)
+    : false;
+
+  const isDangerAction =
+    pathname.startsWith('/api/zona/') &&
+    pathname !== '/api/zona/acceso' &&
+    pathname !== '/api/zona/salir';
+
+  if (isDangerAction && !context.locals.dangerUnlocked) {
+    return context.redirect('/admin/zona-restringida?error=bloqueada');
   }
 
   // Cache de borde para páginas públicas (mismo patrón que ya usan las

@@ -1,7 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import RichEditor from '../../components/RichEditor.astro';
-import { EXPIRY_OPTIONS } from '../../lib/expiry';
 
 export const prerender = false;
 
@@ -58,13 +57,6 @@ const categories = ['Análisis', 'Casos', 'Entrevistas', 'Podcast', 'Actividad A
       <RichEditor name="content_html" />
     </div>
 
-    <div class="field">
-      <label for="expires_option">Eliminación automática</label>
-      <select id="expires_option" name="expires_option">
-        {EXPIRY_OPTIONS.map((opt) => <option value={opt.value}>{opt.label}</option>)}
-      </select>
-      <p class="field-hint">Usa esto para artículos temporales y mantener el sitio dentro de los límites gratuitos.</p>
-    </div>
 
     <div class="row-actions">
       <button class="btn btn-primary" type="submit">Publicar artículo</button>
