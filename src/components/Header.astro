@@ -117,18 +117,19 @@ const navLinks = [
   function initHeader() {
     const header = document.querySelector('header.site-header');
 
-    // Dos umbrales distintos (entra en 40, sale en 20) en vez de uno solo
-    // en 12: con un único umbral, el propio cambio de alto del header al
-    // togglear .is-scrolled podía dejar el scroll oscilando justo ahí
-    // (bucle de scroll anchoring, ver overflow-anchor en global.css). Con
-    // histéresis, cruzar la línea en un sentido no alcanza para volver a
-    // cruzarla en el otro, así que no puede quedar atrapado en bucle.
+    // Dos umbrales (entra en 56, sale en 36) para que un temblor de scroll
+    // justo en la línea no haga parpadear el header. El header ya no cambia
+    // de alto en el flujo (ver "HEADER" en global.css), así que ya no hay
+    // riesgo de bucle de scroll; la histéresis es solo por estabilidad.
+    // 36 (y no menos) es a propósito: el header compacto es 34px más bajo
+    // que el de reposo, y por debajo de ~34px de scroll quedaría una franja
+    // vacía entre la barra y el contenido.
     const onScroll = () => {
       if (!header) return;
       const scrolled = header.classList.contains('is-scrolled');
-      if (!scrolled && window.scrollY > 40) {
+      if (!scrolled && window.scrollY > 56) {
         header.classList.add('is-scrolled');
-      } else if (scrolled && window.scrollY < 20) {
+      } else if (scrolled && window.scrollY < 36) {
         header.classList.remove('is-scrolled');
       }
     };

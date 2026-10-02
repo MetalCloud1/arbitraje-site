@@ -1,7 +1,7 @@
 // Capa de acceso a datos para el directorio de árbitros. Mismo patrón
 // que db.ts (articles): todo el SQL vive acá.
 
-import { escapeLikeTerm } from './db';
+import { likePattern } from './db';
 
 export type Actividad = 'activo' | 'inactivo';
 
@@ -149,7 +149,7 @@ export async function listArbitrosPage(
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(`(nombre_completo LIKE ? ESCAPE '\\' OR titulo LIKE ? ESCAPE '\\' OR estado_republica LIKE ? ESCAPE '\\')`);
     binds.push(like, like, like);
   }
@@ -203,7 +203,7 @@ export async function countArbitros(
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(`(nombre_completo LIKE ? ESCAPE '\\' OR titulo LIKE ? ESCAPE '\\' OR estado_republica LIKE ? ESCAPE '\\')`);
     binds.push(like, like, like);
   }

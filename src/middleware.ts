@@ -2,7 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { env } from 'cloudflare:workers';
 import { readSession, readDangerSession } from './lib/auth';
 import { isCrossOriginWrite, withSecurityHeaders } from './lib/security';
-import { getEdgeCache, isCacheablePagePath, ttlForPagePath } from './lib/edge-cache';
+import { cacheControlForPagePath, getEdgeCache, isCacheablePagePath, pageCacheKey } from './lib/edge-cache';
 
 const PUBLIC_ADMIN_PATHS = new Set(['/admin/login']);
 
@@ -98,18 +98,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.request.method === 'GET' && !session && isCacheablePagePath(pathname);
 
   const cache = getEdgeCache();
-  const cacheKey = context.request.url;
+  const cacheKey = pageCacheKey(context.url);
 
   if (isCacheableRequest) {
     const cached = await cache.match(cacheKey);
-    if (cached) return cached as unknown as Response;
+    if (cached) {
+      // Copia mutable de la respuesta del caché para marcarla (útil para ver
+      // en DevTools si una página salió del borde o se renderizó de nuevo).
+      const hit = new Response((cached as unknown as Response).body, cached as unknown as Response);
+      hit.headers.set('X-Page-Cache', 'HIT');
+      return hit;
+    }
   }
 
   const response = withSecurityHeaders(await next());
 
   if (isCacheableRequest && response.status === 200 && !response.headers.has('Set-Cookie')) {
-    response.headers.set('Cache-Control', `public, max-age=${ttlForPagePath(pathname)}`);
+    response.headers.set('Cache-Control', cacheControlForPagePath(pathname));
     context.locals.cfContext.waitUntil(cache.put(cacheKey, response.clone()));
+    response.headers.set('X-Page-Cache', 'MISS');
   }
 
   return response;

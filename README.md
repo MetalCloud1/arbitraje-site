@@ -171,13 +171,32 @@ ejemplo, coberturas de un torneo puntual) evita acumular imágenes sin usar.
   `max-age=0, must-revalidate` y el navegador revalida todo en cada visita.
 - **Fuentes:** Inter y Source Serif 4 se sirven desde `public/fonts/` (variables,
   licencia OFL) y se declaran en `src/styles/fonts.css`. No se usa Google Fonts.
-- **Redirect www → sin www:** las páginas prerenderizadas se sirven directo del
-  CDN y ya no pasan por el middleware, así que ese redirect debe existir también
-  a nivel de dominio. En el dashboard de Cloudflare: *Rules → Redirect Rules →
-  Create rule*, condición `Hostname equals www.lahoradelarbitraje.pro`, acción
-  *Dynamic* `concat("https://lahoradelarbitraje.pro", http.request.uri.path)`
-  con conservar la query string, código 301. (Requiere que el registro DNS de
-  `www` exista con proxy activado.)
+- **Redirect www → sin www:** se hace a nivel de dominio con un *Bulk Redirect*
+  de Cloudflare (Rules → Bulk Redirects): origen `www.lahoradelarbitraje.pro/`,
+  destino `https://lahoradelarbitraje.pro/`, 301, con *Preserve query string*,
+  *Subpath matching* y *Preserve path suffix* activados. Esto es lo que cubre las
+  páginas prerenderizadas, que se sirven directo del CDN sin pasar por el
+  middleware. El redirect de `src/middleware.ts` queda como respaldo para las
+  rutas dinámicas. Requiere que el registro DNS de `www` tenga el proxy activado
+  (nube naranja). Para comprobarlo:
+  `curl -sI "https://www.lahoradelarbitraje.pro/sobre-nosotros?utm_source=x"`
+  debe responder 301 con `location: https://lahoradelarbitraje.pro/sobre-nosotros?utm_source=x`.
+- **Caché de páginas públicas (`src/middleware.ts` + `src/lib/edge-cache.ts`):**
+  la clave de caché solo conserva los parámetros que cambian el HTML
+  (`CACHE_KEY_PARAMS`: pais, estado, titulo, categoria, buscar); `utm_*`,
+  `fbclid` y demás comparten entrada con la página limpia. **Si una página
+  pública empieza a leer otro parámetro de la URL, agrégalo a esa lista** o
+  mostrará el contenido de otra variante. Las respuestas llevan
+  `X-Page-Cache: HIT|MISS` para comprobarlo en DevTools. El navegador reutiliza
+  las fichas 60 s y los listados nunca (`max-age`), mientras el borde las guarda
+  60 s / 5 min (`s-maxage`).
+- **Búsquedas con `LIKE`:** D1 rechaza patrones de más de 50 bytes, por eso todas
+  pasan por `likePattern()` (`src/lib/db.ts`), que recorta el término.
+- **Optimizador de imágenes:** `src/lib/client/` convierte a WebP y comprime en el
+  navegador las imágenes que se eligen en el panel. Se carga solo desde
+  `AdminLayout.astro`, así que los visitantes públicos no lo descargan.
+- **AdSense:** `BaseLayout.astro` no lo carga en páginas `noindex` (404, 410,
+  formularios y perfiles sin contenido suficiente).
 - **Versión de Astro:** el proyecto usa `astro@^7` y `@astrojs/cloudflare@^14`.
   Los bindings y secretos se leen con `import { env } from 'cloudflare:workers'`
   (ya no existe `Astro.locals.runtime`); el `ExecutionContext` está en

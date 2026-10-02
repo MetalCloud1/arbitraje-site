@@ -154,7 +154,7 @@ const recentGrid = articles.slice(4, 8);
             <a class="club-card" href={`/clubes/${encodeURIComponent(c.slug)}`}>
               <div class="club-card-logo">
                 {c.logo_key ? (
-                  <img src={`/api/img/${c.logo_key}`} alt={c.nombre} loading="lazy" />
+                  <img src={`/api/img/${c.logo_key}`} alt={c.nombre} loading="lazy" decoding="async" />
                 ) : (
                   <span class="club-card-logo-fallback" aria-hidden="true">{c.nombre.charAt(0).toUpperCase()}</span>
                 )}

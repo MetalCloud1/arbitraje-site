@@ -45,7 +45,7 @@ const MODALIDAD_LABEL: Record<string, string> = {
       <div class="club-detail-header">
         <div class="club-detail-logo">
           {logoUrl ? (
-            <img src={logoUrl} alt={club.nombre} />
+            <img src={logoUrl} alt={club.nombre} fetchpriority="high" decoding="async" />
           ) : (
             <span class="club-detail-logo-fallback" aria-hidden="true">{club.nombre.charAt(0).toUpperCase()}</span>
           )}

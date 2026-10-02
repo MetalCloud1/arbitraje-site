@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getEdgeCache } from '../../../lib/edge-cache';
+import { canonicalCacheKey, getEdgeCache } from '../../../lib/edge-cache';
 import { listClubesPage } from '../../../lib/clubes';
 
 export const prerender = false;
@@ -12,6 +12,9 @@ export const prerender = false;
 const PAGE_SIZE = 12;
 const MAX_LIMIT = 36;
 const CACHE_TTL_SECONDS = 120;
+// Solo estos parámetros cambian la respuesta; el resto (utm_*, etc.) no debe
+// crear entradas de caché distintas.
+const CACHE_KEY_PARAMS = new Set(['pais', 'q', 'cursor', 'limit']);
 
 export const GET: APIRoute = async ({ url, locals }) => {
   const pais = url.searchParams.get('pais');
@@ -21,7 +24,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, MAX_LIMIT) : PAGE_SIZE;
 
   const cache = getEdgeCache();
-  const cacheKey = url.toString();
+  const cacheKey = canonicalCacheKey(url, CACHE_KEY_PARAMS);
   const cached = await cache.match(cacheKey);
   if (cached) return cached as unknown as Response;
 

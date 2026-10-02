@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getEdgeCache } from '../../../lib/edge-cache';
+import { canonicalCacheKey, getEdgeCache } from '../../../lib/edge-cache';
 import { listArbitrosPage } from '../../../lib/arbitros';
 
 export const prerender = false;
@@ -12,6 +12,9 @@ export const prerender = false;
 const PAGE_SIZE = 8;
 const MAX_LIMIT = 24;
 const CACHE_TTL_SECONDS = 120;
+// Solo estos parámetros cambian la respuesta; el resto (utm_*, etc.) no debe
+// crear entradas de caché distintas.
+const CACHE_KEY_PARAMS = new Set(['estado', 'titulo', 'q', 'cursor', 'limit']);
 
 export const GET: APIRoute = async ({ url, locals }) => {
   const estado = url.searchParams.get('estado');
@@ -25,7 +28,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   // es lo que respeta la Cache API; sin cursor (primera página) es lo que
   // pega la página al cargar y lo que más vale la pena cachear.
   const cache = getEdgeCache();
-  const cacheKey = url.toString();
+  const cacheKey = canonicalCacheKey(url, CACHE_KEY_PARAMS);
   const cached = await cache.match(cacheKey);
   if (cached) return cached as unknown as Response;
 

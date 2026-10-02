@@ -203,7 +203,7 @@ const descripcion = 'Conoce a la comunidad que comparte su experiencia, conocimi
     return `
       <a class="entrenador-grid-card" href="/entrenadores/${encodeURIComponent(e.slug)}">
         <div class="entrenador-grid-card-photo" style="--tier-color:${tierAjedrez.color}">
-          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(e.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
+          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(e.nombre_completo)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
           ${QUEEN_SVG.replace('queen-mark entrenador-row-queen', 'queen-mark entrenador-grid-card-queen').replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
           <div class="entrenador-grid-card-elo">
             <span class="entrenador-grid-card-elo-value">${formatElo(e.elo_clasico)}</span>

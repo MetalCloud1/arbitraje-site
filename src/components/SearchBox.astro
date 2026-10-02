@@ -149,7 +149,7 @@ const { panelId = 'search-panel' } = Astro.props;
           <span class="search-result-thumb">
             ${
               r.imageUrl
-                ? `<img src="${r.imageUrl}" alt="" loading="lazy" onerror="this.closest('.search-result-thumb').classList.add('is-broken')" />`
+                ? `<img src="${r.imageUrl}" alt="" loading="lazy" decoding="async" onerror="this.closest('.search-result-thumb').classList.add('is-broken')" />`
                 : ''
             }
           </span>

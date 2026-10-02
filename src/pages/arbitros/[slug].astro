@@ -52,7 +52,7 @@ const mostrarEmail = !!arbitro.reclamado_en && !!arbitro.email;
       <div class="arbitro-detail-header">
         <div class="arbitro-detail-photo" data-tier={tier.tier} style={photoStyle} transition:name={`arbitro-photo-${arbitro.slug}`}>
           {fotoUrl ? (
-            <img src={fotoUrl} alt={arbitro.nombre_completo} />
+            <img src={fotoUrl} alt={arbitro.nombre_completo} fetchpriority="high" decoding="async" />
           ) : (
             <PawnMark class="arbitro-detail-pawn" />
           )}

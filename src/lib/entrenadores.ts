@@ -4,7 +4,7 @@
 // acá solo se documenta lo que cambia: titulo_ajedrez, titulo_arbitraje
 // y elo_clasico.
 
-import { escapeLikeTerm } from './db';
+import { likePattern } from './db';
 import { parseEloClasicoInput } from './titulos-ajedrez';
 
 export type Actividad = 'activo' | 'inactivo';
@@ -148,7 +148,7 @@ export async function listEntrenadoresPage(
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(
       `(nombre_completo LIKE ? ESCAPE '\\' OR titulo_ajedrez LIKE ? ESCAPE '\\' OR titulo_arbitraje LIKE ? ESCAPE '\\' OR estado_republica LIKE ? ESCAPE '\\')`
     );
@@ -203,7 +203,7 @@ export async function countEntrenadores(
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(
       `(nombre_completo LIKE ? ESCAPE '\\' OR titulo_ajedrez LIKE ? ESCAPE '\\' OR titulo_arbitraje LIKE ? ESCAPE '\\' OR estado_republica LIKE ? ESCAPE '\\')`
     );

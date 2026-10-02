@@ -29,7 +29,7 @@ const { imageUrl, alt, isVideo = false, playSize = 'md', eager = false, transiti
         class="media-frame-fg"
         src={imageUrl}
         alt={alt}
-        loading={eager ? 'eager' : 'lazy'}
+        loading={eager ? 'eager' : 'lazy'} decoding="async"
         onerror="this.closest('.media-frame')?.classList.add('is-broken')"
       />
       <div class="media-frame-fallback" aria-hidden="true">

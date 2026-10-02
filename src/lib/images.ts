@@ -20,7 +20,11 @@ export async function uploadCoverImage(bucket: R2Bucket, file: File, prefix = 'c
   const key = `${prefix}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
   await bucket.put(key, await file.arrayBuffer(), {
-    httpMetadata: { contentType: file.type },
+    // La clave lleva marca de tiempo y UUID: nunca se reutiliza, así que el
+    // contenido de una clave no cambia. Guardar la cabecera en el propio objeto
+    // hace que, si algún día se sirven las imágenes desde un dominio público de
+    // R2 (sin pasar por /api/img), salgan con caché inmutable de fábrica.
+    httpMetadata: { contentType: file.type, cacheControl: 'public, max-age=31536000, immutable' },
   });
 
   return key;

@@ -74,8 +74,13 @@ const jsonLdBlocks = [baseJsonLd, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd :
        el primer contenido; la serif solo en artículos (prop preloadSerif). -->
   <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
   {preloadSerif && <link rel="preload" href="/fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin />}
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2523743725687386"
-     crossorigin="anonymous"></script>
+  <!-- Sin AdSense en páginas noindex (404, 410, formularios...): no tienen contenido
+       editorial que justifique anuncios (política de AdSense) y solo cargarían
+       JavaScript de terceros sin generar ingresos. -->
+  {!noindex && (
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2523743725687386"
+       crossorigin="anonymous"></script>
+  )}
   <!-- Open Graph -->
   <meta property="og:type" content={type} />
   <meta property="og:site_name" content={siteName} />

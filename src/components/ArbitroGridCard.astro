@@ -31,7 +31,7 @@ const tier = getTituloTier(arbitro.titulo);
       <img
         src={fotoUrl}
         alt={arbitro.nombre_completo}
-        loading="lazy"
+        loading="lazy" decoding="async"
         onerror="this.style.display='none';this.nextElementSibling.style.display='';"
       />
     )}

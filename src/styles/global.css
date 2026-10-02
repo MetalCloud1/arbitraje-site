@@ -237,37 +237,80 @@ a {
 }
 
 /* ---------- HEADER ---------- */
-header.site-header {
-  background: var(--bg-black);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  animation: fadeSlideDown var(--dur-editorial) var(--ease-editorial) both;
-  transition: box-shadow 0.35s ease, background 0.35s ease;
-  /* Evita el bucle de "scroll anchoring": el header sticky cambia de alto
-     al agregar/quitar .is-scrolled (ver .header-inner, .brand-title, etc.),
-     y ese cambio de layout hacía que el navegador reajustara scrollY solo,
-     retriggereando el listener de scroll justo en el umbral y quedando en
-     bucle (vibración/parpadeo del logo). Con overflow-anchor: none el
-     navegador ya no "corrige" el scroll cuando este bloque cambia de alto. */
+/* Scroll anchoring desactivado en TODO el documento. Al activarse .is-scrolled
+   el header (sticky, en el flujo) se encoge ~34px; el navegador interpreta
+   ese cambio como "el contenido se movió" y corrige scrollY solo (-34px), lo
+   que puede devolver el scroll bajo el umbral, quitar .is-scrolled, hacer
+   crecer el header, corregir +34px... y así en bucle: el logo reinicia su
+   transición en cada vuelta y se ve escalando lentísimo, casi vibrando.
+   Excluir solo al header (overflow-anchor en header.site-header) NO alcanza,
+   porque el ancla que se corrige es el contenido de abajo. Medido con scroll
+   lento por el umbral: sin esto la clase cambiaba 8-19 veces en vez de las 4
+   esperadas; con esto, 4. */
+html {
   overflow-anchor: none;
 }
 
-header.site-header.is-scrolled {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+/* El header NO cambia de alto en el flujo del documento. Antes, al hacer
+   scroll, .site-header (sticky, en el flujo) animaba padding y height: cada
+   frame de esa transición obligaba al navegador a recalcular el layout de
+   TODA la página de abajo, y como además movía el contenido ~34px justo
+   mientras el usuario scrolleaba, el resultado era un logo que escalaba
+   lento y como vibrando (peor al subir, cuando el header vuelve a crecer).
+   Ahora hay dos capas:
+   - header.site-header: caja transparente de alto FIJO (--header-h). Ocupa
+     siempre el mismo espacio, así que el contenido de abajo nunca se mueve
+     y la altura del documento nunca cambia (sin bucles de scroll).
+   - .header-inner: la barra visible. Esta sí anima su alto (hasta
+     --header-h-compact), pero dentro de la caja fija: el recalculo de
+     layout queda limitado a unos pocos elementos del propio header.
+   La caja fija no captura clics (pointer-events: none): la franja
+   transparente que queda debajo de la barra compacta deja pasar todo. */
+:root {
+  --header-h: 108px;         /* barra en reposo (arriba del todo) */
+  --header-h-compact: 74px;  /* barra con scroll */
+  --header-dur: 250ms;
+}
+
+@media (max-width: 860px) {
+  :root {
+    --header-h: 72px;
+    --header-h-compact: 64px;
+  }
+}
+
+header.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-h);
+  background: transparent;
+  pointer-events: none;
+  animation: fadeSlideDown var(--dur-editorial) var(--ease-editorial) both;
+  overflow-anchor: none;
 }
 
 .header-inner {
+  /* relative: el panel y el fondo oscuro del buscador mobile
+     (top: 100%) se anclan al borde inferior de la barra visible, no al de
+     la caja fija, que en estado compacto queda unos px más abajo. */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 26px 48px;
+  /* Solo padding lateral: el alto lo fija height. Nunca animar el padding
+     horizontal con el scroll (hacía que el contenido se corriera de lado). */
+  padding: 0 48px;
+  height: var(--header-h);
   gap: 32px;
-  transition: padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--bg-black);
+  pointer-events: auto;
+  transition: height var(--header-dur) var(--ease-editorial), box-shadow var(--header-dur) ease;
 }
 
 header.site-header.is-scrolled .header-inner {
-  padding: 16px 48px;
+  height: var(--header-h-compact);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 /* El header ahora es puramente identidad: el logo, más grande, es la
@@ -283,7 +326,7 @@ header.site-header.is-scrolled .header-inner {
 .brand-title {
   height: 56px;
   width: auto;
-  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
+  transition: height var(--header-dur) var(--ease-editorial), transform 0.3s ease;
 }
 
 header.site-header.is-scrolled .brand-title {
@@ -298,7 +341,7 @@ header.site-header.is-scrolled .brand-title {
   width: 1px;
   height: 34px;
   background: var(--border);
-  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: height var(--header-dur) var(--ease-editorial);
 }
 
 header.site-header.is-scrolled .brand-divider {
@@ -328,7 +371,7 @@ header.site-header.is-scrolled .brand-divider {
   height: 26px;
   width: auto;
   opacity: 0.8;
-  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  transition: height var(--header-dur) var(--ease-editorial), opacity 0.3s ease;
 }
 
 .brand-cluster:hover .chess-logo-ally {
@@ -745,7 +788,7 @@ nav.main-nav a.active::after {
 
 @media (max-width: 860px) {
   .header-inner {
-    padding: 16px 20px;
+    padding: 0 20px;
     gap: 12px;
   }
   .brand-title {
@@ -983,6 +1026,12 @@ nav.main-nav a.active::after {
   --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --drawer-open: 380ms;
   --drawer-close: 260ms;
+
+  /* pointer-events se hereda por el árbol del DOM, también en la "top
+     layer": el <dialog> vive dentro de <header.site-header>, que tiene
+     pointer-events: none (ver "HEADER"). Sin este auto, el menú y su fondo
+     oscuro heredaban "none" y ningún toque respondía. */
+  pointer-events: auto;
 
   /* Reset del <dialog> nativo (centrado, con borde y tamaño máximo). */
   position: fixed;
@@ -1313,12 +1362,21 @@ html:has(.mobile-drawer[open]) {
 }
 
 .media-frame-bg {
+  /* Mismo resultado visual que antes (caja del 124% ampliada x1.1 con blur de
+     28px), pero el difuminado se calcula sobre una caja 4 veces más chica por
+     lado (31% con blur de 7px) y luego se amplía x4.4 con transform. Son 16
+     veces menos píxeles que filtrar: importa porque hay una de estas capas por
+     cada miniatura de los listados, y en celulares modestos el blur grande era
+     lo más caro de pintar. */
   position: absolute;
-  inset: -12%;
+  top: 50%;
+  left: 50%;
+  width: 31%;
+  height: 31%;
   background-size: cover;
   background-position: center;
-  filter: blur(28px) brightness(0.5) saturate(1.3);
-  transform: scale(1.1);
+  filter: blur(7px) brightness(0.5) saturate(1.3);
+  transform: translate(-50%, -50%) scale(4.4);
 }
 
 .media-frame-fg {

@@ -57,5 +57,10 @@ const path = Astro.url.pathname;
       submitBtn.setAttribute('aria-busy', 'true');
     });
   </script>
+  <!-- Optimizador de imágenes (WebP + compresión) solo en el panel. Va como script
+       de cliente: un import en el frontmatter correría en el servidor. -->
+  <script>
+    import '../lib/client/image-optimizer';
+  </script>
 </body>
 </html>

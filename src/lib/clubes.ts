@@ -7,7 +7,7 @@
 // es una pieza futura, aislada, que si algún día existe cuelga de un club
 // por club_id, sin tocar nada de lo que hay acá.
 
-import { escapeLikeTerm } from './db';
+import { likePattern } from './db';
 
 export type Actividad = 'activo' | 'inactivo';
 export type Modalidad = 'virtual' | 'presencial' | 'ambas';
@@ -152,7 +152,7 @@ export async function listClubesPage(
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(`(nombre LIKE ? ESCAPE '\\' OR pais LIKE ? ESCAPE '\\' OR direccion LIKE ? ESCAPE '\\')`);
     binds.push(like, like, like);
   }
@@ -202,7 +202,7 @@ export async function countClubes(db: D1Database, { pais, q }: { pais?: string |
 
   const term = q?.trim();
   if (term && term.length >= 2) {
-    const like = `%${escapeLikeTerm(term)}%`;
+    const like = likePattern(term);
     conditions.push(`(nombre LIKE ? ESCAPE '\\' OR pais LIKE ? ESCAPE '\\' OR direccion LIKE ? ESCAPE '\\')`);
     binds.push(like, like, like);
   }

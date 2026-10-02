@@ -190,7 +190,7 @@ const descripcion = 'Conoce a los árbitros que hacen posible el ajedrez en Amé
     return `
       <a class="arbitro-grid-card" href="/arbitros/${encodeURIComponent(a.slug)}">
         <div class="arbitro-grid-card-photo">
-          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(a.nombre_completo)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
+          ${fotoUrl ? `<img src="${fotoUrl}" alt="${escapeHtml(a.nombre_completo)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />` : ''}
           ${PAWN_SVG.replace('pawn-mark arbitro-row-pawn', 'pawn-mark arbitro-grid-card-pawn').replace('<svg ', fotoUrl ? '<svg style="display:none" ' : '<svg ')}
         </div>
         <div class="arbitro-grid-card-info">

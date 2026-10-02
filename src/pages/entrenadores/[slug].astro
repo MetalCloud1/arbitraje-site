@@ -48,7 +48,7 @@ const mostrarEmail = !!entrenador.reclamado_en && !!entrenador.email;
       <div class="entrenador-detail-header">
         <div class="entrenador-detail-photo" data-tier={tierAjedrez.tier} style={photoStyle} transition:name={`entrenador-photo-${entrenador.slug}`}>
           {fotoUrl ? (
-            <img src={fotoUrl} alt={entrenador.nombre_completo} />
+            <img src={fotoUrl} alt={entrenador.nombre_completo} fetchpriority="high" decoding="async" />
           ) : (
             <QueenMark class="entrenador-detail-queen" />
           )}

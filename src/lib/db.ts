@@ -97,13 +97,35 @@ export function escapeLikeTerm(term: string): string {
   return term.replace(/[\\%_]/g, (match) => `\\${match}`);
 }
 
+// D1 rechaza con "LIKE or GLOB pattern too complex" (y la página responde 500)
+// cualquier patrón LIKE de más de 50 bytes. El patrón lleva dos "%" y cada
+// comodín escapado ocupa un byte extra, así que un término largo (o con
+// acentos, que pesan 2 bytes) hacía fallar la búsqueda. Se recorta el término
+// para que el patrón quepa: buscar por el principio de una frase larga devuelve
+// un resultado razonable en vez de un error.
+const MAX_LIKE_PATTERN_BYTES = 50;
+
+export function likePattern(term: string): string {
+  const encoder = new TextEncoder();
+  let out = '';
+  let bytes = 2; // los dos "%" de los extremos
+  for (const ch of term.trim()) {
+    const escaped = escapeLikeTerm(ch);
+    const size = encoder.encode(escaped).length;
+    if (bytes + size > MAX_LIKE_PATTERN_BYTES) break;
+    out += escaped;
+    bytes += size;
+  }
+  return `%${out}%`;
+}
+
 /**
  * Busca artículos por título, resumen o categoría. Usada tanto por las
  * sugerencias en vivo del buscador (con `limit`) como por la página de
  * resultados completos (sin `limit`).
  */
 export async function searchArticles(db: D1Database, query: string, limit?: number): Promise<ArticleSummary[]> {
-  const term = `%${escapeLikeTerm(query.trim())}%`;
+  const term = likePattern(query);
   const sql =
     `SELECT ${SUMMARY_COLUMNS} FROM articles
      WHERE deleted_at IS NULL

@@ -125,7 +125,7 @@ const descripcion = 'Encuentra tu próximo club de ajedrez y súmate a la comuni
             <a class="club-card" href={`/clubes/${encodeURIComponent(c.slug)}`}>
               <div class="club-card-logo">
                 {c.logo_key ? (
-                  <img src={`/api/img/${c.logo_key}`} alt={c.nombre} loading="lazy" />
+                  <img src={`/api/img/${c.logo_key}`} alt={c.nombre} loading="lazy" decoding="async" />
                 ) : (
                   <span class="club-card-logo-fallback" aria-hidden="true">{c.nombre.charAt(0).toUpperCase()}</span>
                 )}
@@ -168,7 +168,7 @@ const descripcion = 'Encuentra tu próximo club de ajedrez y súmate a la comuni
       <a class="club-card" href="/clubes/${encodeURIComponent(c.slug)}">
         <div class="club-card-logo">
           ${logoUrl
-            ? `<img src="${logoUrl}" alt="${escapeHtml(c.nombre)}" loading="lazy" />`
+            ? `<img src="${logoUrl}" alt="${escapeHtml(c.nombre)}" loading="lazy" decoding="async" />`
             : `<span class="club-card-logo-fallback" aria-hidden="true">${escapeHtml(c.nombre.charAt(0).toUpperCase())}</span>`}
         </div>
         <span class="club-card-nombre">${escapeHtml(c.nombre)}</span>

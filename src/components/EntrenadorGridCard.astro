@@ -37,7 +37,7 @@ const tierArbitraje = entrenador.titulo_arbitraje ? getTituloTier(entrenador.tit
       <img
         src={fotoUrl}
         alt={entrenador.nombre_completo}
-        loading="lazy"
+        loading="lazy" decoding="async"
         onerror="this.style.display='none';this.nextElementSibling.style.display='';"
       />
     )}
