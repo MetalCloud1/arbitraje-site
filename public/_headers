@@ -1,0 +1,64 @@
+# Cabeceras de los archivos estáticos (Cloudflare Workers Static Assets).
+# Sin este archivo, Cloudflare manda "max-age=0, must-revalidate" a TODO, lo
+# que obliga al navegador a revalidar cada archivo en cada visita, incluso los
+# que nunca cambian. Referencia: developers.cloudflare.com/workers/static-assets/headers/
+
+# JS/CSS/imágenes que genera el build: llevan hash en el nombre, así que el
+# contenido de una URL no cambia jamás. Caché de un año, sin revalidar.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Fuentes: nombres fijos y contenido estable. Si algún día se reemplaza una,
+# cambia también su nombre de archivo (p. ej. inter-latin-v2.woff2).
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Recursos de diseño que casi no cambian (se revalidan a diario después).
+/icons/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/textures/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+/widgets/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+# Imágenes y logos de la raíz (nombres sin hash: una semana, y si se
+# reemplazan, el navegador las renueva solo al vencer).
+/arbitros-hero.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/site-title.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/og-default.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/logo.svg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/podcast-logo.svg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/favicon.ico
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/favicon-96x96.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/web-app-manifest-192x192.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/web-app-manifest-512x512.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# Páginas prerenderizadas: ya no pasan por el Worker (ver wrangler.jsonc), así
+# que las cabeceras de seguridad que antes ponía el middleware van aquí.
+# (La CSP en modo "solo reportar" no se repite: no bloquea nada.)
+/sobre-nosotros
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/politica-de-privacidad
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/terminos-y-condiciones
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/cursos
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/formacion
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

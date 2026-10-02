@@ -19,6 +19,8 @@ interface Props {
   modifiedTime?: string;
   /** Uno o varios objetos JSON-LD (schema.org) específicos de esta página. */
   jsonLd?: object | object[];
+  /** Precarga la fuente serif (solo páginas de artículo, donde pinta el título y el cuerpo). */
+  preloadSerif?: boolean;
 }
 
 const {
@@ -30,9 +32,13 @@ const {
   publishedTime,
   modifiedTime,
   jsonLd,
+  preloadSerif = false,
 } = Astro.props;
 
-const canonicalUrl = new URL(Astro.url.pathname, Astro.url.origin).toString();
+// Sin barra final (salvo la raíz): las páginas prerenderizadas se construyen con
+// pathname "/sobre-nosotros/", pero se sirven (y se enlazan) sin barra.
+const canonicalPath = Astro.url.pathname.replace(/(.)\/+$/, '$1');
+const canonicalUrl = new URL(canonicalPath, Astro.url.origin).toString();
 const absoluteImage = new URL(image, Astro.url.origin).toString();
 const siteName = 'La Hora del Arbitraje';
 
@@ -59,17 +65,15 @@ const jsonLdBlocks = [baseJsonLd, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd :
   <link rel="canonical" href={canonicalUrl} />
   {noindex && <meta name="robots" content="noindex, follow" />}
   <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <!-- Sin favicon.svg a propósito: pesaba 1.8 MB (un PNG incrustado en base64). -->
   <link rel="shortcut icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="alternate" type="application/rss+xml" title={`${siteName} - Artículos`} href={`${Astro.url.origin}/rss.xml`} />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
-    rel="stylesheet"
-  />
+  <!-- Fuentes autoalojadas (src/styles/fonts.css). Se precarga solo la que pinta
+       el primer contenido; la serif solo en artículos (prop preloadSerif). -->
+  <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+  {preloadSerif && <link rel="preload" href="/fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin />}
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2523743725687386"
      crossorigin="anonymous"></script>
   <!-- Open Graph -->

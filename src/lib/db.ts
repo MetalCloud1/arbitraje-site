@@ -19,6 +19,16 @@ export interface Article {
   updated_at: string;
 }
 
+/**
+ * Artículo sin el cuerpo. Los listados (portada, /articulos, buscador, sitemap,
+ * panel) nunca muestran `content_html`, que es la columna más pesada: traerla
+ * hacía que cada render leyera de D1 todos los cuerpos de todos los artículos.
+ */
+export type ArticleSummary = Omit<Article, 'content_html'>;
+
+const SUMMARY_COLUMNS =
+  'id, slug, title, category, excerpt, cover_key, video_url, read_minutes, published_at, expires_at, deleted_at, created_at, updated_at';
+
 export interface ArticleInput {
   slug: string;
   title: string;
@@ -32,34 +42,34 @@ export interface ArticleInput {
   expires_at: string | null;
 }
 
-export async function listRecentArticles(db: D1Database, limit = 4): Promise<Article[]> {
+export async function listRecentArticles(db: D1Database, limit = 4): Promise<ArticleSummary[]> {
   const { results } = await db
     // id DESC como desempate: published_at solo guarda el día (sin hora), así
     // que dos artículos publicados el mismo día quedan empatados y, sin esto,
     // el orden entre ellos queda librado al azar (el motor de la base puede
     // dejar arriba al más viejo de los dos). Con id DESC gana el que se creó
     // después, que es justo lo que se espera de "lo más nuevo primero".
-    .prepare('SELECT * FROM articles WHERE deleted_at IS NULL ORDER BY published_at DESC, id DESC LIMIT ?')
+    .prepare(`SELECT ${SUMMARY_COLUMNS} FROM articles WHERE deleted_at IS NULL ORDER BY published_at DESC, id DESC LIMIT ?`)
     .bind(limit)
-    .all<Article>();
+    .all<ArticleSummary>();
   return results ?? [];
 }
 
 // Para bloques de previsualización por categoría (p. ej. los paneles de
 // "Actividad Arbitral" y "Avisos" dentro del hub de /arbitros). Mismo
 // desempate id DESC que listRecentArticles, mismo motivo.
-export async function listArticlesByCategory(db: D1Database, category: string, limit = 3): Promise<Article[]> {
+export async function listArticlesByCategory(db: D1Database, category: string, limit = 3): Promise<ArticleSummary[]> {
   const { results } = await db
-    .prepare('SELECT * FROM articles WHERE category = ? AND deleted_at IS NULL ORDER BY published_at DESC, id DESC LIMIT ?')
+    .prepare(`SELECT ${SUMMARY_COLUMNS} FROM articles WHERE category = ? AND deleted_at IS NULL ORDER BY published_at DESC, id DESC LIMIT ?`)
     .bind(category, limit)
-    .all<Article>();
+    .all<ArticleSummary>();
   return results ?? [];
 }
 
-export async function listAllArticles(db: D1Database): Promise<Article[]> {
+export async function listAllArticles(db: D1Database): Promise<ArticleSummary[]> {
   const { results } = await db
-    .prepare('SELECT * FROM articles WHERE deleted_at IS NULL ORDER BY published_at DESC, id DESC')
-    .all<Article>();
+    .prepare(`SELECT ${SUMMARY_COLUMNS} FROM articles WHERE deleted_at IS NULL ORDER BY published_at DESC, id DESC`)
+    .all<ArticleSummary>();
   return results ?? [];
 }
 
@@ -92,16 +102,16 @@ export function escapeLikeTerm(term: string): string {
  * sugerencias en vivo del buscador (con `limit`) como por la página de
  * resultados completos (sin `limit`).
  */
-export async function searchArticles(db: D1Database, query: string, limit?: number): Promise<Article[]> {
+export async function searchArticles(db: D1Database, query: string, limit?: number): Promise<ArticleSummary[]> {
   const term = `%${escapeLikeTerm(query.trim())}%`;
   const sql =
-    `SELECT * FROM articles
+    `SELECT ${SUMMARY_COLUMNS} FROM articles
      WHERE deleted_at IS NULL
        AND (title LIKE ? ESCAPE '\\' OR excerpt LIKE ? ESCAPE '\\' OR category LIKE ? ESCAPE '\\')
      ORDER BY published_at DESC, id DESC` + (limit ? ' LIMIT ?' : '');
   const stmt = db.prepare(sql);
   const bound = limit ? stmt.bind(term, term, term, limit) : stmt.bind(term, term, term);
-  const { results } = await bound.all<Article>();
+  const { results } = await bound.all<ArticleSummary>();
   return results ?? [];
 }
 

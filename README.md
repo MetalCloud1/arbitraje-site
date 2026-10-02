@@ -165,6 +165,19 @@ ejemplo, coberturas de un torneo puntual) evita acumular imágenes sin usar.
   (ver `src/lib/security.ts`).
 - **Sesión de admin:** cookie firmada con HMAC-SHA256 (sin JWT ni tabla de
   sesiones), válida 7 días.
+- **Caché de archivos estáticos:** `public/_headers` fija `Cache-Control`
+  inmutable (1 año) para `/_astro/*` y `/fonts/*`, y plazos largos para íconos,
+  texturas e imágenes de la raíz. Sin ese archivo Cloudflare manda
+  `max-age=0, must-revalidate` y el navegador revalida todo en cada visita.
+- **Fuentes:** Inter y Source Serif 4 se sirven desde `public/fonts/` (variables,
+  licencia OFL) y se declaran en `src/styles/fonts.css`. No se usa Google Fonts.
+- **Redirect www → sin www:** las páginas prerenderizadas se sirven directo del
+  CDN y ya no pasan por el middleware, así que ese redirect debe existir también
+  a nivel de dominio. En el dashboard de Cloudflare: *Rules → Redirect Rules →
+  Create rule*, condición `Hostname equals www.lahoradelarbitraje.pro`, acción
+  *Dynamic* `concat("https://lahoradelarbitraje.pro", http.request.uri.path)`
+  con conservar la query string, código 301. (Requiere que el registro DNS de
+  `www` exista con proxy activado.)
 - **Versión de Astro:** el proyecto usa `astro@^7` y `@astrojs/cloudflare@^14`.
   Los bindings y secretos se leen con `import { env } from 'cloudflare:workers'`
   (ya no existe `Astro.locals.runtime`); el `ExecutionContext` está en
