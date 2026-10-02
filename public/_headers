@@ -1,28 +1,23 @@
 # Cabeceras de los archivos estáticos (Cloudflare Workers Static Assets).
-# Sin este archivo, Cloudflare manda "max-age=0, must-revalidate" a TODO, lo
-# que obliga al navegador a revalidar cada archivo en cada visita, incluso los
-# que nunca cambian. Referencia: developers.cloudflare.com/workers/static-assets/headers/
+# Sin este archivo, Cloudflare manda "max-age=0, must-revalidate" a TODO.
 
-# JS/CSS/imágenes que genera el build: llevan hash en el nombre, así que el
-# contenido de una URL no cambia jamás. Caché de un año, sin revalidar.
+# JS/CSS/imágenes compiladas por Astro (llevan hash en el nombre).
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Fuentes: nombres fijos y contenido estable. Si algún día se reemplaza una,
-# cambia también su nombre de archivo (p. ej. inter-latin-v2.woff2).
-/fonts/*
+# Fuentes
+/fonts/**
   Cache-Control: public, max-age=31536000, immutable
 
-# Recursos de diseño que casi no cambian (se revalidan a diario después).
-/icons/*
+# Recursos de diseño y assets estáticos generales
+/icons/**
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
-/textures/*
+/textures/**
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
-/widgets/*
+/widgets/**
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
-# Imágenes y logos de la raíz (nombres sin hash: una semana, y si se
-# reemplazan, el navegador las renueva solo al vencer).
+# Imágenes y logos de la raíz (nombres fijos)
 /arbitros-hero.webp
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 /site-title.webp
@@ -44,9 +39,7 @@
 /web-app-manifest-512x512.png
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 
-# Páginas prerenderizadas: ya no pasan por el Worker (ver wrangler.jsonc), así
-# que las cabeceras de seguridad que antes ponía el middleware van aquí.
-# (La CSP en modo "solo reportar" no se repite: no bloquea nada.)
+# Páginas prerenderizadas
 /sobre-nosotros
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
