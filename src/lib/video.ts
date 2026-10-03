@@ -103,17 +103,17 @@ export interface ArticleThumbnail {
   /** true si el artículo tiene un video asociado (se debe mostrar el ícono de play). */
   isVideo: boolean;
   /**
-   * URL de la imagen a usar como fondo de la miniatura. Puede ser:
-   * la miniatura automática de YouTube, la imagen de portada subida
-   * (usada también como respaldo para videos de Facebook, que no
-   * ofrecen miniatura automática), o null si no hay ninguna.
+   * URL de la imagen a usar como fondo de la miniatura. Prioridad:
+   * 1) la imagen de portada subida (si existe, se ignora por completo
+   * cualquier miniatura de video), 2) la miniatura automática de
+   * YouTube, 3) null (Facebook no ofrece miniatura automática).
    */
   imageUrl: string | null;
 }
 
 /**
  * Resuelve qué imagen usar como miniatura de un artículo en tarjetas y
- * listados, centralizando la prioridad video > portada manual.
+ * listados, centralizando la prioridad portada manual > miniatura de video.
  */
 export function resolveThumbnail(article: {
   video_url: string | null;
@@ -123,7 +123,7 @@ export function resolveThumbnail(article: {
   const coverUrl = article.cover_key ? `/api/img/${article.cover_key}` : null;
 
   if (video) {
-    return { isVideo: true, imageUrl: video.thumbnailUrl ?? coverUrl };
+    return { isVideo: true, imageUrl: coverUrl ?? video.thumbnailUrl };
   }
   return { isVideo: false, imageUrl: coverUrl };
 }
