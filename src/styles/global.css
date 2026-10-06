@@ -1,5 +1,6 @@
 @import './fonts.css';
 @import './widgets.css';
+@import './layout-blocks.css';
 
 :root {
   --bg-black: #0a1410;

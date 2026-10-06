@@ -15,7 +15,23 @@
 
 import { Parser } from 'htmlparser2';
 import { escapeAttr, escapeHtml, isWidgetType, normalizeWidget, renderWidgetElement, type RawWidget } from './schema';
-import { CALLOUT_CLASSES, DIVIDER_CLASSES, HEADING_CLASSES, IMG_CLASSES, LIST_CLASSES, MARK_CLASSES, QUOTE_CLASSES } from './article-classes';
+import {
+  CALLOUT_CLASSES,
+  COL_CLASS,
+  COLS_CLASS,
+  CONN_CLASS,
+  DIVIDER_CLASSES,
+  HEADING_CLASSES,
+  IMG_CLASSES,
+  LAYOUT_WRAP_CLASS,
+  LIST_CLASSES,
+  MARK_CLASSES,
+  MAX_COLUMNS,
+  MAX_LAYOUT_BLOCKS,
+  QUOTE_CLASSES,
+  colsClass,
+  connKindOf,
+} from './article-classes';
 
 const VOID_TAGS = new Set(['br', 'hr', 'img']);
 
@@ -108,11 +124,32 @@ const ATTRS: Record<string, Record<string, (v: string) => string | null>> = {
   details: { open: () => '' },
 };
 
+/** Estado de un bloque de columnas mientras se lee (la clase final se decide al cerrarlo). */
+interface ColsState {
+  /** Posición en `out` de la apertura, que se reescribe al cerrar con las clases canónicas. */
+  outIndex: number;
+  columns: number;
+  /** Posición en `out` del conector emitido (-1 si no hay). */
+  connIndex: number;
+  /** Posiciones en `out` de los widgets interactivos que contiene. */
+  interactive: number[];
+}
+
 interface Frame {
   /** Etiqueta de cierre a emitir (null si no se emitió apertura o es vacía). */
   close: string | null;
   /** Se ignora todo el contenido hasta cerrar este marco. */
   skip: boolean;
+  /** Bloques de diseño: "cols" (contenedor de columnas) o "col" (una columna). */
+  kind?: 'cols' | 'col';
+  cols?: ColsState;
+  /** Si existe, produce el cierre en lugar de `</close>` (el bloque de columnas necesita reescribirse). */
+  finish?: () => string;
+}
+
+/** Widgets que no caben bien en tres columnas: tienen controles, botones o un marco propio. */
+function isInteractiveWidget(type: string, attrs: Record<string, string>): boolean {
+  return type === 'chess-puzzle' || type === 'quiz' || type === 'embed' || (type === 'chess-board' && !!attrs.moves);
 }
 
 export interface SanitizeResult {
@@ -142,6 +179,7 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
   const errors: string[] = [];
   const stack: Frame[] = [];
   let skipping = 0; // cuántos marcos de la pila descartan su contenido
+  let layoutBlocks = 0; // bloques de columnas aceptados hasta ahora
 
   const parser = new Parser(
     {
@@ -165,7 +203,13 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
             // escrito a mano se limpia acá aparte, con la misma lista blanca
             // que ya usan las imágenes sueltas.
             const widgetClass = attribs.class ? classAttr(IMG_CLASSES)(attribs.class) : null;
-            if (result.ok) out.push(renderWidgetElement(type, result.attrs, result.fallback, widgetClass));
+            if (result.ok) {
+              // Si está dentro de un bloque de columnas, se anota su posición: si el
+              // bloque termina con 3 columnas, los widgets interactivos se descartan.
+              const owner = [...stack].reverse().find((f) => f.kind === 'cols');
+              if (owner?.cols && isInteractiveWidget(type, result.attrs)) owner.cols.interactive.push(out.length);
+              out.push(renderWidgetElement(type, result.attrs, result.fallback, widgetClass));
+            }
             else errors.push(result.error);
           } else {
             errors.push(`Tipo de widget desconocido: "${type}".`);
@@ -179,6 +223,88 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
           stack.push({ close: null, skip: true });
           skipping++;
           return;
+        }
+
+        // ---- Bloques de diseño: <div> con clases art-layout / art-cols / art-col / art-conn ----
+        if (rawName === 'div') {
+          const tokens = new Set((attribs.class ?? '').split(/\s+/));
+          const top = stack[stack.length - 1];
+
+          if (tokens.has(LAYOUT_WRAP_CLASS)) {
+            // El contenedor ya guardado: transparente (art-cols vuelve a crear el suyo).
+            stack.push({ close: null, skip: false });
+            return;
+          }
+
+          if (tokens.has(COLS_CLASS)) {
+            if (stack.some((f) => f.kind === 'cols')) {
+              errors.push('Las columnas no se pueden anidar dentro de otras columnas: se quitó el bloque interno y se conservó su contenido.');
+              stack.push({ close: null, skip: false });
+              return;
+            }
+            if (layoutBlocks >= MAX_LAYOUT_BLOCKS) {
+              errors.push(`Máximo ${MAX_LAYOUT_BLOCKS} bloques de columnas por artículo: el resto se quitó y se conservó su contenido.`);
+              stack.push({ close: null, skip: false });
+              return;
+            }
+            layoutBlocks++;
+            const state: ColsState = { outIndex: out.length, columns: 0, connIndex: -1, interactive: [] };
+            out.push(''); // marcador: la apertura real se escribe al cerrar, cuando ya se sabe cuántas columnas hay
+            stack.push({
+              close: null,
+              skip: false,
+              kind: 'cols',
+              cols: state,
+              finish: () => {
+                if (state.columns === 0) {
+                  out[state.outIndex] = '';
+                  return ''; // bloque vacío: no se emite nada
+                }
+                if (state.connIndex >= 0 && state.columns !== 2) {
+                  out[state.connIndex] = '';
+                  state.connIndex = -1;
+                  errors.push('El conector solo se puede usar entre exactamente 2 columnas: se quitó.');
+                }
+                if (state.columns >= 3 && state.interactive.length) {
+                  for (const i of state.interactive) out[i] = '';
+                  errors.push('Los widgets interactivos (problema, trivia, incrustar, partida con jugadas) no caben en 3 columnas: se quitaron. Usa 2 columnas.');
+                }
+                out[state.outIndex] = `<div class="${LAYOUT_WRAP_CLASS}"><div class="${colsClass(state.columns, state.connIndex >= 0)}">`;
+                return '</div></div>';
+              },
+            });
+            return;
+          }
+
+          if (tokens.has(COL_CLASS)) {
+            if (top?.kind !== 'cols' || !top.cols) {
+              // Una columna suelta (fuera de un bloque de columnas): se quita la etiqueta, se conserva el contenido.
+              stack.push({ close: null, skip: false });
+              return;
+            }
+            if (top.cols.columns >= MAX_COLUMNS) {
+              errors.push(`Máximo ${MAX_COLUMNS} columnas por bloque: se quitó la columna sobrante con su contenido.`);
+              stack.push({ close: null, skip: true });
+              skipping++;
+              return;
+            }
+            top.cols.columns++;
+            out.push(`<div class="${COL_CLASS}">`);
+            stack.push({ close: 'div', skip: false, kind: 'col', cols: top.cols });
+            return;
+          }
+
+          if (tokens.has(CONN_CLASS)) {
+            if (top?.kind === 'cols' && top.cols && top.cols.columns === 1 && top.cols.connIndex < 0) {
+              top.cols.connIndex = out.length;
+              out.push(`<div class="${CONN_CLASS} ${CONN_CLASS}-${connKindOf(attribs.class)}"></div>`);
+            } else {
+              errors.push('Un conector solo se puede colocar entre dos columnas: se quitó.');
+            }
+            stack.push({ close: null, skip: true }); // su contenido se ignora siempre
+            skipping++;
+            return;
+          }
         }
 
         const name = TAG_ALIASES[rawName] ?? rawName;
@@ -199,13 +325,17 @@ export function sanitizeArticleHtml(input: string): SanitizeResult {
       },
 
       ontext(text) {
-        if (skipping === 0) out.push(escapeHtml(text));
+        if (skipping > 0) return;
+        // Entre las columnas solo se toleran espacios (saltos de línea del HTML escrito a mano).
+        if (stack[stack.length - 1]?.kind === 'cols' && !text.trim()) return;
+        out.push(escapeHtml(text));
       },
 
       onclosetag() {
         const frame = stack.pop();
         if (!frame) return;
         if (frame.skip) skipping--;
+        else if (frame.finish && skipping === 0) out.push(frame.finish());
         else if (frame.close && skipping === 0) out.push(`</${frame.close}>`);
       },
     },

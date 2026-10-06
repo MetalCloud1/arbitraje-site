@@ -39,7 +39,17 @@ const { name, initialHtml = '' } = Astro.props;
       <button type="button" class="editor-widget-btn" data-action="w-chess-board" title="Insertar tablero o partida de ajedrez" aria-label="Insertar tablero o partida">♟ Tablero</button>
       <button type="button" class="editor-widget-btn" data-action="w-chess-puzzle" title="Insertar problema de ajedrez interactivo" aria-label="Insertar problema de ajedrez">Problema</button>
       <button type="button" class="editor-widget-btn" data-action="w-quiz" title="Insertar trivia" aria-label="Insertar trivia">Trivia</button>
+      <button type="button" class="editor-widget-btn" data-action="w-law-cite" title="Citar un artículo del reglamento con su edición y fuente" aria-label="Insertar cita de artículo">§ Cita</button>
       <button type="button" class="editor-widget-btn" data-action="w-embed" title="Incrustar contenido (Lichess, Chess.com, YouTube)" aria-label="Incrustar contenido externo">Incrustar</button>
+      <details class="editor-menu" data-menu>
+        <summary class="editor-widget-btn" title="Columnas y conector" aria-label="Diseño: columnas y conector">▥ Diseño</summary>
+        <div class="editor-menu-panel" role="group" aria-label="Diseño">
+          <button type="button" data-action="l-cols2">2 columnas</button>
+          <button type="button" data-action="l-cols2c">2 columnas con flecha <span class="editor-menu-hint">(clic en la flecha cambia el símbolo)</span></button>
+          <button type="button" data-action="l-cols3">3 columnas <span class="editor-menu-hint">(solo contenido estático)</span></button>
+          <button type="button" data-action="l-unwrap" class="is-danger">Quitar columnas (conserva el contenido)</button>
+        </div>
+      </details>
       <span class="editor-sep" aria-hidden="true"></span>
       <button type="button" data-action="clear" title="Quitar formato" aria-label="Quitar formato">Tx</button>
       <button type="button" data-action="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↺</button>
@@ -76,7 +86,7 @@ const { name, initialHtml = '' } = Astro.props;
 
   <p class="editor-note" data-note hidden>
     Al volver al modo Visual solo se conserva el formato que el editor soporta (párrafos, títulos H2/H3,
-    negrita, cursiva, subrayado, listas, citas, enlaces, tablas y widgets). Estilos, clases y cualquier otro
+    negrita, cursiva, subrayado, listas, citas, enlaces, tablas, columnas y widgets). Estilos, clases y cualquier otro
     HTML se descartan. Los widgets se escriben como &lt;figure data-widget="…"&gt;; lo más cómodo es
     insertarlos con los botones de la barra en modo Visual.
   </p>
@@ -89,6 +99,7 @@ const { name, initialHtml = '' } = Astro.props;
   import StarterKit from '@tiptap/starter-kit';
   import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
   import { ArticleBlockquote, ArticleBulletList, ArticleHeading, ArticleOrderedList } from '../lib/widgets/editor/article-nodes';
+  import { Column, Columns, Connector } from '../lib/widgets/editor/layout-nodes';
   import type { WidgetType } from '../lib/widgets/schema';
   // Los widgets (nodo del editor, formularios, vista previa) se cargan con
   // import() dinámico a propósito: comparten código (schema, dom, mount) con el
@@ -170,6 +181,9 @@ const { name, initialHtml = '' } = Astro.props;
         ArticleBulletList,
         ArticleOrderedList,
         Widget,
+        Columns,
+        Column,
+        Connector,
       ],
       editorProps: {
         attributes: { 'aria-label': 'Contenido del artículo', spellcheck: 'true' },
@@ -250,6 +264,11 @@ const { name, initialHtml = '' } = Astro.props;
       'w-quiz': () => void insertWidget('quiz'),
       'w-embed': () => void insertWidget('embed'),
       'w-gallery': () => void insertWidget('gallery'),
+      'w-law-cite': () => void insertWidget('law-cite'),
+      'l-cols2': () => editor.chain().focus().insertColumns(2).run(),
+      'l-cols2c': () => editor.chain().focus().insertColumns(2, true).run(),
+      'l-cols3': () => editor.chain().focus().insertColumns(3).run(),
+      'l-unwrap': () => editor.chain().focus().unwrapColumns().run(),
       bold: () => editor.chain().focus().toggleBold().run(),
       italic: () => editor.chain().focus().toggleItalic().run(),
       underline: () => editor.chain().focus().toggleUnderline().run(),
@@ -274,6 +293,19 @@ const { name, initialHtml = '' } = Astro.props;
       delTable: () => editor.chain().focus().deleteTable().run(),
     };
 
+    // El menú "Diseño" se cierra al hacer clic en cualquier otro lugar. El
+    // listener se retira solo cuando el editor ya no está en la página
+    // (navegación con ClientRouter), para no acumularse.
+    const closeMenus = () => wrapper.querySelectorAll('[data-menu][open]').forEach((m) => m.removeAttribute('open'));
+    const onDocumentDown = (e: MouseEvent) => {
+      if (!wrapper.isConnected) {
+        document.removeEventListener('mousedown', onDocumentDown);
+        return;
+      }
+      if (!(e.target as Element | null)?.closest('[data-menu]')) closeMenus();
+    };
+    document.addEventListener('mousedown', onDocumentDown);
+
     // mousedown + preventDefault: el botón no le quita el foco (ni la
     // selección) al editor antes de aplicar el comando.
     wrapper.addEventListener('mousedown', (e) => {
@@ -287,6 +319,7 @@ const { name, initialHtml = '' } = Astro.props;
       const actionBtn = target.closest<HTMLButtonElement>('[data-action]');
       if (actionBtn && mode === 'visual') {
         actions[actionBtn.dataset.action!]?.();
+        closeMenus();
         return;
       }
       const tableBtn = target.closest<HTMLButtonElement>('[data-table]');

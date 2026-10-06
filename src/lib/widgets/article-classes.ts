@@ -35,3 +35,47 @@ export const DIVIDER_CLASSES = new Set(['art-divider']);
  * desconocida (se quita, se conserva el contenido), igual que hoy.
  */
 export const CALLOUT_CLASSES = new Set(['art-callout', 'art-callout-info', 'art-callout-warning']);
+
+/**
+ * Bloques de diseño (columnas y conector). Van sobre <div>, igual que los
+ * recuadros, y el sanitizador (sanitize.ts) además les impone estructura:
+ *
+ *   <div class="art-cols">                       2 o 3 hijos "art-col"
+ *     <div class="art-col">…contenido…</div>     (máximo 3 columnas)
+ *     <div class="art-conn art-conn-arrow"></div> opcional, solo entre 2 columnas
+ *     <div class="art-col">…contenido…</div>
+ *   </div>
+ *
+ * El autor solo escribe "art-cols"; el sanitizador calcula las clases
+ * canónicas (cuántas columnas hay, si hay conector) y envuelve el bloque en
+ * <div class="art-layout"> (el "contenedor" sobre el que el CSS decide, según
+ * el ancho REAL disponible y no el de la pantalla, cuántas columnas caben).
+ * "art-layout" también se acepta al leer (el HTML ya guardado lo trae): es
+ * transparente, no se duplica.
+ */
+export const LAYOUT_WRAP_CLASS = 'art-layout';
+export const COLS_CLASS = 'art-cols';
+export const COL_CLASS = 'art-col';
+export const CONN_CLASS = 'art-conn';
+
+/** Símbolos del conector (lista cerrada; el dibujo está en CSS, no hay SVG ni texto libre). */
+export const CONN_KINDS = ['arrow', 'vs', 'plus', 'equals'] as const;
+export type ConnKind = (typeof CONN_KINDS)[number];
+
+/** Topes de diseño: protegen el peso de la página y evitan anidaciones que no caben en un celular. */
+export const MAX_COLUMNS = 3;
+export const MAX_LAYOUT_BLOCKS = 12;
+
+/** Clase CSS canónica de un bloque de columnas según cuántas tiene y si lleva conector. */
+export function colsClass(columns: number, hasConnector: boolean): string {
+  if (columns >= 3) return `${COLS_CLASS} ${COLS_CLASS}-3`;
+  if (columns === 2) return `${COLS_CLASS} ${COLS_CLASS}-2${hasConnector ? ` ${COLS_CLASS}-conn` : ''}`;
+  return `${COLS_CLASS} ${COLS_CLASS}-1`;
+}
+
+/** Primer tipo de conector reconocido en una lista de clases; "arrow" por defecto. */
+export function connKindOf(classValue: string | null | undefined): ConnKind {
+  const tokens = (classValue ?? '').split(/\s+/);
+  for (const kind of CONN_KINDS) if (tokens.includes(`${CONN_CLASS}-${kind}`)) return kind;
+  return 'arrow';
+}

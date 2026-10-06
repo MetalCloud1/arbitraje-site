@@ -16,7 +16,7 @@ import { Chess, validateFen } from 'chess.js';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-export const WIDGET_TYPES = ['chess-board', 'chess-puzzle', 'quiz', 'embed', 'gallery'] as const;
+export const WIDGET_TYPES = ['chess-board', 'chess-puzzle', 'quiz', 'embed', 'gallery', 'law-cite'] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export const WIDGET_LABELS: Record<WidgetType, string> = {
@@ -25,7 +25,27 @@ export const WIDGET_LABELS: Record<WidgetType, string> = {
   quiz: 'Trivia',
   embed: 'Incrustar',
   gallery: 'Imagen / Galería',
+  'law-cite': 'Cita de artículo',
 };
+
+/**
+ * Widgets "estáticos": todo su contenido ya viene en el HTML del servidor
+ * (el <figure> lleva el texto final) y se muestran solo con CSS. No cargan
+ * JavaScript, así que un artículo que solo tenga widgets estáticos no
+ * descarga el código de widgets. Si agregas uno, añade su tipo también al
+ * selector de arranque en src/pages/articulos/[slug].astro.
+ */
+export const STATIC_WIDGET_TYPES: readonly WidgetType[] = ['law-cite'];
+export const isStaticWidget = (type: string): boolean => (STATIC_WIDGET_TYPES as readonly string[]).includes(type);
+
+/** Máximo de caracteres del texto citado: es una cita breve con su fuente, no una copia del reglamento. */
+export const MAX_CITE_CHARS = 300;
+
+/**
+ * Sitios permitidos para el enlace "texto oficial" de una cita. Lista blanca
+ * cerrada, como EMBED_HOSTS: agregar uno es una línea aquí.
+ */
+export const CITE_SOURCE_HOSTS: readonly string[] = ['handbook.fide.com', 'fide.com', 'www.fide.com'];
 
 export const MAX_GALLERY_IMAGES = 12;
 
@@ -88,7 +108,8 @@ export type WidgetProps =
   | { type: 'chess-puzzle'; fen: string; solution: string[]; caption?: string; hint?: string }
   | { type: 'quiz'; quiz: Quiz }
   | { type: 'embed'; src: string; title: string; ratio: EmbedRatio }
-  | { type: 'gallery'; images: GalleryImage[] };
+  | { type: 'gallery'; images: GalleryImage[] }
+  | { type: 'law-cite'; article: string; text: string; edition: string; source?: string };
 
 export type WidgetResult =
   | {
@@ -433,6 +454,43 @@ function normalizeGallery(raw: RawWidget): WidgetResult & { ok: true } {
   return { ok: true, props: { type: 'gallery', images }, attrs, fallback };
 }
 
+/** Valida el enlace al texto oficial de una cita: https, sin credenciales ni puerto, de un sitio de la lista blanca. */
+function checkCiteSource(value: string | null | undefined): string {
+  const text = (value ?? '').trim();
+  if (!text) return '';
+  if (text.length > 500) fail('El enlace al texto oficial es demasiado largo.');
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return fail('El enlace al texto oficial no es válido.');
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || !CITE_SOURCE_HOSTS.includes(url.hostname.toLowerCase())) {
+    fail(`El enlace al texto oficial debe ser de: ${CITE_SOURCE_HOSTS.join(', ')} (por https).`);
+  }
+  return url.toString();
+}
+
+function normalizeLawCite(raw: RawWidget): WidgetResult & { ok: true } {
+  const article = line(raw.article, 'El número de artículo', 30, true);
+  const text = line(raw.text, 'El texto citado', MAX_CITE_CHARS, true);
+  const edition = line(raw.edition, 'La edición del reglamento', 80, true);
+  const source = checkCiteSource(raw.source);
+
+  const attrs: Record<string, string> = { article, text, edition };
+  if (source) attrs.source = source;
+
+  // Un número ("3.8.2") se muestra como "Art. 3.8.2"; un nombre ("Apéndice A") se deja tal cual.
+  const label = /^\d/.test(article) ? `Art. ${article}` : article;
+  const fallback =
+    `<blockquote><p>${escapeHtml(text)}</p></blockquote>` +
+    `<figcaption><strong>${escapeHtml(label)}</strong> · ${escapeHtml(edition)}` +
+    (source ? ` · <a href="${escapeAttr(source)}" target="_blank" rel="noopener noreferrer">Texto oficial</a>` : '') +
+    `</figcaption>`;
+
+  return { ok: true, props: { type: 'law-cite', article, text, edition, source: source || undefined }, attrs, fallback };
+}
+
 /** Valida una URL de embed contra la lista blanca de sitios y rutas. */
 export function checkEmbedUrl(value: string | null | undefined): URL {
   const text = (value ?? '').trim();
@@ -506,6 +564,8 @@ export function normalizeWidget(type: string, raw: RawWidget): WidgetResult {
         return normalizeEmbed(raw);
       case 'gallery':
         return normalizeGallery(raw);
+      case 'law-cite':
+        return normalizeLawCite(raw);
       default:
         return { ok: false, error: `Tipo de widget desconocido: "${type}".` };
     }

@@ -639,6 +639,80 @@ figure[data-widget][data-ready='true'] {
   }
 }
 
+/* ---------- Cita de artículo (widget estático: sin JavaScript) ----------
+   El <figure> ya trae su contenido desde el servidor (blockquote + figcaption),
+   así que aquí solo se le da forma. El selector lleva [data-article] para ganar
+   en especificidad a ".article-body blockquote / figure / figcaption" de
+   global.css, que se carga después. */
+figure[data-widget='law-cite'][data-article] {
+  margin: 28px 0;
+  padding: 18px 20px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green-bright);
+  border-radius: 10px;
+  background: rgba(129, 182, 76, 0.07);
+  text-align: left;
+  /* Una palabra o URL larguísima se parte en lugar de salirse de la caja. */
+  overflow-wrap: anywhere;
+}
+figure[data-widget='law-cite'][data-article] blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-style: normal;
+  line-height: 1.6;
+  color: var(--white);
+}
+figure[data-widget='law-cite'][data-article] blockquote p {
+  margin: 0;
+}
+figure[data-widget='law-cite'][data-article] figcaption {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--gray);
+}
+figure[data-widget='law-cite'][data-article] figcaption strong {
+  color: var(--green-bright);
+}
+figure[data-widget='law-cite'][data-article] figcaption a {
+  color: var(--green-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+figure[data-widget='law-cite'][data-article] figcaption a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ---------- Widgets dentro de columnas (bloques de diseño) ----------
+   Una columna es angosta incluso en una pantalla ancha, así que sus widgets
+   NO deben usar los puntos de corte de la pantalla (p. ej. los 720px de
+   .wg-game, que pondrían tablero y panel lado a lado en ~220px). Aquí siempre
+   van en su forma apilada, la misma que ya se ve en un teléfono. Los
+   selectores llevan 2 clases, por lo que ganan a las reglas de arriba sin
+   importar el orden ni los @media. */
+.art-col .wg-game,
+.art-col .wg-game.wg-static {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: none;
+}
+.art-col .wg {
+  padding: 12px;
+}
+.art-col .wg-gallery-grid:not([data-count='1']) {
+  grid-template-columns: repeat(2, 1fr);
+}
+.art-col .wg-gallery-grid:not([data-count='1']):not([data-count='2']) {
+  grid-auto-rows: 84px;
+}
+
 /* ---------- Editor del panel: bloque de widget y formularios ---------- */
 .editor-toolbar .editor-widget-btn {
   width: auto;

@@ -2,7 +2,7 @@
 // campos; al aceptar se valida con el MISMO esquema que usa el servidor, así el
 // autor ve el error en el momento y no al guardar el artículo.
 
-import { EMBED_HOSTS, EMBED_RATIOS, MAX_GALLERY_IMAGES, START_FEN, WIDGET_LABELS, formatMovetext, normalizeWidget, parseGameText, suggestEmbedUrl, type RawWidget, type WidgetType } from '../schema';
+import { CITE_SOURCE_HOSTS, EMBED_HOSTS, EMBED_RATIOS, MAX_CITE_CHARS, MAX_GALLERY_IMAGES, START_FEN, WIDGET_LABELS, formatMovetext, normalizeWidget, parseGameText, suggestEmbedUrl, type RawWidget, type WidgetType } from '../schema';
 import { add, h } from '../client/dom';
 
 type Data = Record<string, string>;
@@ -280,12 +280,43 @@ function galleryForm(initial: Data): Form {
   };
 }
 
+// ---------- Cita de artículo ----------
+// La última edición escrita se recuerda mientras dure la sesión del panel: en
+// una unidad se citan muchos artículos de la misma edición.
+let lastEdition = '';
+
+function citeForm(initial: Data): Form {
+  const article = input(initial.article ?? '', { maxlength: '30', placeholder: 'Ej.: 3.8.2' });
+  const text = textarea(initial.text ?? '', 4, { maxlength: String(MAX_CITE_CHARS), spellcheck: 'true', placeholder: 'El fragmento del artículo que quieres citar' });
+  const edition = input(initial.edition ?? lastEdition, { maxlength: '80', placeholder: 'Ej.: Leyes del Ajedrez FIDE, vigentes desde 2023' });
+  const source = input(initial.source ?? '', { placeholder: 'https://handbook.fide.com/…', inputmode: 'url' });
+  const counter = h('small', {}, '');
+  const count = () => (counter.textContent = `${text.value.length} / ${MAX_CITE_CHARS} caracteres`);
+  text.addEventListener('input', count);
+  count();
+  const el = h('div', {},
+    field('Artículo', article, 'Un número ("3.8.2") se muestra como "Art. 3.8.2". Un nombre ("Apéndice A") se muestra tal cual.'),
+    field('Texto citado', text, `Cita breve y fiel, como máximo ${MAX_CITE_CHARS} caracteres: no copies el reglamento completo.`),
+    counter,
+    field('Edición del reglamento', edition, 'Siempre se muestra junto a la cita, para saber a qué versión se refiere cuando el reglamento cambie.'),
+    field('Enlace al texto oficial', source, `Opcional. Sitios permitidos: ${CITE_SOURCE_HOSTS.join(', ')}.`)
+  );
+  return {
+    el,
+    read() {
+      lastEdition = edition.value.trim();
+      return { article: article.value, text: text.value, edition: edition.value, source: source.value };
+    },
+  };
+}
+
 const FORMS: Record<WidgetType, (initial: Data) => Form> = {
   'chess-board': boardForm,
   'chess-puzzle': puzzleForm,
   quiz: quizForm,
   embed: embedForm,
   gallery: galleryForm,
+  'law-cite': citeForm,
 };
 
 /**

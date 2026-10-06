@@ -189,9 +189,11 @@ const articleJsonLd = {
   <script>
     // Widgets del artículo (tablero, problema, trivia, incrustación): el código
     // solo se descarga si el artículo tiene alguno, y cada widget se inicia
-    // cuando se acerca a la pantalla. Ver src/lib/widgets.
+    // cuando se acerca a la pantalla. Ver src/lib/widgets. Los widgets
+    // estáticos (STATIC_WIDGET_TYPES en schema.ts, hoy "law-cite") no cuentan:
+    // se muestran solo con CSS y no necesitan descargar nada.
     const boot = () => {
-      if (document.querySelector('.article-body [data-widget]')) {
+      if (document.querySelector('.article-body [data-widget]:not([data-widget="law-cite"])')) {
         import('../../lib/widgets/client/mount').then((m) => m.hydrateWidgets());
       }
     };

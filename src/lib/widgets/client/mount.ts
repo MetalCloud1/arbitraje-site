@@ -6,7 +6,7 @@
 // - Es idempotente: se puede llamar en cada navegación (ClientRouter).
 // - Si algo falla, el contenido alternativo del servidor se queda visible.
 
-import { normalizeWidget, type WidgetProps } from '../schema';
+import { isStaticWidget, normalizeWidget, type WidgetProps } from '../schema';
 
 type Disposer = () => void;
 type Loader = (el: HTMLElement, props: never) => Disposer | void;
@@ -23,12 +23,16 @@ const disposers = new Set<Disposer>();
 let cleanupRegistered = false;
 
 /** Lee los data-* del elemento y los valida con el mismo esquema que el servidor. */
-function readProps(el: HTMLElement): WidgetProps | null {
+function readWidget(el: HTMLElement) {
   const raw: Record<string, string> = {};
   for (const [key, value] of Object.entries(el.dataset)) {
     if (key !== 'widget' && key !== 'ready' && typeof value === 'string') raw[key] = value;
   }
-  const result = normalizeWidget(el.dataset.widget ?? '', raw);
+  return normalizeWidget(el.dataset.widget ?? '', raw);
+}
+
+function readProps(el: HTMLElement): WidgetProps | null {
+  const result = readWidget(el);
   return result.ok ? result.props : null;
 }
 
@@ -39,6 +43,19 @@ function readProps(el: HTMLElement): WidgetProps | null {
 export async function mountWidget(el: HTMLElement): Promise<Disposer | undefined> {
   if (el.dataset.ready) return;
   const type = el.dataset.widget ?? '';
+  // Widgets estáticos (p. ej. la cita de artículo): no hay módulo que cargar.
+  // En la página el <figure> ya trae su contenido desde el servidor; en la
+  // vista previa del editor llega vacío y se rellena con el mismo HTML.
+  if (isStaticWidget(type)) {
+    const result = readWidget(el);
+    if (!result.ok) {
+      el.dataset.ready = 'error';
+      return;
+    }
+    if (!el.firstElementChild) el.innerHTML = result.fallback; // HTML propio, ya escapado por schema.ts
+    el.dataset.ready = 'true';
+    return;
+  }
   const load = modules[type];
   const props = readProps(el);
   if (!load || !props) {

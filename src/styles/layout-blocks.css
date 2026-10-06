@@ -1,0 +1,239 @@
+/* ==========================================================================
+   BLOQUES DE DISEÑO DE ARTÍCULOS: columnas y conector
+   (el HTML canónico lo genera el sanitizador, ver lib/widgets/sanitize.ts)
+
+     <div class="art-layout">                  ← contenedor: mide el ancho REAL disponible
+       <div class="art-cols art-cols-2 art-cols-conn">
+         <div class="art-col">…</div>
+         <div class="art-conn art-conn-arrow"></div>
+         <div class="art-col">…</div>
+       </div>
+     </div>
+
+   Reglas de oro:
+   - Mobile-first: por defecto TODO va en una sola columna. Las columnas
+     aparecen solo cuando el contenedor tiene espacio, así que un navegador
+     sin container queries simplemente ve el contenido apilado (seguro).
+   - Se decide por el ancho del contenedor (@container), NO por el de la
+     pantalla: el mismo bloque funciona en el artículo, en la Academia con
+     barra lateral y en la vista previa del editor.
+   - 2 columnas desde 520px; 3 columnas desde 640px (y por debajo de eso,
+     apiladas: nunca "2 + 1 huérfana").
+   - min-width: 0 en cada columna: sin eso, un hijo ancho (tabla, tablero,
+     cuadrícula) estira la columna y ensancha la página.
+   ========================================================================== */
+
+.art-layout {
+  container-type: inline-size;
+  container-name: art-layout;
+  margin: 32px 0;
+}
+
+.art-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.art-col {
+  min-width: 0;
+  /* Una palabra o URL larguísima se parte en lugar de salirse de la columna. */
+  overflow-wrap: anywhere;
+}
+
+/* Dentro de una columna el ritmo vertical es de la propia columna: sin los
+   márgenes grandes de párrafos y widgets pegados al borde. */
+.art-col > :first-child,
+.art-col > figure[data-widget]:first-child {
+  margin-top: 0;
+}
+.art-col > :last-child,
+.art-col > figure[data-widget]:last-child {
+  margin-bottom: 0;
+}
+.art-col > figure[data-widget] {
+  margin: 20px 0;
+}
+.art-col img,
+.art-col figure,
+.art-col table {
+  max-width: 100%;
+}
+
+/* ---------- Conector (flecha, VS, +, =) ---------- */
+.art-conn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 36px;
+  color: var(--green-bright, #97cc5f);
+}
+
+/* Apilado (por defecto): la flecha apunta hacia abajo. */
+.art-conn-arrow {
+  flex-direction: column;
+}
+.art-conn-arrow::before {
+  content: '';
+  width: 2px;
+  height: 26px;
+  background: currentColor;
+}
+.art-conn-arrow::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  margin-top: -9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+/* VS, + e =: dibujados con CSS (lista cerrada, sin texto libre ni SVG).
+   La segunda declaración de "content" (texto alternativo vacío) evita que un
+   lector de pantalla los lea; si el navegador no la entiende, usa la primera. */
+.art-conn-vs::before,
+.art-conn-plus::before,
+.art-conn-equals::before {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--font-sans, sans-serif);
+  font-weight: 700;
+  line-height: 1;
+}
+.art-conn-vs::before {
+  content: 'VS';
+  content: 'VS' / '';
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.art-conn-plus::before {
+  content: '+';
+  content: '+' / '';
+  font-size: 22px;
+}
+.art-conn-equals::before {
+  content: '=';
+  content: '=' / '';
+  font-size: 22px;
+}
+
+/* ---------- Columnas, cuando el contenedor tiene espacio ---------- */
+@container art-layout (min-width: 520px) {
+  .art-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .art-cols-conn {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  /* Conector en horizontal: la flecha apunta a la derecha. */
+  .art-conn-arrow {
+    flex-direction: row;
+    min-width: 44px;
+  }
+  .art-conn-arrow::before {
+    width: 26px;
+    height: 2px;
+  }
+  .art-conn-arrow::after {
+    margin-top: 0;
+    margin-left: -9px;
+    border-bottom: 0;
+    border-top: 2px solid currentColor;
+  }
+}
+
+@container art-layout (min-width: 640px) {
+  .art-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Vista previa en el editor del panel ---------- */
+.editor-body .art-layout {
+  margin: 20px 0;
+}
+.editor-body .art-col {
+  padding: 10px 12px;
+  border: 1px dashed rgba(129, 182, 76, 0.4);
+  border-radius: 10px;
+}
+.editor-body .art-conn {
+  cursor: pointer;
+  user-select: none;
+}
+.editor-body .art-conn:hover {
+  filter: brightness(1.25);
+}
+
+/* ---------- Menú "Diseño" en la barra del editor ---------- */
+.editor-menu {
+  position: relative;
+}
+.editor-menu > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 4px;
+  color: var(--gray);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.editor-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.editor-menu > summary:hover,
+.editor-menu[open] > summary {
+  background: rgba(129, 182, 76, 0.15);
+  color: var(--white);
+}
+.editor-menu > summary:focus-visible {
+  outline: 2px solid var(--green-bright);
+  outline-offset: 1px;
+}
+.editor-menu-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 280px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0a1410;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+.editor-toolbar .editor-menu-panel button {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+}
+.editor-toolbar .editor-menu-panel button.is-danger:hover {
+  background: rgba(220, 80, 80, 0.18);
+}
+.editor-menu-hint {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--gray-dim);
+}
