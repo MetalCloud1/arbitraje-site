@@ -6,15 +6,15 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # Fuentes
-/fonts/**
+/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
 # Recursos de diseño y assets estáticos generales
-/icons/**
+/icons/*
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
-/textures/**
+/textures/*
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
-/widgets/**
+/widgets/*
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
 
 # Imágenes y logos de la raíz (nombres fijos)
