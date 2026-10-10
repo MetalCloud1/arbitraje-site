@@ -387,12 +387,12 @@ function normalizeQuiz(raw: RawWidget): WidgetResult & { ok: true } {
   const questions: QuizQuestion[] = (input.questions as unknown[]).map((item, i) => {
     const n = i + 1;
     const q = item as { q?: unknown; options?: unknown; answer?: unknown; explain?: unknown };
-    const text = line(typeof q.q === 'string' ? q.q : '', `El enunciado de la pregunta ${n}`, 300, true);
+    const text = line(typeof q.q === 'string' ? q.q : '', `El enunciado de la pregunta ${n}`, 600, true);
     if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 6) {
       fail(`La pregunta ${n} necesita entre 2 y 6 opciones.`);
     }
     const options = (q.options as unknown[]).map((o, j) =>
-      line(typeof o === 'string' ? o : '', `La opción ${j + 1} de la pregunta ${n}`, 150, true)
+      line(typeof o === 'string' ? o : '', `La opción ${j + 1} de la pregunta ${n}`, 300, true)
     );
     if (typeof q.answer !== 'number' || !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= options.length) {
       fail(`La pregunta ${n} no tiene una respuesta correcta válida.`);
@@ -408,7 +408,7 @@ function normalizeQuiz(raw: RawWidget): WidgetResult & { ok: true } {
   if (title) quiz.title = title;
 
   const json = JSON.stringify(quiz);
-  if (json.length > 20000) fail('La trivia es demasiado larga.');
+  if (json.length > 60000) fail('La trivia es demasiado larga.');
 
   const letter = (i: number) => String.fromCharCode(97 + i);
   const fallback =

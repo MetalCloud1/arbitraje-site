@@ -116,11 +116,11 @@ function quizForm(initial: Data): Form {
 
   function addQuestion(q?: Q) {
     const group = uid();
-    const text = textarea(q?.q ?? '', 2, { placeholder: 'Enunciado de la pregunta', 'aria-label': 'Enunciado' });
+    const text = textarea(q?.q ?? '', 2, { maxlength: '600', placeholder: 'Enunciado de la pregunta', 'aria-label': 'Enunciado' });
     const rows = Array.from({ length: 4 }, (_, i) => {
       const radio = h('input', { type: 'radio', name: group, 'aria-label': `Marcar la opción ${String.fromCharCode(65 + i)} como correcta` });
       radio.checked = q ? q.answer === i : i === 0;
-      const opt = input(q?.options[i] ?? '', { maxlength: '150', placeholder: `Opción ${String.fromCharCode(65 + i)}`, 'aria-label': `Opción ${String.fromCharCode(65 + i)}` });
+      const opt = input(q?.options[i] ?? '', { maxlength: '300', placeholder: `Opción ${String.fromCharCode(65 + i)}`, 'aria-label': `Opción ${String.fromCharCode(65 + i)}` });
       return { radio, opt, el: h('div', { class: 'wg-optrow' }, radio, opt) };
     });
     const explain = input(q?.explain ?? '', { maxlength: '400', placeholder: 'Explicación (opcional, se muestra al responder)', 'aria-label': 'Explicación' });

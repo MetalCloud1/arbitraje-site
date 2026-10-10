@@ -154,7 +154,7 @@ const quizInitial = daily ? daily.raw.quiz : '{}';
       const opt = document.createElement('input');
       opt.type = 'text';
       opt.style.cssText = FIELD_INPUT_STYLE;
-      opt.maxLength = 150;
+      opt.maxLength = 300;
       opt.placeholder = 'Opción ' + String.fromCharCode(65 + i);
       opt.setAttribute('aria-label', 'Opción ' + String.fromCharCode(65 + i));
       opt.value = (q && q.options && q.options[i]) || '';
