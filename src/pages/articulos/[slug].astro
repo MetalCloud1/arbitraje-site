@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArticleBySlug } from '../../lib/db';
 import { fueEliminado } from '../../lib/papelera';
-import { formatDateEs, splitAfterFirstParagraph, wrapTables } from '../../lib/text';
+import { formatDateEs, lazyImages, splitAfterFirstParagraph, wrapTables } from '../../lib/text';
 import { parseVideoUrlSafe } from '../../lib/video';
 import MediaFrame from '../../components/MediaFrame.astro';
 import ReadingProgress from '../../components/ReadingProgress.astro';
@@ -81,7 +81,7 @@ const articleJsonLd = {
             src={heroUrl}
             alt=""
             loading="eager"
-            fetchpriority="high"
+            decoding="async"
             onerror="this.parentElement.style.display='none'"
           />
         </div>
@@ -115,7 +115,7 @@ const articleJsonLd = {
         {/* .article-content agrupa texto + media para que la barra de progreso
             de lectura mida el artículo completo, no solo el primer tramo. */}
         <div class="article-content">
-          {head && <div class="article-body" set:html={wrapTables(head)} />}
+          {head && <div class="article-body" set:html={lazyImages(wrapTables(head))} />}
 
           {video && (
             <div class="article-video-embed">
@@ -136,7 +136,7 @@ const articleJsonLd = {
             </div>
           )}
 
-          {tail && <div class={head ? 'article-body article-body-cont' : 'article-body'} set:html={wrapTables(tail)} />}
+          {tail && <div class={head ? 'article-body article-body-cont' : 'article-body'} set:html={lazyImages(wrapTables(tail))} />}
         </div>
 
         {/* Fuera de .article-content a propósito: no debe contar para la

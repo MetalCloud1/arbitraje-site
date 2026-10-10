@@ -132,3 +132,10 @@ export function wrapTables(html: string): string {
     .replace(/<table\b/gi, '<div class="table-scroll"><table')
     .replace(/<\/table>/gi, '</table></div>');
 }
+
+/** Añade loading="lazy" y decoding="async" a las <img> del cuerpo del artículo. */
+export function lazyImages(html: string): string {
+  // El sanitizador no deja pasar `loading`/`decoding`, así que se añaden al
+  // renderizar. Solo a <img> que aún no los traen.
+  return html.replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async"');
+}

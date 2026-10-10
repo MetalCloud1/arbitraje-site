@@ -24,7 +24,17 @@ const { imageUrl, alt, isVideo = false, playSize = 'md', eager = false, transiti
 <div class="media-frame" {...(transitionName ? { 'transition:name': transitionName } : {})}>
   {imageUrl && (
     <>
-      <div class="media-frame-bg" style={`background-image:url(${imageUrl})`}></div>
+      {/* <img> y no background-image: los fondos CSS se descargan siempre,
+          sin importar si la tarjeta está fuera de pantalla, y anulaban el
+          lazy-loading. Con la misma URL que la imagen principal el navegador
+          hace una sola petición. */}
+      <img
+        class="media-frame-bg"
+        src={imageUrl}
+        alt=""
+        aria-hidden="true"
+        loading={eager ? 'eager' : 'lazy'} decoding="async"
+      />
       <img
         class="media-frame-fg"
         src={imageUrl}

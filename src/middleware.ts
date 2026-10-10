@@ -95,7 +95,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // navegando el sitio público no debe terminar sirviendo su versión desde
   // este caché compartido a otros visitantes).
   const isCacheableRequest =
-    context.request.method === 'GET' && !session && isCacheablePagePath(pathname);
+    context.request.method === 'GET' &&
+    !session &&
+    isCacheablePagePath(pathname) &&
+    // Las búsquedas son noindex y casi nunca repiten consulta: cachearlas solo
+    // llena el caché de entradas que no vuelven a dar HIT.
+    !context.url.searchParams.has('buscar');
 
   const cache = getEdgeCache();
   const cacheKey = pageCacheKey(context.url);
