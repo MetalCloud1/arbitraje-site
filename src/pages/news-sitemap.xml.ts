@@ -12,7 +12,8 @@ import {
 
 // Sitemap de Google News: solo artículos de las últimas 48 horas (así lo
 // pide Google; los más viejos ya los cubre /sitemap.xml). Con un sitio que
-// publica poco, es normal que a veces salga vacío.
+// publica poco puede no haber nada tan reciente: en ese caso se devuelve el
+// último artículo para que el archivo nunca quede sin <url>.
 export const prerender = false;
 
 const MAX_URLS = 1000; // límite de Google por sitemap de noticias
@@ -27,7 +28,11 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // fechas sin hora) y se recorta exacto a 48 h acá.
     const candidates = await listFeedArticles(env.DB, MAX_URLS, { maxAgeDays: 3 });
     const cutoff = Date.now() - WINDOW_MS;
-    const articles = candidates.filter((a) => a.publishedDate.getTime() >= cutoff);
+    let articles = candidates.filter((a) => a.publishedDate.getTime() >= cutoff);
+
+    if (articles.length === 0) {
+      articles = (await listFeedArticles(env.DB, 1)).slice(0, 1);
+    }
 
     const lastModified = articles.reduce<Date | null>(
       (latest, a) => (!latest || a.modifiedDate > latest ? a.modifiedDate : latest),
