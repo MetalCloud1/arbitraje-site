@@ -1,10 +1,10 @@
 ---
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getArticleBySlug } from '../../lib/db';
+import { getArticleBySlug, listRelatedArticles } from '../../lib/db';
 import { fueEliminado } from '../../lib/papelera';
 import { formatDateEs, lazyImages, splitAfterFirstParagraph, wrapTables } from '../../lib/text';
-import { parseVideoUrlSafe } from '../../lib/video';
+import { parseVideoUrlSafe, resolveThumbnail } from '../../lib/video';
 import MediaFrame from '../../components/MediaFrame.astro';
 import ReadingProgress from '../../components/ReadingProgress.astro';
 
@@ -21,6 +21,11 @@ if (!article) {
 }
 
 const video = parseVideoUrlSafe(article.video_url);
+
+// "Sigue leyendo": no hay conteo de visitas en el sitio, así que en vez de
+// "Más leído" se muestran los artículos de la misma categoría y, si faltan,
+// los más recientes. En desktop va como columna lateral; en mobile, al final.
+const related = await listRelatedArticles(db, article.id, article.category, 5);
 const coverUrl = !video && article.cover_key ? `/api/img/${article.cover_key}` : null;
 
 // Imagen de fondo del encabezado (desenfocada y oscurecida por CSS). Sale de
@@ -111,6 +116,7 @@ const articleJsonLd = {
     </header>
 
     <div class="container">
+     <div class="article-layout">
       <div class="article-detail article-detail-body">
         {/* .article-content agrupa texto + media para que la barra de progreso
             de lectura mida el artículo completo, no solo el primer tramo. */}
@@ -183,6 +189,36 @@ const articleJsonLd = {
           </div>
         </div>
       </div>
+
+      {related.length > 0 && (
+        <aside class="article-aside" aria-labelledby="article-aside-title">
+          <h2 class="article-aside-title" id="article-aside-title">Sigue leyendo</h2>
+          <ol class="article-aside-list">
+            {related.map((item, i) => {
+              const thumb = resolveThumbnail(item);
+              return (
+                <li class="article-aside-item">
+                  <a class="article-aside-link" href={`/articulos/${item.slug}`}>
+                    <span class="article-aside-num" aria-hidden="true">{i + 1}</span>
+                    <span class="article-aside-text">
+                      <span class="article-aside-cat">{item.category}</span>
+                      <span class="article-aside-headline">{item.title}</span>
+                    </span>
+                    <span class="article-aside-thumb">
+                      {thumb.imageUrl ? (
+                        <img src={thumb.imageUrl} alt="" loading="lazy" decoding="async" width="96" height="72" />
+                      ) : (
+                        <span class="article-aside-thumb-empty" aria-hidden="true"></span>
+                      )}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </aside>
+      )}
+     </div>
     </div>
   </article>
 

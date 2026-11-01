@@ -66,6 +66,26 @@ export async function listArticlesByCategory(db: D1Database, category: string, l
   return results ?? [];
 }
 
+// Para el bloque "Sigue leyendo" del detalle de artículo: otros artículos
+// (nunca el que se está leyendo), con los de la misma categoría primero y
+// luego los más nuevos. Es una sola consulta: `category = ?` vale 1 o 0 y
+// ordenar por eso DESC deja las coincidencias arriba. Mismo desempate
+// id DESC que listRecentArticles, mismo motivo.
+export async function listRelatedArticles(
+  db: D1Database,
+  excludeId: number,
+  category: string,
+  limit = 5
+): Promise<ArticleSummary[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT ${SUMMARY_COLUMNS} FROM articles WHERE deleted_at IS NULL AND id != ? ORDER BY (category = ?) DESC, published_at DESC, id DESC LIMIT ?`
+    )
+    .bind(excludeId, category, limit)
+    .all<ArticleSummary>();
+  return results ?? [];
+}
+
 export async function listAllArticles(db: D1Database): Promise<ArticleSummary[]> {
   const { results } = await db
     .prepare(`SELECT ${SUMMARY_COLUMNS} FROM articles WHERE deleted_at IS NULL ORDER BY published_at DESC, id DESC`)

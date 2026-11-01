@@ -23,16 +23,15 @@ const quizInitial = daily ? daily.raw.quiz : '{}';
 <AdminLayout title="Desafío diario">
   <div class="admin-header">
     <h1>Desafío diario</h1>
-    <a class="btn btn-secondary" href="/" target="_blank">Ver en el inicio ↗</a>
   </div>
 
   <p class="field-hint" style="margin: -8px 0 20px;">
-    Esto NO rota solo ni guarda quién respondió qué: es un único desafío que reemplazás manualmente cuando
-    quieras (por ejemplo, la jugada brillante de un GM ese mismo día). Se actualiza al instante en el inicio.
+    Esta sección ya no se muestra en el sitio público (se quitó del inicio). El panel y los datos se conservan
+    por si se vuelve a activar más adelante: lo que guardes acá no se ve en ninguna página por ahora.
   </p>
 
   {error && <div class="alert alert-error">{error}</div>}
-  {updated && <div class="alert alert-success">Desafío diario actualizado. Ya se ve así en el inicio.</div>}
+  {updated && <div class="alert alert-success">Desafío diario guardado (por ahora no se muestra en el sitio).</div>}
   {daily && <p class="field-hint">Última actualización: {new Date(daily.updatedAt + 'Z').toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' })}</p>}
 
   <form class="form-card" method="POST" action="/api/daily" id="daily-form">

@@ -268,8 +268,8 @@ html {
    La caja fija no captura clics (pointer-events: none): la franja
    transparente que queda debajo de la barra compacta deja pasar todo. */
 :root {
-  --header-h: 108px;         /* barra en reposo (arriba del todo) */
-  --header-h-compact: 74px;  /* barra con scroll */
+  --header-h: 92px;          /* barra en reposo (arriba del todo) */
+  --header-h-compact: 72px;  /* barra con scroll */
   --header-dur: 250ms;
 }
 
@@ -325,13 +325,13 @@ header.site-header.is-scrolled .header-inner {
 }
 
 .brand-title {
-  height: 56px;
+  height: 52px;
   width: auto;
   transition: height var(--header-dur) var(--ease-editorial), transform 0.3s ease;
 }
 
 header.site-header.is-scrolled .brand-title {
-  height: 42px;
+  height: 40px;
 }
 
 .brand-cluster:hover .brand-title {
@@ -383,92 +383,64 @@ header.site-header.is-scrolled .chess-logo-ally {
   height: 22px;
 }
 
+/* Botones principales de la barra (desktop): Artículos, Árbitros y
+   Entrenadores. Van pegados a la derecha, junto a la lupa y la hamburguesa.
+   En mobile no entran, así que se ocultan (ver @media 860px) y el menú de
+   la hamburguesa los lista. */
 nav.main-nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 6px;
   min-width: 0;
+  margin-left: auto;
 }
 
 nav.main-nav a {
-  position: relative;
+  padding: 9px 16px;
+  border-radius: 999px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--white);
-  padding-bottom: 20px;
-  margin-bottom: -20px;
   white-space: nowrap;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
 
-nav.main-nav a::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  width: 0;
-  height: 2px;
-  background: var(--green);
-  transform: translateX(-50%);
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-nav.main-nav a:hover {
+nav.main-nav a:hover,
+nav.main-nav a:focus-visible {
   color: var(--green-bright);
-  transform: translateY(-1px);
-}
-
-nav.main-nav a:hover::after {
-  width: 100%;
+  background: rgba(151, 204, 95, 0.1);
 }
 
 nav.main-nav a.active {
   color: var(--green-bright);
-}
-
-nav.main-nav a.active::after {
-  width: 100%;
-  background: var(--green-bright);
+  background: rgba(151, 204, 95, 0.14);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.social-links {
+/* Lupa: el panel de resultados se ancla a la barra completa (no al botón),
+   así que .search-box pasa a static y el panel se posiciona respecto de
+   .header-inner (position: relative). En desktop cae justo debajo de la
+   barra, alineado a la derecha; en mobile se vuelve una hoja a todo el
+   ancho (ver "SEARCH (mobile)"). */
+.header-search .search-box {
+  position: static;
+}
+
+.header-search .search-panel {
+  top: calc(100% + 10px);
+  right: 48px;
+}
+
+/* Hamburguesa: visible en todas las pantallas. Abre el menú lateral con lo
+   que no cabe en la barra (Inicio, Clubes, Sobre Nosotros y redes). */
+.menu-toggle {
   display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.social-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gray);
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.social-link:hover {
-  color: var(--green-bright);
-  transform: translateY(-1px);
-}
-
-/* Buscador que vive en el header junto a la hamburguesa: solo se ve en
-   mobile (ver @media abajo). En desktop el buscador de siempre sigue
-   siendo el de la barra de categorías; este queda oculto para no
-   duplicarlo visualmente. */
-.mobile-search {
-  display: none;
-}
-
-/* Botón hamburguesa: solo existe visualmente en mobile (ver @media abajo),
-   donde toma el lugar de .social-links en el header. */
-.mobile-menu-toggle {
-  display: none;
   align-items: center;
   justify-content: center;
   width: 38px;
@@ -476,61 +448,67 @@ nav.main-nav a.active::after {
   padding: 0;
   color: var(--white);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 50%;
   cursor: pointer;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
-@media (max-width: 860px) {
-  .social-links {
-    display: none;
-  }
-
-  .mobile-search {
-    display: block;
-  }
-
-  .mobile-menu-toggle {
-    display: flex;
-  }
+.menu-toggle:hover,
+.menu-toggle[aria-expanded='true'] {
+  background: rgba(151, 204, 95, 0.12);
+  border-color: rgba(151, 204, 95, 0.3);
+  color: var(--green-bright);
 }
 
-/* La barra de categorías es siempre visible (no depende del ancho): en
-   pantallas angostas, en vez de esconderse detrás del hamburguesa, se
-   vuelve una fila con scroll horizontal. Sin scrollbar visible, para que
-   se lea como una fila de pestañas y no como un textarea.
-   Por debajo de 1100px ya no hay garantía de que el nav completo + la
-   lupa entren en una sola fila, así que el scroll empieza desde ahí,
-   no solo desde 860px. Entre 861px y 1100px el nav no tenía overflow-x
-   ni podía encoger, así que desbordaba la fila y el overflow-x:hidden
-   del body terminaba cortando la lupa. */
+/* Tablet / laptop angosta: la barra tiene que seguir entrando en una fila
+   con logos + 3 botones + lupa + hamburguesa. Se compacta: menos aire y
+   sin el texto "En alianza con" (el logo de Chess.com se queda). */
 @media (max-width: 1100px) {
-  nav.main-nav {
-    flex: 1;
-    min-width: 0;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: 22px;
+  .header-inner {
+    padding: 0 24px;
+    gap: 16px;
   }
 
-  nav.main-nav::-webkit-scrollbar {
+  .header-search .search-panel {
+    right: 24px;
+  }
+
+  .brand-cluster {
+    gap: 14px;
+  }
+
+  .brand-ally-label {
     display: none;
   }
 
   nav.main-nav a {
-    padding-bottom: 10px;
-    margin-bottom: 0;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* Mobile: los botones principales no caben en la barra; viven en el menú. */
+@media (max-width: 860px) {
+  nav.main-nav {
+    display: none;
   }
 
-  nav.main-nav a::after {
-    bottom: 8px;
+  .header-right {
+    margin-left: auto;
   }
 
-  .search-box {
-    flex-shrink: 0;
+  .header-search .search-panel {
+    right: 0;
   }
+}
 
+/* Desktop: Artículos / Árbitros / Entrenadores ya están a la vista en la
+   barra, así que el menú no los repite. */
+@media (min-width: 861px) {
+  .drawer-link--primary {
+    display: none;
+  }
 }
 
 /* ---------- SEARCH BOX ---------- */
@@ -842,11 +820,11 @@ nav.main-nav a.active::after {
 }
 
 @media (max-width: 860px) {
-  .mobile-search .search-box {
+  .header-search .search-box {
     position: static;
   }
 
-  .mobile-search .search-panel {
+  .header-search .search-panel {
     top: 100%;
     left: 0;
     right: 0;
@@ -861,7 +839,7 @@ nav.main-nav a.active::after {
     animation: searchSheetIn 320ms var(--ease-editorial) both;
   }
 
-  .mobile-search .search-box.is-open .search-backdrop {
+  .header-search .search-box.is-open .search-backdrop {
     display: block;
     position: absolute;
     top: 100%;
@@ -875,79 +853,79 @@ nav.main-nav a.active::after {
   }
 
   /* 16px: por debajo de eso Safari en iPhone hace zoom al enfocar el campo. */
-  .mobile-search .search-form {
+  .header-search .search-form {
     padding: 4px 6px 4px 14px;
     border-radius: 12px;
     transition: border-color var(--dur-fast) ease;
   }
 
-  .mobile-search .search-form:focus-within {
+  .header-search .search-form:focus-within {
     border-color: rgba(151, 204, 95, 0.5);
   }
 
-  .mobile-search .search-form-icon {
+  .header-search .search-form-icon {
     width: 18px;
     height: 18px;
   }
 
-  .mobile-search .search-input {
+  .header-search .search-input {
     font-size: 16px;
     min-height: 44px;
   }
 
-  .mobile-search .search-clear {
+  .header-search .search-clear {
     width: 36px;
     height: 36px;
   }
 
-  .mobile-search .search-clear svg {
+  .header-search .search-clear svg {
     width: 18px;
     height: 18px;
   }
 
-  .mobile-search .search-results {
+  .header-search .search-results {
     max-height: 50vh;
     max-height: 50dvh;
     margin-top: 10px;
     overscroll-behavior: contain;
   }
 
-  .mobile-search .search-hint {
+  .header-search .search-hint {
     padding: 10px 4px 2px;
     font-size: 14px;
   }
 
-  .mobile-search .search-result {
+  .header-search .search-result {
     gap: 14px;
     padding: 10px 6px;
     min-height: 64px;
   }
 
-  .mobile-search .search-result-thumb {
+  .header-search .search-result-thumb {
     width: 76px;
     height: 52px;
   }
 
-  .mobile-search .search-result-category {
+  .header-search .search-result-category {
     font-size: 11px;
   }
 
-  .mobile-search .search-result-title {
+  .header-search .search-result-title {
     font-size: 15px;
     line-height: 1.3;
   }
 
-  .mobile-search .search-view-all {
+  .header-search .search-view-all {
     padding: 14px 4px 4px;
     font-size: 14px;
   }
 
-  .mobile-search .search-skeleton-row {
+  .header-search .search-skeleton-row {
     height: 52px;
   }
 
   /* Mientras el buscador está abierto la página de abajo no scrollea. */
-  html:has(.mobile-search .search-box.is-open) {
+  html:has(.header-search .search-box.is-open) {
     overflow: hidden;
   }
 }
@@ -955,61 +933,6 @@ nav.main-nav a.active::after {
 @keyframes searchSheetIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---------- CATEGORY BAR ----------
-   Segunda fila, fija debajo del header, con la navegación principal y el
-   buscador. Reemplaza tanto al masthead (foto+texto) como a la fila de
-   nav que antes vivía apretada dentro del header. Las subcategorías de
-   Artículos se eligen con el panel de filtro de /articulos
-   (.articulos-filter-panel, botón .arbitros-icon-btn). */
-.category-bar {
-  /* position/z-index explícitos: sin esto, la regla genérica
-     "body > * { z-index: 1 }" convierte a .category-bar en su propio
-     contexto de apilamiento con z-index 1, igual que las secciones de
-     la página que vienen después en el DOM. Al empatar en z-index,
-     gana quien esté más abajo en el HTML -- así que el buscador y el
-     menú "Artículos" (que viven dentro de .category-bar) quedaban
-     tapados por el contenido siguiente en vez de flotar sobre él. */
-  position: relative;
-  z-index: 20;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-black);
-}
-
-.category-bar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 10px 4;
-}
-
-@media (max-width: 860px) {
-  .category-bar-inner {
-    /* Antes decía "padding: 8px 0", que sí ajusta el alto pero también
-       pone el padding izquierdo/derecho en 0 -- y como este mismo div
-       también tiene la clase .container (que da los 24px de aire a los
-       costados en mobile), esta regla ganaba por ser la que aparece
-       después en el archivo con la misma especificidad, pisando ese
-       padding lateral. Resultado: "Inicio" y la lupa quedaban pegados
-       al borde de la pantalla. Ahora solo toca el alto, no los costados. */
-    gap: 10px;
-    padding-top: 8px;
-    padding-bottom: 8px;
-  }
-}
-
-/* En mobile, la fila de categorías con scroll horizontal desaparece del
-   todo -- no era clara como navegación ahí (nada avisa que hay más
-   pestañas fuera de pantalla) -- y en su lugar el menú hamburguesa del
-   header abre el menú lateral (.mobile-drawer, más abajo) con los mismos
-   enlaces en una lista vertical. En desktop nada de esto aplica: se sigue
-   viendo la fila de siempre. */
-@media (max-width: 860px) {
-  .category-bar {
-    display: none;
-  }
 }
 
 /* ---------- MOBILE DRAWER (menú lateral) ----------
@@ -1272,45 +1195,6 @@ html:has(.mobile-drawer[open]) {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-}
-
-/* "Problema Diario" (tablero) + "Problema Arbitral" (trivia), lado a lado.
-   Contenido estático guardado a mano desde /admin/diario (ver src/lib/daily.ts):
-   no rota solo ni cuenta respuestas, así que acá no hay nada async ni
-   client-side aparte de hidratar los dos widgets (ver script en index.astro). */
-.daily-section {
-  padding-top: 48px;
-}
-
-.daily-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  align-items: start;
-}
-
-.daily-col-title {
-  margin: 0 0 16px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--white);
-}
-
-/* Los widgets (figure[data-widget]) traen su propio margen vertical de
-   artículo (40px arriba y abajo, ver widgets.css); acá van solos en la
-   columna, así que ese margen sobra y descuadra la altura contra la otra
-   columna. */
-.daily-col figure[data-widget] {
-  margin: 0;
-}
-
-@media (max-width: 900px) {
-  .daily-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
 }
 
 @media (max-width: 1100px) {
@@ -2243,6 +2127,176 @@ html:has(.mobile-drawer[open]) {
    .article-detail era para cuando el título estaba dentro. */
 .article-detail.article-detail-body {
   padding-top: 8px;
+}
+
+/* ---------- LAYOUT DE ARTÍCULO + "SIGUE LEYENDO" ----------
+   Mobile / tablet: una sola columna de 700px; el bloque "Sigue leyendo"
+   queda debajo del artículo (después del pie con Compartir).
+   Desktop (>=1100px): grilla de dos columnas -- el texto de siempre (700px)
+   y una columna lateral de 320px que se queda fija (sticky) mientras se lee.
+   El encabezado usa el mismo ancho total y limita el título a 700px para que
+   título y cuerpo queden alineados por la izquierda. */
+.article-layout {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.article-layout .article-detail {
+  padding-bottom: 56px;
+}
+
+.article-aside {
+  padding: 0 0 96px;
+}
+
+.article-aside-title {
+  position: relative;
+  margin: 0 0 4px;
+  padding-bottom: 14px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.article-aside-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--green-bright);
+}
+
+.article-aside-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-aside-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.article-aside-item:last-child {
+  border-bottom: none;
+}
+
+.article-aside-link {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 96px;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.article-aside-num {
+  align-self: start;
+  padding-top: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--green-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.article-aside-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.article-aside-cat {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.article-aside-headline {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--white);
+  transition: color var(--dur-fast) ease;
+}
+
+.article-aside-link:hover .article-aside-headline,
+.article-aside-link:focus-visible .article-aside-headline {
+  color: var(--green-bright);
+}
+
+.article-aside-thumb {
+  display: block;
+  width: 96px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0e1b14;
+}
+
+.article-aside-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.article-aside-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 600px) {
+  .article-aside-link {
+    grid-template-columns: 18px minmax(0, 1fr) 88px;
+    gap: 12px;
+  }
+
+  .article-aside-thumb {
+    width: 88px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 700px) 320px;
+    gap: 64px;
+    align-items: start;
+    max-width: 1084px;
+  }
+
+  .article-hero-inner {
+    max-width: 1084px;
+  }
+
+  .article-hero-inner h1 {
+    max-width: 700px;
+  }
+
+  .article-layout .article-detail {
+    padding-bottom: 110px;
+  }
+
+  .article-aside {
+    position: sticky;
+    top: calc(var(--header-h-compact) + 24px);
+    padding: 8px 0 0;
+  }
 }
 
 @media (max-width: 600px) {
